@@ -10,6 +10,8 @@ interface AnalyzePayload {
   documents?: UploadPayload[];
 }
 
+const acceptedFileTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+
 const extractionSchema = {
   type: 'object',
   additionalProperties: false,
@@ -58,7 +60,7 @@ export async function POST(request: Request) {
 
   const documents = payload.documents?.slice(0, 3) ?? [];
   if (documents.length < 2) return Response.json({ code: 'MISSING_DOCUMENTS', message: 'Provide a challan and vehicle record.' }, { status: 400 });
-  if (documents.some((file) => !file.data.startsWith('data:') || file.data.length > 14_000_000)) {
+  if (documents.some((file) => !acceptedFileTypes.has(file.type) || !file.data.startsWith(`data:${file.type};base64,`) || file.data.length > 14_000_000)) {
     return Response.json({ code: 'UNSUPPORTED_DOCUMENT', message: 'Use clear JPG, PNG or PDF files under 10 MB each.' }, { status: 413 });
   }
 

@@ -49,7 +49,7 @@ function DocumentArtwork({ caseFile, source, imageUrl, selectedKey }: { caseFile
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#112629]/85 via-transparent to-transparent" />
         <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-[#112629]/80 p-3 text-white backdrop-blur-md">
-          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#f7c64a]">Selected evidence field</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#b8d4e1]">Selected evidence field</p>
           <p className="mt-1 font-mono text-sm font-black">{sourceFact?.value || 'Select and verify a field'}</p>
         </div>
       </div>
@@ -60,11 +60,11 @@ function DocumentArtwork({ caseFile, source, imageUrl, selectedKey }: { caseFile
     const plate = field(caseFile, 'photoPlate');
     return (
       <div className="relative grid min-h-[280px] place-items-center overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_50%_30%,#526265_0,#273638_40%,#152326_100%)] p-7 text-white">
-        <div className="absolute left-[12%] top-[18%] h-20 w-[76%] rounded-[55%_45%_20%_25%] border border-white/10 bg-white/[0.05]" />
-        <div className="relative w-full max-w-sm rounded-xl border border-white/20 bg-white/[0.07] p-5 text-center shadow-2xl backdrop-blur-sm">
+        <div className="absolute left-[12%] top-[18%] h-20 w-[76%] rounded-[45%_45%_18%_18%] border border-white/10 bg-white/[0.04]" />
+        <div className="relative w-full max-w-sm rounded-lg border border-white/20 bg-white/[0.07] p-5 text-center shadow-xl backdrop-blur-sm">
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/45">Camera crop · plate region</p>
-          <p className={classes('mt-3 rounded-lg border px-3 py-3 font-mono text-xl font-black tracking-[0.14em]', selectedKey === 'photoPlate' ? 'border-[#f7c64a] bg-[#f7c64a]/15 shadow-[0_0_0_5px_rgba(247,198,74,.08)]' : 'border-white/15 bg-black/10')}>{plate?.value || 'NOT CLEAR'}</p>
-          {plate?.alternatives?.[0] && <p className="mt-3 text-[10px] font-bold text-[#f7c64a]">Alternate read: {plate.alternatives[0].value}</p>}
+          <p className={classes('mt-3 rounded-md border px-3 py-3 font-mono text-xl font-black tracking-[0.14em]', selectedKey === 'photoPlate' ? 'border-[#8fb2c4] bg-[#315f78]/15 shadow-[0_0_0_4px_rgba(143,178,196,.08)]' : 'border-white/15 bg-black/10')}>{plate?.value || 'NOT CLEAR'}</p>
+          {plate?.alternatives?.[0] && <p className="mt-3 text-[10px] font-bold text-[#b8d4e1]">Alternate read: {plate.alternatives[0].value}</p>}
         </div>
         <p className="absolute bottom-5 left-6 text-[10px] font-bold text-white/40">Broad family: {field(caseFile, 'photoFamily')?.value || 'Unknown'}</p>
       </div>
@@ -73,14 +73,13 @@ function DocumentArtwork({ caseFile, source, imageUrl, selectedKey }: { caseFile
 
   const isChallan = source === 'challan';
   return (
-    <div className={classes('relative min-h-[280px] overflow-hidden rounded-2xl border p-5', isChallan ? 'border-[#d4cdc0] bg-[#fffdf8]' : 'border-[#bdd5c5] bg-[#edf6ef]')}>
-      <div className="pointer-events-none absolute right-[-36px] top-12 rotate-[32deg] border-y border-[#db5f43]/20 px-10 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#db5f43]/25">Synthetic</div>
+    <div className={classes('relative min-h-[280px] overflow-hidden rounded-lg border p-5', isChallan ? 'border-[#d4cdc0] bg-[#fbfaf7]' : 'border-[#bdd5c5] bg-[#edf4ef]')}>
       <div className="flex items-start justify-between border-b border-[#d8d2c7] pb-4">
         <div><p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#74807d]">{isChallan ? 'Electronic challan' : 'Vehicle record extract'}</p><p className="mt-1 text-xs font-black">{isChallan ? caseFile.challanNumber : caseFile.id}</p></div>
-        <span className="rounded-full bg-[#112629] px-2 py-1 text-[8px] font-black text-white">DEMO</span>
+        <span className="rounded-md border border-[#bac6ca] bg-white/70 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-[#52646b]">Synthetic</span>
       </div>
       <dl className="mt-5 grid gap-4 text-xs">
-        <div className={classes('rounded-xl border p-3 transition', selectedKey === sourceFact?.key ? 'border-[#db5f43] bg-[#fff0ea] shadow-[0_0_0_4px_rgba(219,95,67,.08)]' : 'border-[#d8d2c7] bg-white/50')}>
+        <div className={classes('rounded-md border p-3 transition', selectedKey === sourceFact?.key ? 'border-[#315f78] bg-[#eef4f7] shadow-[0_0_0_3px_rgba(49,95,120,.07)]' : 'border-[#d8d2c7] bg-white/50')}>
           <dt className="text-[8px] font-black uppercase tracking-[0.13em] text-[#778481]">Registration mark</dt>
           <dd className="mt-1 font-mono text-base font-black tracking-[0.12em]">{sourceFact?.value || 'Not extracted'}</dd>
         </div>
@@ -101,9 +100,9 @@ function SourceInspector({ caseFile, source, imageUrl, selectedKey, onClose }: {
   const meta = sourceMeta[source];
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-end bg-[#112629]/60 p-0 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="source-inspector-title" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[30px] bg-[#f4f0e8] p-5 shadow-2xl sm:h-[calc(100vh-32px)] sm:rounded-[30px] sm:p-7">
+      <section className="h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[18px] bg-[#f3f1ec] p-5 shadow-2xl sm:h-[calc(100vh-32px)] sm:rounded-lg sm:p-7">
         <header className="flex items-start justify-between gap-5 border-b border-[#d6d0c5] pb-5">
-          <div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#db5f43]">Source inspector · {meta.eyebrow}</p><h2 id="source-inspector-title" className="mt-1 text-3xl font-black tracking-[-0.045em]">{meta.title}</h2><p className="mt-2 text-xs text-[#677470]">The original is never changed. Highlights are a separate visual layer.</p></div>
+          <div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#315f78]">Source inspector · {meta.eyebrow}</p><h2 id="source-inspector-title" className="mt-1 text-3xl font-black tracking-[-0.045em]">{meta.title}</h2><p className="mt-2 text-xs text-[#677470]">The original is never changed. Highlights are a separate visual layer.</p></div>
           <button autoFocus onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#bdb7ac] bg-white text-lg font-black" aria-label="Close source inspector">×</button>
         </header>
         <div className="mt-6"><DocumentArtwork caseFile={caseFile} source={source} imageUrl={imageUrl} selectedKey={selectedKey} /></div>
@@ -132,7 +131,7 @@ function PlateDiff({ caseFile, onSelect }: { caseFile: DemoCase; onSelect: (key:
   const active = columns[activeIndex];
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-      <div className="overflow-x-auto rounded-[24px] border border-[#d5cfc4] bg-[#fffdf8] p-5">
+      <div className="overflow-x-auto rounded-xl border border-[#d5cfc4] bg-[#fbfaf7] p-5">
         <div className="min-w-[620px]">
           {[['Challan record', record, 'recordPlate'], ['Evidence photo', photo, 'photoPlate'], ['Vehicle record', vehicle, 'rcPlate']].map(([label, value, key]) => (
             <div key={key} className="grid grid-cols-[150px_repeat(10,minmax(34px,1fr))] items-center gap-1 border-b border-[#e3ded5] py-3 last:border-0">
@@ -140,13 +139,13 @@ function PlateDiff({ caseFile, onSelect }: { caseFile: DemoCase; onSelect: (key:
               {Array.from({ length: 10 }, (_, index) => {
                 const character = value[index] || '·';
                 const conflict = columns[index]?.conflict;
-                return <button key={index} onClick={() => setActiveIndex(index)} className={classes('grid h-10 place-items-center rounded-lg border font-mono text-sm font-black transition', activeIndex === index ? 'scale-105 border-[#112629] bg-[#112629] text-white' : conflict ? 'border-[#db5f43] bg-[#fff0ea] text-[#9d3f29]' : 'border-[#ddd7cc] bg-[#f6f2eb]')}>{character}</button>;
+                return <button key={index} onClick={() => setActiveIndex(index)} className={classes('grid h-10 place-items-center rounded-md border font-mono text-sm font-black transition', activeIndex === index ? 'border-[#172a33] bg-[#172a33] text-white' : conflict ? 'border-[#769eb2] bg-[#eef4f7] text-[#315f78]' : 'border-[#ddd7cc] bg-[#f6f2eb]')}>{character}</button>;
               })}
             </div>
           ))}
         </div>
       </div>
-      <aside className={classes('rounded-[24px] border p-5', active?.conflict ? 'border-[#df9f8e] bg-[#fff0ea]' : 'border-[#bfd7c7] bg-[#edf6ef]')}>
+      <aside className={classes('rounded-xl border p-5', active?.conflict ? 'border-[#9dbbc9] bg-[#eef4f7]' : 'border-[#bfd7c7] bg-[#edf6ef]')}>
         <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#6e7976]">Character position {activeIndex + 1}</p>
         <p className="mt-3 text-5xl font-black tracking-[-0.06em]">{active?.photo || '—'}</p>
         <h3 className="mt-4 text-lg font-black">{active?.conflict ? 'This position conflicts.' : 'This position agrees.'}</h3>
@@ -160,14 +159,14 @@ function Timeline({ caseFile }: { caseFile: DemoCase }) {
   const validIssue = /^\d{4}-\d{2}-\d{2}$/.test(caseFile.issueDate) && caseFile.issueDate >= '2026-01-20';
   const deadline = validIssue ? deadlineFor(caseFile) : null;
   return (
-    <div className="rounded-[26px] border border-[#d5cfc4] bg-[#fffdf8] p-5 sm:p-7">
+    <div className="rounded-xl border border-[#d5cfc4] bg-[#fbfaf7] p-5 sm:p-7">
       <div className="relative grid gap-7 md:grid-cols-3 md:gap-3">
         <div className="absolute left-[15px] top-6 h-[calc(100%-48px)] w-px bg-[#cfc8bc] md:left-[16.67%] md:top-[15px] md:h-px md:w-[66.66%]" />
         {[
           { number: '1', label: 'Incident recorded', value: caseFile.occurredAt },
           { number: '2', label: 'Challan issued', value: validIssue ? formatDate(caseFile.issueDate) : 'Issue date not confirmed' },
           { number: '3', label: 'Rule-based safety date', value: deadline ? formatDate(deadline.date) : 'Cannot calculate safely' },
-        ].map((event, index) => <div key={event.number} className="relative flex gap-4 md:flex-col md:items-center md:text-center"><span className={classes('relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-black', index === 2 ? 'bg-[#db5f43] text-white' : 'bg-[#112629] text-[#f7c64a]')}>{event.number}</span><div><p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#77827f]">{event.label}</p><p className="mt-1 text-sm font-black">{event.value}</p></div></div>)}
+        ].map((event, index) => <div key={event.number} className="relative flex gap-4 md:flex-col md:items-center md:text-center"><span className={classes('relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-md text-xs font-black', index === 2 ? 'bg-[#315f78] text-white' : 'bg-[#172a33] text-white')}>{event.number}</span><div><p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#77827f]">{event.label}</p><p className="mt-1 text-sm font-black">{event.value}</p></div></div>)}
       </div>
       <div className="mt-8 rounded-2xl bg-[#fff8df] p-4 text-xs leading-5 text-[#6c5c33]"><strong>Clock source:</strong> 45 calendar days from issuance under CMVR Rule 167, G.S.R. 48(E). This is a rule-based safety date; state procedure and the official portal remain authoritative.</div>
     </div>
@@ -194,11 +193,11 @@ export function EvidenceWorkbench({ caseFile, selectedKey, files, onSelect }: Ev
   ];
 
   return (
-    <section className="overflow-hidden rounded-[30px] border border-[#cfc9be] bg-[#ebe6dc] shadow-[0_22px_60px_rgba(30,45,44,0.10)]">
+    <section className="overflow-hidden rounded-[18px] border border-[#cfc9be] bg-[#ece9e2] shadow-[0_12px_34px_rgba(23,42,51,0.07)]">
       <header className="flex flex-col gap-4 border-b border-[#cbc4b8] bg-[#fffdf8] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div><p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#db5f43]">Interactive evidence workbench</p><p className="mt-1 text-sm font-black">Three source views · immutable originals · editable facts</p></div>
+        <div><p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#315f78]">Evidence workbench</p><p className="mt-1 text-sm font-black">Three source views · immutable originals · editable facts</p></div>
         <div className="flex gap-1 rounded-2xl border border-[#d5cfc4] bg-[#f4f0e8] p-1" role="tablist" aria-label="Evidence workbench views">
-          {tabs.map((item) => <button key={item.id} role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={classes('rounded-xl px-3 py-2 text-left transition sm:px-4', tab === item.id ? 'bg-[#112629] text-white shadow-md' : 'text-[#66736f] hover:bg-white')}><span className="block text-[10px] font-black">{item.label}</span><span className={classes('hidden text-[8px] sm:block', tab === item.id ? 'text-white/55' : 'text-[#8a9491]')}>{item.note}</span></button>)}
+          {tabs.map((item) => <button key={item.id} role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={classes('rounded-md px-3 py-2 text-left transition sm:px-4', tab === item.id ? 'bg-[#172a33] text-white' : 'text-[#66736f] hover:bg-white')}><span className="block text-[10px] font-black">{item.label}</span><span className={classes('hidden text-[8px] sm:block', tab === item.id ? 'text-white/55' : 'text-[#8a9491]')}>{item.note}</span></button>)}
         </div>
       </header>
 
@@ -210,8 +209,8 @@ export function EvidenceWorkbench({ caseFile, selectedKey, files, onSelect }: Ev
               const factKey = source === 'challan' ? 'recordPlate' : source === 'photo' ? 'photoPlate' : 'rcPlate';
               const active = selectedSource === source;
               return (
-                <button key={source} onClick={() => { onSelect(factKey); setInspecting(source); }} className={classes('group rounded-[24px] border p-3 text-left transition hover:-translate-y-1 hover:shadow-xl', active ? 'border-[#db5f43] bg-[#fff7f3] shadow-[0_0_0_4px_rgba(219,95,67,.08)]' : 'border-[#d1cabf] bg-[#f4f0e8]')}>
-                  <div className="mb-3 flex items-center justify-between px-1"><div><p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#788481]">{meta.eyebrow}</p><p className="mt-1 text-xs font-black">{meta.title}</p></div><span className="grid h-8 w-8 place-items-center rounded-full border border-[#c9c2b6] bg-white text-xs font-black transition group-hover:bg-[#112629] group-hover:text-white">↗</span></div>
+                <button key={source} onClick={() => { onSelect(factKey); setInspecting(source); }} className={classes('group rounded-xl border p-3 text-left transition hover:border-[#315f78] hover:shadow-[0_8px_20px_rgba(23,42,51,.06)]', active ? 'border-[#315f78] bg-[#f3f7f8] shadow-[0_0_0_3px_rgba(49,95,120,.06)]' : 'border-[#d1cabf] bg-[#f3f1ec]')}>
+                  <div className="mb-3 flex items-center justify-between px-1"><div><p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#788481]">{meta.eyebrow}</p><p className="mt-1 text-xs font-black">{meta.title}</p></div><span className="grid h-8 w-8 place-items-center rounded-md border border-[#c9c2b6] bg-white text-xs font-black transition group-hover:bg-[#172a33] group-hover:text-white">↗</span></div>
                   <DocumentArtwork caseFile={caseFile} source={source} imageUrl={imageFor(source)} selectedKey={selectedKey} />
                 </button>
               );

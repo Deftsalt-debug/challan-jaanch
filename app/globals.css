@@ -1,8 +1,12 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #f4f0e8;
-  --foreground: #112629;
+  --background: #f3f1ec;
+  --foreground: #172a33;
+  --accent: #315f78;
+  --accent-strong: #24495d;
+  --border: #d5d1c9;
+  --surface: #fbfaf7;
 }
 
 @theme inline {
@@ -17,27 +21,30 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 12% 8%, rgba(247, 198, 74, 0.08), transparent 24rem),
-    radial-gradient(circle at 92% 32%, rgba(219, 95, 67, 0.055), transparent 28rem),
+    linear-gradient(rgba(23, 42, 51, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 42, 51, 0.018) 1px, transparent 1px),
     var(--background);
+  background-size: 32px 32px;
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-button:focus-visible, a:focus-visible { outline: 3px solid #db5f43; outline-offset: 3px; }
-input:focus-visible { outline: 2px solid #112629; outline-offset: 2px; }
-::selection { background: #f7c64a; color: #112629; }
+button, a, input { transition-timing-function: cubic-bezier(.2, .7, .2, 1); }
+button:focus-visible, a:focus-visible { outline: 3px solid #315f78; outline-offset: 3px; }
+input:focus-visible { outline: 2px solid #172a33; outline-offset: 2px; }
+::selection { background: #dce9ef; color: #172a33; }
 
 @keyframes evidence-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes floating-note {
-  0%, 100% { transform: translateY(0) rotate(1deg); }
-  50% { transform: translateY(-7px) rotate(-0.5deg); }
+@keyframes stage-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scan {
@@ -47,16 +54,30 @@ input:focus-visible { outline: 2px solid #112629; outline-offset: 2px; }
   100% { transform: translateX(230%); opacity: 0; }
 }
 
-.animate-evidence-in { animation: evidence-in 280ms cubic-bezier(.2,.8,.2,1) both; }
-.floating-note { animation: floating-note 4s ease-in-out infinite; }
+.animate-evidence-in { animation: evidence-in 240ms cubic-bezier(.2,.7,.2,1) both; }
+.stage-transition { animation: stage-in 260ms cubic-bezier(.2,.7,.2,1) both; }
 .scan-line {
   position: absolute;
   inset: 0 auto 0 -30%;
   width: 24%;
-  background: linear-gradient(90deg, transparent, rgba(247, 198, 74, 0.38), transparent);
+  background: linear-gradient(90deg, transparent, rgba(148, 187, 207, 0.34), transparent);
   transform: skewX(-14deg);
   animation: scan 2.8s ease-in-out infinite;
   pointer-events: none;
+}
+
+.professional-card {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 12px 34px rgba(23, 42, 51, 0.06);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(49, 95, 120, 0.1);
 }
 
 @supports (text-wrap: balance) {

@@ -77,7 +77,7 @@ The API route necessarily transmits selected files to OpenAI only when the user 
 - Tailwind CSS 4 plus a small global motion layer.
 - OpenAI Responses API for optional multimodal extraction.
 - jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
-- OpenAI Sites for versioned private hosting.
+- OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
 
 ## Production-hardening backlog
 

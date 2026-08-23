@@ -35,7 +35,7 @@ The synthetic demo is complete without an API key. Live file extraction is optio
 | Extraction | OpenAI Responses API, optional | Structured multimodal field extraction with `store: false` |
 | Decision layer | Deterministic TypeScript | Plate, vehicle-family, duplicate-event, and deadline rules |
 | Exports | jsPDF and browser Web APIs | Client-side PDF, JSON manifest, SHA-256 hashes, audio guidance |
-| Hosting | OpenAI Sites | Versioned private deployment |
+| Hosting | OpenAI Sites | Versioned deployment; public access is a separate release decision |
 | Persistence | None by design | No application database, analytics, or persistent document store |
 
 ## Run locally
@@ -84,3 +84,5 @@ docs/DEMO_SCRIPT.md                A judge-ready 90-second walkthrough
 Challan Jaanch reports conflicts visible in supplied records. It does not declare a challan invalid, infer fraud or cloning, predict grievance success, provide legal advice, or perform an official submission. The Rule 167 source pack is dated and must be rechecked before production use.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete design.
+
+For a full, explanatory walkthrough of every stage, program, data boundary, rule, deployment mode, and the no-database decision, read [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md).
