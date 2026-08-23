@@ -15,6 +15,8 @@ npm run dev
 
 Open `http://localhost:3000`. Choose **Run the 90-second demo** for the complete keyless journey.
 
+Choose **Scam check** for the second keyless journey. Pasted scam text is evaluated locally and does not require an API key.
+
 ## Configure live extraction
 
 ```bash
@@ -63,6 +65,10 @@ Confirm every field tagged **Decisive**. Editing any decisive field intentionall
 ### The packet download button is disabled
 
 Complete the final human attestation. Packets are only available for supported outcomes.
+
+### Scam Shield found no obvious red flag
+
+That does not authenticate the sender. Independently type the official eChallan address. User-supplied destinations are intentionally not clickable.
 
 ## Push to a new repository
 

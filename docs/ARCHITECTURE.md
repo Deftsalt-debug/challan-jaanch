@@ -29,6 +29,19 @@ Optional observable-field extraction ── failure ──► Manual entry
         Separate official-portal handoff
 ```
 
+Scam Shield is a parallel, browser-only trust lane:
+
+```text
+Pasted message text
+        │
+        ▼
+Inert URL parsing + advisory-pattern rules
+        │
+        ├──► Verify independently on exact official hostname
+        ├──► Report attempted impersonation to I4C
+        └──► If exposed: 1930 + bank/provider + NCRP
+```
+
 ## Trust boundaries
 
 ### Extraction boundary
@@ -59,9 +72,15 @@ The MVP has no database, R2 bucket, analytics, account system, or application-ow
 
 The API route necessarily transmits selected files to OpenAI only when the user chooses live extraction and a server-side key is configured. Production deployments should add an explicit consent receipt, retention verification, rate limits, and abuse controls before accepting real documents.
 
+### Scam-navigation boundary
+
+`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled government URLs are clickable. The checker can label a known exact host, a lookalike, or an unverified destination; it never labels a sender or message safe.
+
 ## UI state machine
 
 `home → upload → processing → review → result → packet`
+
+Parallel lane: `home → scam → verify | report-attempt | emergency`
 
 - **Home:** synthetic cases, product evidence, and interactive outcome preview.
 - **Upload:** drag/drop or file selection with local preview and size/type guidance.
@@ -69,6 +88,7 @@ The API route necessarily transmits selected files to OpenAI only when the user 
 - **Review:** source inspector, character-level diff, rule clock, editing, and confirmation.
 - **Result:** finding trace, adversarial counter-checks, deadline context, and refusal path.
 - **Packet:** redacted/official-handoff views, attestation, PDF/JSON exports, and a separate official link.
+- **Scam:** local message triage, inert URL inspection, exposure-aware response plan, and hard-coded official escape routes.
 
 ## Main technology choices
 
@@ -76,6 +96,7 @@ The API route necessarily transmits selected files to OpenAI only when the user 
 - Vinext/Vite for Next-compatible routes and Cloudflare output.
 - Tailwind CSS 4 plus a small global motion layer.
 - OpenAI Responses API for optional multimodal extraction.
+- Pure TypeScript scam rules for advisory patterns, URL classification, and exposure routing.
 - jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
 - OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
 

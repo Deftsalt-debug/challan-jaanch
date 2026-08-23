@@ -3,6 +3,7 @@
 import { ChangeEvent, DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { EvidenceWorkbench } from '../components/EvidenceWorkbench';
 import { AudioGuideButton, HowItWorksDrawer } from '../components/ProductGuide';
+import { ScamShield } from '../components/ScamShield';
 import {
   Assessment,
   CaseFact,
@@ -14,7 +15,7 @@ import {
   formatDate,
 } from '../lib/cases';
 
-type Stage = 'home' | 'upload' | 'processing' | 'review' | 'result' | 'packet';
+type Stage = 'home' | 'scam' | 'upload' | 'processing' | 'review' | 'result' | 'packet';
 type Language = 'en' | 'hi';
 type PacketMode = 'official' | 'redacted';
 type UploadKey = 'challan' | 'vehicle' | 'supporting';
@@ -109,7 +110,7 @@ function manualCase(extraction: LiveExtraction, files: UploadedFiles): DemoCase 
   };
 }
 
-function Brand({ language, onLanguage, onHome, onHelp, guideText }: { language: Language; onLanguage: () => void; onHome: () => void; onHelp: () => void; guideText: string }) {
+function Brand({ language, onLanguage, onHome, onScam, onHelp, guideText }: { language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onHelp: () => void; guideText: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <button onClick={onHome} className="flex items-center gap-3 text-left" aria-label="Challan Jaanch home">
@@ -122,6 +123,7 @@ function Brand({ language, onLanguage, onHome, onHelp, guideText }: { language: 
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="hidden rounded-full border border-[#d3cec3] bg-white/50 px-3 py-1.5 text-xs font-semibold text-[#52615f] sm:inline">{translate(language, 'Private by design', 'गोपनीयता पहले')}</span>
         <AudioGuideButton text={guideText} language={language} />
+        <button onClick={onScam} className="rounded-lg border border-[#b8877b] bg-[#fbefec] px-3 py-2 text-[10px] font-black text-[#8f3827] transition hover:border-[#a13d2a] hover:bg-white sm:text-xs">Scam check</button>
         <button onClick={onHelp} className="grid h-10 w-10 place-items-center rounded-lg border border-[#c7c1b6] bg-white/60 text-xs font-black text-[#52615f] transition hover:border-[#315f78] hover:bg-white md:h-auto md:w-auto md:px-3 md:py-2" aria-label="How it works"><span className="md:hidden">?</span><span className="hidden md:inline">How it works</span></button>
         <button onClick={onLanguage} className="rounded-lg border border-[#172a33] px-4 py-2 text-sm font-bold transition hover:bg-[#172a33] hover:text-white" aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}>{language === 'en' ? 'हिंदी' : 'English'}</button>
       </div>
@@ -143,20 +145,20 @@ function Progress({ stage, language }: { stage: Stage; language: Language }) {
   );
 }
 
-function Shell({ children, stage, language, onLanguage, onHome, onDelete, onHelp, guideText }: { children: ReactNode; stage: Stage; language: Language; onLanguage: () => void; onHome: () => void; onDelete: () => void; onHelp: () => void; guideText: string }) {
+function Shell({ children, stage, language, onLanguage, onHome, onScam, onDelete, onHelp, guideText }: { children: ReactNode; stage: Stage; language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onDelete: () => void; onHelp: () => void; guideText: string }) {
   return (
     <main className="min-h-screen bg-[#f3f1ec] text-[#172a33]">
       <header className="sticky top-0 z-40 border-b border-[#d7d3cb] bg-[#f3f1ec]/94 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-[1180px] px-5 py-4 sm:px-8">
-          <Brand language={language} onLanguage={onLanguage} onHome={onHome} onHelp={onHelp} guideText={guideText} />
-          {stage !== 'home' && <Progress stage={stage} language={language} />}
+          <Brand language={language} onLanguage={onLanguage} onHome={onHome} onScam={onScam} onHelp={onHelp} guideText={guideText} />
+          {stage !== 'home' && stage !== 'scam' && <Progress stage={stage} language={language} />}
         </div>
       </header>
       <div key={stage} className="stage-transition">{children}</div>
       {stage !== 'home' && (
         <footer className="mx-auto flex w-full max-w-[1180px] flex-col gap-3 border-t border-[#d8d2c7] px-5 py-7 text-xs text-[#65726f] sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p>Not a government service or legal adviser. No official submission occurs here.</p>
-          <button onClick={onDelete} className="w-fit font-extrabold text-[#a13d2a] underline decoration-[#a13d2a]/30 underline-offset-4">Delete this case from this browser</button>
+          <p>{stage === 'scam' ? 'Safety triage only. It cannot authenticate a sender or declare a message safe.' : 'Not a government service or legal adviser. No official submission occurs here.'}</p>
+          <button onClick={onDelete} className="w-fit font-extrabold text-[#a13d2a] underline decoration-[#a13d2a]/30 underline-offset-4">{stage === 'scam' ? 'Clear and leave Scam Shield' : 'Delete this case from this browser'}</button>
         </footer>
       )}
     </main>
@@ -206,10 +208,10 @@ function EvidenceHeroCard() {
   );
 }
 
-function Home({ language, onLanguage, onStartCase, onUpload, onHelp }: { language: Language; onLanguage: () => void; onStartCase: (id: string) => void; onUpload: () => void; onHelp: () => void }) {
+function Home({ language, onLanguage, onStartCase, onUpload, onScam, onHelp }: { language: Language; onLanguage: () => void; onStartCase: (id: string) => void; onUpload: () => void; onScam: () => void; onHelp: () => void }) {
   return (
     <main className="stage-transition min-h-screen overflow-hidden bg-[#f3f1ec] text-[#172a33]">
-      <header className="mx-auto w-full max-w-[1180px] px-5 py-5 sm:px-8"><Brand language={language} onLanguage={onLanguage} onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })} onHelp={onHelp} guideText="Challan Jaanch checks supplied challan evidence before a citizen uses the official grievance service. Run the synthetic demo to inspect three sources, verify decisive facts, compare them with narrow rules, and prepare a transparent citizen packet." /></header>
+      <header className="mx-auto w-full max-w-[1180px] px-5 py-5 sm:px-8"><Brand language={language} onLanguage={onLanguage} onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })} onScam={onScam} onHelp={onHelp} guideText="Challan Jaanch checks supplied challan evidence before a citizen uses the official grievance service. It can also inspect suspicious challan messages without opening their links." /></header>
       <section className="mx-auto grid w-full max-w-[1180px] gap-8 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:pb-24 lg:pt-12">
         <div>
           <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-[#c7c2b8] bg-[#fbfaf7] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#52615f]"><span className="status-dot" />{translate(language, 'For objectively incorrect eChallans', 'स्पष्ट रूप से गलत ई-चालान के लिए')}</div>
@@ -222,6 +224,13 @@ function Home({ language, onLanguage, onStartCase, onUpload, onHelp }: { languag
           <p className="mt-5 border-l-2 border-[#9eaaa7] pl-3 text-xs font-semibold leading-5 text-[#6d7876]">{translate(language, 'Synthetic demonstration. No government system is contacted and nothing is submitted.', 'डेमो में केवल नकली रिकॉर्ड हैं। कोई सरकारी सिस्टम संपर्क नहीं किया जाता।')}</p>
         </div>
         <EvidenceHeroCard />
+      </section>
+
+      <section className="mx-auto w-full max-w-[1180px] px-5 pb-16 sm:px-8 lg:pb-20">
+        <div className="grid overflow-hidden rounded-xl border border-[#bfcbd0] bg-[#eaf0f2] lg:grid-cols-[1fr_auto] lg:items-stretch">
+          <div className="p-6 sm:p-8"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8f3827]"><span className="block h-2 w-2 rounded-full bg-[#a13d2a]" />Scam Shield</div><h2 className="mt-3 text-2xl font-black tracking-[-0.04em] sm:text-3xl">A fake challan needs a different response.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-[#576965]">Paste a suspicious message or URL as text. Check for APK malware, OTP requests, pressure tactics, hidden destinations, and lookalike eChallan sites—without visiting them.</p><div className="mt-5 flex flex-wrap gap-2">{['APK lure', 'Lookalike URL', 'OTP request', 'Payment pressure'].map((item) => <span key={item} className="rounded-md border border-[#c4d0d4] bg-white/60 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wide text-[#51676f]">{item}</span>)}</div></div>
+          <button onClick={onScam} className="group flex min-h-28 items-center justify-between gap-6 border-t border-[#bfcbd0] bg-[#172a33] px-6 py-6 text-left text-white transition hover:bg-[#24495d] lg:w-[265px] lg:border-l lg:border-t-0"><span><span className="block text-[9px] font-black uppercase tracking-[0.16em] text-[#b8d4e1]">Local-only triage</span><span className="mt-2 block text-base font-black">Check a suspicious message</span></span><span className="text-xl transition group-hover:translate-x-1">→</span></button>
+        </div>
       </section>
 
       <section className="mx-auto w-full max-w-[1180px] px-5 pb-16 sm:px-8 lg:pb-24">
@@ -423,7 +432,8 @@ export default function HomePage() {
     review: 'Use the source lens to inspect each record, the character diff to compare every plate position, and the rule clock to see the calculated safety date. Confirm every decisive value before comparing.',
     result: assessment.outcome === 'supported' ? 'The confirmed records support a narrow objective contradiction. Inspect the finding map, sceptic mode, and rule clock before preparing a citizen packet.' : 'The evidence does not safely support an objective claim. Review the unresolved counter-checks and improve the source material before proceeding.',
     packet: 'Choose a redacted share or official handoff view, inspect the claim-to-source map, complete the human attestation, and download the citizen-prepared PDF and JSON manifest.',
-    home: 'Challan Jaanch is an evidence preflight for potentially incorrect electronic challans.',
+    scam: 'Paste a suspicious challan message as plain text. The local checker never opens its links. If money was sent or a suspicious app was installed, use a clean device and call 1930 immediately.',
+    home: 'Challan Jaanch is an evidence preflight for incorrect or potentially fraudulent electronic challans.',
   } as Record<Stage, string>)[stage], [assessment.outcome, stage]);
 
   const startCase = async (id: string) => {
@@ -591,11 +601,12 @@ export default function HomePage() {
     }
   };
 
-  if (stage === 'home') return <><Home language={language} onLanguage={() => setLanguage((value) => value === 'en' ? 'hi' : 'en')} onStartCase={startCase} onUpload={() => setStage('upload')} onHelp={() => setGuideOpen(true)} /><HowItWorksDrawer open={guideOpen} onClose={() => setGuideOpen(false)} /></>;
+  if (stage === 'home') return <><Home language={language} onLanguage={() => setLanguage((value) => value === 'en' ? 'hi' : 'en')} onStartCase={startCase} onUpload={() => setStage('upload')} onScam={() => setStage('scam')} onHelp={() => setGuideOpen(true)} /><HowItWorksDrawer open={guideOpen} onClose={() => setGuideOpen(false)} /></>;
 
   return (
     <>
-      <Shell stage={stage} language={language} onLanguage={() => setLanguage((value) => value === 'en' ? 'hi' : 'en')} onHome={reset} onDelete={reset} onHelp={() => setGuideOpen(true)} guideText={guideText}>
+      <Shell stage={stage} language={language} onLanguage={() => setLanguage((value) => value === 'en' ? 'hi' : 'en')} onHome={reset} onScam={() => setStage('scam')} onDelete={reset} onHelp={() => setGuideOpen(true)} guideText={guideText}>
+        {stage === 'scam' && <ScamShield onBack={reset} />}
         {stage === 'upload' && <UploadScreen language={language} files={files} setFile={setFile} error={uploadError} onAnalyse={analyseUploads} onStartCase={startCase} />}
         {stage === 'processing' && <ProcessingScreen progress={processingStep} live={liveProcessing} />}
         {stage === 'review' && <ReviewScreen caseFile={caseFile} confirmed={confirmed} selectedKey={selectedKey} notice={notice} files={files} onSelect={setSelectedKey} onChange={updateFact} onConfirm={toggleConfirmation} onConfirmAll={confirmAll} onCompare={() => { setStage('result'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}

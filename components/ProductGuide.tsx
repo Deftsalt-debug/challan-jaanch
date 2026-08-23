@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type GuideTab = 'journey' | 'guardrails' | 'stack';
+type GuideTab = 'journey' | 'scams' | 'guardrails' | 'stack';
 
 function classes(...values: Array<string | false | undefined>) {
   return values.filter(Boolean).join(' ');
@@ -43,7 +43,7 @@ export function HowItWorksDrawer({ open, onClose }: { open: boolean; onClose: ()
   }, [open, onClose]);
   if (!open) return null;
 
-  const tabs: Array<[GuideTab, string]> = [['journey', 'Citizen journey'], ['guardrails', 'Trust model'], ['stack', 'Technology']];
+  const tabs: Array<[GuideTab, string]> = [['journey', 'Evidence journey'], ['scams', 'Scam Shield'], ['guardrails', 'Trust model'], ['stack', 'Technology']];
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-end bg-[#112629]/65 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="guide-title" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-t-[18px] bg-[#f3f1ec] p-5 shadow-2xl sm:h-full sm:rounded-none sm:p-8">
@@ -68,6 +68,21 @@ export function HowItWorksDrawer({ open, onClose }: { open: boolean; onClose: ()
           </div>
         )}
 
+        {tab === 'scams' && (
+          <div className="mt-7 space-y-5">
+            <div className="rounded-xl border border-[#c5d3d8] bg-[#eaf0f2] p-6"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8f3827]">Parallel safety lane</p><h3 className="mt-3 text-2xl font-black tracking-[-0.04em]">Inspect the lure without taking its route.</h3><p className="mt-3 text-sm leading-6 text-[#5e6e69]">The pasted message stays in browser memory. Suspicious URLs are parsed as inert text and are never rendered as links.</p></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ['Detect high-risk patterns', 'Flags APK installation, OTP/PIN requests, remote access, urgency, direct-payment pressure, short links and lookalike domains.'],
+                ['Never label a message safe', 'The lowest-risk result is “No obvious red flag.” The sender still must be verified independently.'],
+                ['Separate attempt from loss', 'A suspicious attempt routes to I4C Report Suspect. A payment or credential exposure routes to 1930 and the cybercrime complaint portal.'],
+                ['Use a clean escape route', 'The only clickable destinations are hard-coded government services. User-supplied links remain inert.'],
+              ].map(([title, body]) => <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5"><h3 className="font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p></article>)}
+            </div>
+            <p className="text-xs leading-5 text-[#6a7774]">Government basis: MoRTH’s eChallan impersonation warning, I4C reporting routes, and the CRPF advisory on fake RTO/Parivahan APKs. Sources were rechecked on 24 August 2026.</p>
+          </div>
+        )}
+
         {tab === 'guardrails' && (
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             {[
@@ -76,6 +91,7 @@ export function HowItWorksDrawer({ open, onClose }: { open: boolean; onClose: ()
               ['Original files stay immutable', 'Annotations and user edits are overlays; source files are never rewritten.'],
               ['No government impersonation', 'No logos, seals, official case numbers or simulated submission success.'],
               ['No credential collection', 'The official portal opens separately. Challan Jaanch never asks for its password or OTP.'],
+              ['No unsafe-link navigation', 'Pasted URLs are inspected as text. Only hard-coded official government destinations are clickable.'],
               ['No silent retention', 'No application database, analytics or persistent document store; reset clears the browser session.'],
             ].map(([title, body], index) => <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5"><span className={classes('inline-flex rounded-md border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]', index % 2 ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]')}>{index % 2 ? 'Check' : 'Control'}</span><h3 className="mt-4 font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p></article>)}
           </div>
@@ -91,6 +107,7 @@ export function HowItWorksDrawer({ open, onClose }: { open: boolean; onClose: ()
                 ['Tailwind CSS 4', 'Responsive layout, design tokens, reduced-motion support and touch-friendly components.'],
                 ['OpenAI Responses API', 'Optional image/PDF field extraction using structured JSON output and storage disabled.'],
                 ['Deterministic TypeScript rules', 'Plate, broad vehicle-family and exact-duplicate comparisons; calendar-date deadline logic.'],
+                ['Local scam-triage rules', 'URL parsing, exact-host allowlisting and current advisory patterns without opening or transmitting pasted links.'],
                 ['jsPDF + Web APIs', 'In-browser PDF/JSON downloads, file hashing, object URLs and speech guidance.'],
                 ['OpenAI Sites', 'Versioned releases and Cloudflare-compatible hosting; public access is configured separately.'],
                 ['No database by design', 'No D1, R2, auth or application-owned document persistence in this MVP.'],

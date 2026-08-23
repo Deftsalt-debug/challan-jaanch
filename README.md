@@ -2,7 +2,7 @@
 
 ![Challan Jaanch social card](public/og.png)
 
-An evidence-first preflight for potentially incorrect Indian eChallans. It brings a challan record, supplied enforcement evidence, and the citizen's vehicle record into one inspectable workspace. The product then reports a narrow observable contradiction—or explicitly refuses to conclude.
+An evidence-first preflight for potentially incorrect or fraudulent Indian eChallans. It combines a source-linked contradiction checker with a local Scam Shield for suspicious messages, APK lures, credential requests, and lookalike payment destinations.
 
 ## What makes it different
 
@@ -11,6 +11,8 @@ An evidence-first preflight for potentially incorrect Indian eChallans. It bring
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
 - **Human verification gates:** editing a decisive field invalidates its confirmation and the prior result.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
+- **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened.
+- **Incident-aware routing:** attempted impersonation routes to I4C Report Suspect, while payments, credential exposure, or APK installation route to 1930 and the National Cyber Crime Reporting Portal.
 - **No government impersonation:** the app never asks for portal credentials, submits a grievance, or claims a government decision.
 
 ## Guided experience
@@ -24,7 +26,7 @@ An evidence-first preflight for potentially incorrect Indian eChallans. It bring
 7. Build a redacted or official-handoff packet.
 8. Continue separately on the official eChallan portal.
 
-The synthetic demo is complete without an API key. Live file extraction is optional and fails safely into manual verification when it is not configured.
+The synthetic evidence demo and Scam Shield are complete without an API key. Live file extraction is optional and fails safely into manual verification when it is not configured.
 
 ## Technology
 
@@ -34,6 +36,7 @@ The synthetic demo is complete without an API key. Live file extraction is optio
 | App framework | Vinext, Vite 8, Next-compatible routing | Fast development and Cloudflare Worker output |
 | Extraction | OpenAI Responses API, optional | Structured multimodal field extraction with `store: false` |
 | Decision layer | Deterministic TypeScript | Plate, vehicle-family, duplicate-event, and deadline rules |
+| Scam triage | Deterministic TypeScript | Exact-host allowlisting, inert URL parsing, advisory-pattern detection, and exposure routing |
 | Exports | jsPDF and browser Web APIs | Client-side PDF, JSON manifest, SHA-256 hashes, audio guidance |
 | Hosting | OpenAI Sites | Versioned deployment; public access is a separate release decision |
 | Persistence | None by design | No application database, analytics, or persistent document store |
@@ -72,7 +75,9 @@ app/page.tsx                       Citizen journey and state machine
 app/api/analyze/route.ts           Optional structured extraction endpoint
 components/EvidenceWorkbench.tsx  Source inspector, character diff, rule clock
 components/ProductGuide.tsx       Audio guide and in-product architecture drawer
+components/ScamShield.tsx         Local scam triage, recovery plan, and official routing
 lib/cases.ts                       Typed fixtures, comparison rules, date logic
+lib/scam-shield.ts                 Pure scam signals, URL classification, and response tracks
 tests/rules.test.mjs               Deterministic rule and API-boundary tests
 docs/ARCHITECTURE.md               Trust boundaries and data flow
 docs/LOCAL_DEVELOPMENT.md          Setup and troubleshooting
@@ -81,7 +86,7 @@ docs/DEMO_SCRIPT.md                A judge-ready 90-second walkthrough
 
 ## Product boundary
 
-Challan Jaanch reports conflicts visible in supplied records. It does not declare a challan invalid, infer fraud or cloning, predict grievance success, provide legal advice, or perform an official submission. The Rule 167 source pack is dated and must be rechecked before production use.
+Challan Jaanch reports conflicts visible in supplied records and risk patterns in pasted communications. It does not declare a challan invalid, authenticate a sender, certify a message as safe, infer fraud or cloning, predict grievance success, provide legal advice, or perform an official submission. The Rule 167 and cyber-advisory source packs are dated and must be rechecked before production use.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete design.
 

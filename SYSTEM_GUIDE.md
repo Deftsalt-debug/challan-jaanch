@@ -4,7 +4,7 @@ This document explains what Challan Jaanch does, why it exists, how every progra
 
 ## 1. The system in one sentence
 
-Challan Jaanch is an independent evidence preflight that helps a citizen determine whether the records supplied with an eChallan support a narrow, objective contradiction before the citizen uses the official grievance process.
+Challan Jaanch is an independent trust preflight that helps a citizen determine whether an eChallan communication is suspicious and whether supplied records support a narrow, objective contradiction before the citizen uses an official government process.
 
 It is not a government service, legal adviser, automated appeal writer, or decision-maker.
 
@@ -19,6 +19,8 @@ An eChallan grievance form may accept a complaint, but the citizen still has to 
 - What should be redacted before sharing?
 - Is there a time window that requires immediate attention?
 - How can the citizen explain the problem without accidentally alleging fraud, cloning, or government error?
+- Is the challan message itself genuine, or is it a payment, phishing, or malicious-app lure?
+- If the citizen already clicked, installed, shared a secret, or paid, what should happen first?
 
 Challan Jaanch turns those questions into a guided evidence workflow.
 
@@ -60,6 +62,10 @@ The guide also scores end-to-end thinking. Therefore, this document explains bot
 - calculate a dated, rule-based safety date;
 - generate a citizen-prepared PDF and JSON manifest;
 - open the official eChallan portal separately.
+- inspect pasted message text and URLs locally without opening them;
+- flag current advisory patterns such as APK installation, OTP/PIN requests, remote access, artificial urgency, and lookalike challan destinations;
+- route a suspected attempt to I4C's Report Suspect facility;
+- route financial loss or credential/device exposure to 1930 and the National Cyber Crime Reporting Portal.
 
 ### The system may not
 
@@ -71,14 +77,25 @@ The guide also scores end-to-end thinking. Therefore, this document explains bot
 - collect a government password, OTP, Aadhaar number, PAN, or payment detail;
 - perform an official submission;
 - represent itself as a government product.
+- authenticate a sender or certify a message as safe;
+- visit, redirect through, or make a clickable link from a user-supplied suspicious destination;
+- scan, execute, upload, or sandbox a suspicious APK.
 
 ## 5. Citizen journey
 
-The application is a state machine with these stages:
+The evidence application is a state machine with these stages:
 
 ```text
 Home → Documents → Processing → Verification → Result → Packet
 ```
+
+Scam Shield is a separate parallel lane:
+
+```text
+Home → Scam Shield → local signal check → Verify / Report attempt / Emergency response
+```
+
+The scam lane does not create an evidence case, does not call the extraction API, and does not share state with the challan-comparison journey.
 
 ### Stage 1: Home
 
@@ -92,6 +109,7 @@ The citizen can:
 - open the in-product system guide;
 - use English or Hindi interface labels;
 - listen to a short stage-specific audio explanation on supported devices.
+- open Scam Shield from the main navigation or the dedicated home-page safety panel.
 
 The demo fixtures are visibly fictional. They use impossible-looking registration values and explicit “synthetic” labels.
 
@@ -183,6 +201,53 @@ The system generates:
 
 Original uploaded files are not embedded in either export.
 
+### Parallel lane: Scam Shield
+
+Scam Shield addresses fake challan messages and impersonation attempts without pretending that software can prove a sender is genuine.
+
+The citizen can:
+
+1. choose whether the communication arrived through WhatsApp, SMS, a call, email, or another channel;
+2. paste the wording or URL as plain text;
+3. indicate whether they opened a link, installed an app/APK, sent money, or shared an OTP, PIN, or password;
+4. receive a live deterministic risk explanation;
+5. inspect extracted destinations as inert text;
+6. copy an ordered safety plan;
+7. continue only through hard-coded official government destinations.
+
+The checker looks for:
+
+- `.apk` files and app-install instructions;
+- OTP, UPI PIN, CVV, password, or screen-sharing requests;
+- remote-access software such as AnyDesk or TeamViewer;
+- immediate payment instructions and QR/UPI pressure;
+- threats of arrest, vehicle seizure, or licence cancellation;
+- HTTP rather than HTTPS;
+- URL shorteners;
+- raw IP-address destinations;
+- internationalised/punycode hostnames;
+- transport or challan wording on a hostname that is not one of the exact recognised official transport-service hosts.
+
+The allowlist is intentionally narrow. Only the exact HTTPS hostnames `echallan.parivahan.gov.in` and `mparivahan.parivahan.gov.in` receive the “Exact official host” label. An unfamiliar state-government destination is labelled unverified, not fraudulent, because the checker does not maintain an exhaustive registry of every state service.
+
+There are three outcomes:
+
+| Outcome | Meaning |
+| --- | --- |
+| `danger` | A critical pattern or multiple combined signals were found. The citizen is told to stop. |
+| `suspicious` | One or more caution signals were found. The citizen is told to verify independently. |
+| `unverified` | No obvious pattern was found. This is explicitly not a “safe” or “genuine” verdict. |
+
+There are also three response tracks:
+
+| Track | Trigger | Route |
+| --- | --- | --- |
+| `verify` | No obvious signal or a known official hostname | Independently open the official eChallan service. |
+| `report-attempt` | Suspicious or high-risk lure without known exposure | Preserve the message and use I4C Report Suspect. |
+| `emergency` | Money sent, credentials shared, or suspicious app installed | Use a clean device, call 1930, contact the financial provider, preserve evidence, and report at cybercrime.gov.in. |
+
+The application does not display a user-supplied address as a link. The only clickable safety destinations are constants controlled in source code.
+
 ## 6. The deterministic rules
 
 Rules live in `lib/cases.ts`. They operate only on the current case object and the set of confirmed field keys.
@@ -271,6 +336,28 @@ The output is labelled a “rule-based safety date,” not an official portal de
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+Scam Shield remains inside the browser boundary:
+
+```text
+Pasted message / caller instruction
+             │
+             ▼
+Unicode normalisation + inert URL parsing
+             │
+             ├──► exact-host comparison
+             ├──► advisory-pattern rules
+             └──► exposure-state rules
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+       Verify      Report attempt    Emergency
+          │              │              │
+          ▼              ▼              ▼
+  official eChallan   I4C suspect    1930 + NCRP
+
+No extraction API call · no suspicious-link navigation · no persistence
+```
+
 ## 8. How the programs work together
 
 ### `app/page.tsx`
@@ -311,6 +398,21 @@ This component provides:
 
 It is explanatory UI only.
 
+### `components/ScamShield.tsx`
+
+This component owns the interactive anti-scam lane:
+
+- communication-channel selection;
+- synthetic scam examples;
+- plain-text message input;
+- exposure checkboxes;
+- live signal and destination explanations;
+- ordered incident-response steps;
+- clipboard action-plan export;
+- hard-coded official verification and reporting links.
+
+It never renders a user-supplied URL as an anchor.
+
 ### `lib/cases.ts`
 
 This is the typed domain and rule layer. It contains:
@@ -322,6 +424,20 @@ This is the typed domain and rule layer. It contains:
 - date formatting and calendar-day calculation.
 
 This module contains no React code, network calls, or persistence.
+
+### `lib/scam-shield.ts`
+
+This pure deterministic module contains:
+
+- the recognised official eChallan hostname;
+- official verification and cybercrime-reporting constants;
+- inert URL extraction and classification;
+- advisory-pattern rules;
+- exposure escalation;
+- typed `danger`, `suspicious`, and `unverified` outcomes;
+- typed `verify`, `report-attempt`, and `emergency` routes.
+
+It does not fetch a URL, resolve a redirect, query a reputation vendor, or call an AI model.
 
 ### `app/api/analyze/route.ts`
 
@@ -369,6 +485,9 @@ These tests verify:
 - normalization does not guess confusable characters;
 - the calendar calculation has no local-time drift;
 - the extraction endpoint fails honestly when no key exists.
+- fake APK and lookalike-host patterns produce a danger state;
+- only the exact HTTPS national eChallan and mParivahan hostnames receive the official-host label;
+- payment or credential exposure selects the emergency route.
 
 ### Build and hosting files
 
@@ -409,6 +528,20 @@ User selects local files
 
 The prototype does not save the original File objects, extracted fields, hashes, findings, or packets in an application-owned database.
 
+### Scam Shield path
+
+```text
+Citizen pastes message as plain text
+  → React memory
+  → local deterministic parsing
+  → inert destination labels + risk signals
+  → local action plan
+  → optional browser clipboard copy
+  → clear, route change, reload, or tab close removes application state
+```
+
+Scam Shield does not call `/api/analyze`, OpenAI, a URL-reputation service, or a link-expansion service. This is intentional: following a short link or querying an external service with the full destination could expose the citizen's unique tracking token or announce that the lure reached an active device.
+
 ## 10. Why there is no application database or persistent document store
 
 ### Short answer
@@ -440,6 +573,10 @@ The main demonstration does not need persistence to prove the product, and not r
 6. **Simpler deletion semantics**
 
    Resetting the case clears the React state. Closing or reloading the page ends the in-memory session. There is no application backup or server record that the citizen must separately request to delete.
+
+7. **Safer scam triage**
+
+   Suspicious messages often contain phone numbers, unique victim tokens, payment handles, or malicious destinations. Local-only analysis prevents the prototype from becoming a new repository of scam evidence or inadvertently contacting an attacker-controlled server.
 
 ### What “no database” does not mean
 
@@ -507,6 +644,9 @@ If the project moves beyond a stateless prototype, introduce persistence in stag
 - No official submission.
 - Explicit reset control.
 - Synthetic default fixtures.
+- Scam-message checks run locally and are not sent to the extraction endpoint.
+- User-supplied suspicious URLs are never clickable.
+- Official escape routes are hard-coded rather than copied from the message.
 
 ## 13. Failure behavior
 
@@ -524,6 +664,10 @@ The product is designed to fail into review rather than certainty.
 | Ambiguous decisive character | Return `unable`; create no finding or packet. |
 | No supported rule | Return `none`; do not claim the challan is valid. |
 | Invalid issue date | Do not calculate a deadline. |
+| No obvious scam signal | Return `unverified`, never “safe” or “genuine.” |
+| Unknown government-looking hostname | Label it unverified; do not declare it fraudulent. |
+| Lookalike/APK/credential pattern | Return a danger or suspicious state and block any user-supplied route. |
+| Money, credential, or app exposure | Select the emergency response track with 1930 and NCRP guidance. |
 
 ## 14. Local launch
 
@@ -555,6 +699,8 @@ http://localhost:3000
 ```
 
 Choose **Run the 90-second demo** to use the complete application without an API key.
+
+Choose **Scam check** to use the local anti-scam lane. It also requires no API key and makes no network request with the pasted message.
 
 ### Enable optional live extraction
 
@@ -616,13 +762,15 @@ challan-jaanch/
 │   └── page.tsx                 Complete citizen journey
 ├── components/
 │   ├── EvidenceWorkbench.tsx    Source inspector, plate diff, rule clock
-│   └── ProductGuide.tsx         Help drawer and audio guidance
+│   ├── ProductGuide.tsx         Help drawer and audio guidance
+│   └── ScamShield.tsx           Local scam triage and official safety routing
 ├── docs/
 │   ├── ARCHITECTURE.md          Short architecture reference
 │   ├── DEMO_SCRIPT.md           Judge-ready demonstration
 │   └── LOCAL_DEVELOPMENT.md     Compact setup guide
 ├── lib/
-│   └── cases.ts                 Types, fixtures, deterministic rules
+│   ├── cases.ts                 Types, fixtures, deterministic evidence rules
+│   └── scam-shield.ts           Scam patterns, URL classification, response tracks
 ├── tests/
 │   └── rules.test.mjs           Rule and boundary tests
 ├── public/
@@ -642,6 +790,8 @@ challan-jaanch/
 - `react` and `react-dom`: render the interactive application.
 - `next`: supply compatible app-router and metadata types.
 - `jspdf`: create the citizen PDF in the browser.
+
+Scam Shield uses only browser and language primitives. It adds no reputation SDK, tracking service, or runtime dependency.
 
 ### Build and development
 
@@ -671,6 +821,13 @@ challan-jaanch/
 - Redacted and official-handoff packet views.
 - Responsive mobile and desktop layouts.
 - Keyboard focus and reduced-motion handling.
+- Local plain-text scam-message triage.
+- Four synthetic scam patterns.
+- Inert URL extraction and exact-host allowlisting.
+- APK, secret-request, remote-access, threat, and payment-pressure signals.
+- Separate verify, report-attempt, and emergency routes.
+- Copyable incident-response plan.
+- Direct links to the official eChallan service, I4C Report Suspect, NCRP, and `tel:1930` for exposed users.
 
 ## 18. What is mocked or limited
 
@@ -684,9 +841,23 @@ challan-jaanch/
 - Hindi localization is partial, not a complete translation.
 - No account, saved draft, sync, reminder, or collaboration exists.
 - No production consent, malware-scanning, or support operation exists.
+- Scam Shield does not query a live domain-reputation feed, expand short links, inspect message headers, reverse-lookup phone numbers, or scan APK binaries.
+- A lack of detected signals does not authenticate the sender or establish that a message is genuine.
+- The recognised official-host list is deliberately narrow and is not a complete directory of state traffic portals.
 - The current owner-only hosted URL is not suitable for the hackathon's public-link requirement until access is deliberately changed.
 
-## 19. Deployment and the hackathon public-link requirement
+## 19. Cyber-advisory basis for Scam Shield
+
+The anti-scam rules were rechecked on 24 August 2026 against primary government sources:
+
+- [MoRTH national eChallan service](https://echallan.parivahan.gov.in/index/check-challan-status): warns about fraudulent websites and mobile apps and says the service does not request passwords, OTPs, payment details, or sensitive personal information through calls, emails, messages, or links.
+- [CRPF Cyber Byte, January 2026](https://crpf.gov.in/Upload/MediaGallery/CYBER_BYTE_ENG-24012026.pdf): describes fake RTO/Parivahan APKs distributed through WhatsApp and tells citizens to verify through the official eChallan service or mParivahan.
+- [I4C Report Suspect](https://www.cybercrime.gov.in/Webform/cyber_suspect.aspx): accepts reports about suspicious website URLs, WhatsApp or Telegram handles, phone numbers, emails, SMS headers, and social-media URLs.
+- [National Cyber Crime Reporting Portal](https://www.cybercrime.gov.in/): directs victims of financial cyber fraud to report immediately and use the national helpline `1930`.
+
+These sources justify the product split between independent challan verification, attempted-scam reporting, and urgent post-loss response. They do not justify declaring every unfamiliar URL fraudulent, so the system retains an explicit `unverified` state.
+
+## 20. Deployment and the hackathon public-link requirement
 
 The project is connected to OpenAI Sites and can produce Cloudflare-compatible output.
 
@@ -700,7 +871,7 @@ Changing a site from private to public is an external access change. It should b
 - all links work in a signed-out browser;
 - the disclaimer and mocked dependencies remain visible.
 
-## 20. How to push to your own Git repository
+## 21. How to push to your own Git repository
 
 Inspect existing remotes:
 
@@ -729,7 +900,7 @@ npm run verify
 git status
 ```
 
-## 21. Recommended production evolution
+## 22. Recommended production evolution
 
 ### Phase 1: Public synthetic pilot
 
@@ -763,7 +934,7 @@ git status
 - Source citations and review ownership.
 - Automated regression fixtures for every rule revision.
 
-## 22. Troubleshooting
+## 23. Troubleshooting
 
 ### The comparison button is disabled
 
@@ -789,7 +960,15 @@ Only supported results can reach the packet stage. Complete the final human atte
 
 The Site is private. That is acceptable for internal review but not for the hackathon's required public link. The owner must explicitly approve a public access change.
 
-## 23. Final mental model
+### Scam Shield says “No obvious red flag”
+
+That is not an authentication result. Independently type the official eChallan address and check whether the challan exists. Do not continue through the original message.
+
+### A suspicious APK was already installed
+
+Disconnect the affected device from the internet. Use a different trusted device to call 1930 and contact the bank or payment provider. Preserve the original message, filename, permissions, and transaction alerts before arranging secure device cleanup.
+
+## 24. Final mental model
 
 The easiest way to understand the product is:
 
@@ -797,6 +976,7 @@ The easiest way to understand the product is:
 AI is a reader.
 The citizen is the verifier.
 TypeScript rules are the comparator.
+Scam Shield is a local risk triage, never a “safe sender” certificate.
 The packet is the portable artifact.
 The government portal remains the decision and submission system.
 ```

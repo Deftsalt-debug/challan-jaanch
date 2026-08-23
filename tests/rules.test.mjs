@@ -9,6 +9,7 @@ import {
   deadlineFor,
   normaliseRegistration,
 } from '../lib/cases.ts';
+import { inspectChallanMessage } from '../lib/scam-shield.ts';
 
 function confirmDecisive(caseFile) {
   return new Set(caseFile.facts.filter((fact) => fact.decisive).map((fact) => fact.key));
@@ -69,4 +70,41 @@ test('live extraction endpoint fails honestly when no API key is configured', as
   assert.equal(response.status, 503);
   assert.equal(body.code, 'LIVE_EXTRACTION_NOT_CONFIGURED');
   if (previous) process.env.OPENAI_API_KEY = previous;
+});
+
+test('Scam Shield flags fake challan APKs and lookalike destinations without opening them', () => {
+  const assessment = inspectChallanMessage({
+    message: 'Pay ₹1,000 now and install https://mparivahan-pay.example/RTO-Challan.apk',
+    channel: 'whatsapp',
+    clicked: false,
+    installed: false,
+    paid: false,
+    sharedCredentials: false,
+  });
+  assert.equal(assessment.outcome, 'danger');
+  assert.equal(assessment.track, 'report-attempt');
+  assert.ok(assessment.signals.some((signal) => signal.id === 'apk'));
+  assert.equal(assessment.destinations[0].classification, 'lookalike');
+});
+
+test('Scam Shield recognises exact HTTPS eChallan and mParivahan hostnames', () => {
+  const official = inspectChallanMessage({ message: 'https://echallan.parivahan.gov.in/index/check-challan-status', channel: 'other', clicked: false, installed: false, paid: false, sharedCredentials: false });
+  assert.equal(official.outcome, 'unverified');
+  assert.equal(official.destinations[0].classification, 'official');
+
+  const mParivahan = inspectChallanMessage({ message: 'https://mparivahan.parivahan.gov.in/', channel: 'other', clicked: false, installed: false, paid: false, sharedCredentials: false });
+  assert.equal(mParivahan.outcome, 'unverified');
+  assert.equal(mParivahan.destinations[0].classification, 'official');
+
+  const lookalike = inspectChallanMessage({ message: 'https://echallan.parivahan.gov.in.example/pay', channel: 'sms', clicked: false, installed: false, paid: false, sharedCredentials: false });
+  assert.equal(lookalike.outcome, 'danger');
+  assert.equal(lookalike.destinations[0].classification, 'lookalike');
+});
+
+test('Scam Shield routes financial or credential exposure to emergency response', () => {
+  const assessment = inspectChallanMessage({ message: 'I sent the payment and shared my OTP', channel: 'call', clicked: true, installed: false, paid: true, sharedCredentials: true });
+  assert.equal(assessment.outcome, 'danger');
+  assert.equal(assessment.track, 'emergency');
+  assert.ok(assessment.signals.some((signal) => signal.id === 'paid'));
+  assert.ok(assessment.signals.some((signal) => signal.id === 'shared'));
 });

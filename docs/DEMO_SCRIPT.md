@@ -37,3 +37,23 @@ Choose **Build citizen packet**. Toggle between **Redacted share** and **Officia
 From the result screen, choose **Try the refusal case**, confirm the synthetic values, and compare. The result must say **Unable to assess safely** because `Z` and `2` remain plausible. No packet action should appear.
 
 This second path is the strongest answer to “What happens when the AI is wrong?”
+
+## 45-second extension: fake challan protection
+
+**0–10 seconds — Change the threat model**
+
+Return home and open **Scam check**. Say: “Sometimes the record is not wrong—the entire challan message is fake. That requires a different safety route.”
+
+**10–22 seconds — Inspect without clicking**
+
+Choose **Fake APK lure**. Point out that the app parses the address as inert text, flags the `.apk`, and identifies the lookalike hostname without visiting either destination.
+
+**22–32 seconds — Show calibrated language**
+
+Choose **Known official hostname**. The result says **No obvious red flag**, not “safe.” Explain that software cannot authenticate the sender and the citizen must still independently open the official service.
+
+**32–45 seconds — Trigger emergency mode**
+
+Return to the APK fixture and check **Installed an app/APK** or **Sent money**. The route changes immediately to an ordered containment plan with **Call 1930**, bank/provider contact, evidence preservation, and the National Cyber Crime Reporting Portal.
+
+Land with: “Wrong evidence goes to the grievance preflight. A fake route goes to Scam Shield. The product does not confuse the two.”
