@@ -224,13 +224,21 @@ function noGroundAssessment(): Assessment {
 }
 
 export function addCalendarDays(date: string, days: number): string {
+  if (!isValidIsoDate(date)) throw new Error('Expected a valid YYYY-MM-DD calendar date.');
   const [year, month, day] = date.split('-').map(Number);
   const value = new Date(Date.UTC(year, month - 1, day));
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
 }
 
+export function isValidIsoDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(date)) return false;
+  const value = new Date(`${date}T00:00:00.000Z`);
+  return !Number.isNaN(value.getTime()) && value.toISOString().slice(0, 10) === date;
+}
+
 export function formatDate(date: string): string {
+  if (!isValidIsoDate(date)) return 'Date not confirmed';
   const [year, month, day] = date.split('-').map(Number);
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(Date.UTC(year, month - 1, day)));
 }

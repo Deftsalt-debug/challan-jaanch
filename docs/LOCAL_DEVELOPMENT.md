@@ -48,6 +48,12 @@ Or run the full gate:
 npm run verify
 ```
 
+Before deployment, also run the network-backed production dependency audit:
+
+```bash
+npm run release:check
+```
+
 ## Common issues
 
 ### Live extraction says it is not configured

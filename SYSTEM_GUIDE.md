@@ -223,6 +223,7 @@ The checker looks for:
 - immediate payment instructions and QR/UPI pressure;
 - threats of arrest, vehicle seizure, or licence cancellation;
 - HTTP rather than HTTPS;
+- bare domains that omit `https://`;
 - URL shorteners;
 - raw IP-address destinations;
 - internationalised/punycode hostnames;
@@ -446,8 +447,10 @@ This is the optional server-side extraction adapter. It:
 - keeps the API key on the server;
 - accepts a maximum of three supplied documents;
 - rejects missing, malformed, or oversized payloads;
+- rejects more than three documents instead of silently truncating them;
 - maps PDFs to `input_file` and images to `input_image`;
 - requests strict JSON schema output;
+- enforces a 45-second upstream timeout and validates the returned structure and calendar date at runtime;
 - sets `store: false`;
 - returns clean manual-fallback errors if the key or service is unavailable.
 
@@ -488,6 +491,7 @@ These tests verify:
 - fake APK and lookalike-host patterns produce a danger state;
 - only the exact HTTPS national eChallan and mParivahan hostnames receive the official-host label;
 - payment or credential exposure selects the emergency route.
+- malformed extraction dates and invalid structured model output are rejected before rendering.
 
 ### Build and hosting files
 
@@ -658,6 +662,7 @@ The product is designed to fail into review rather than certainty.
 | Extraction service unreachable | Return `502 EXTRACTION_UNREACHABLE`; continue manually. |
 | Upstream extraction failure | Return a safe extraction error; continue manually. |
 | Invalid structured result | Reject it; continue manually. |
+| Invalid or impossible extracted date | Remove it from the case and do not calculate or render a deadline. |
 | Missing required files | Keep analysis disabled and show guidance. |
 | File above 10 MB | Reject it in the interface. |
 | Unconfirmed fact | Lock comparison. |
@@ -742,6 +747,12 @@ That command runs:
 3. deterministic and boundary tests;
 4. the production build.
 
+For the deployment gate, including npm's current production-dependency advisories:
+
+```bash
+npm run release:check
+```
+
 Individual commands are:
 
 ```bash
@@ -774,7 +785,9 @@ challan-jaanch/
 ├── tests/
 │   └── rules.test.mjs           Rule and boundary tests
 ├── public/
-│   └── og.png                   Social preview image
+│   ├── _headers                 Security and immutable-asset cache headers
+│   ├── og-release.png           Active release social preview
+│   └── og.png                   Preserved legacy social preview
 ├── .env.example                 Optional environment template
 ├── .openai/hosting.json         Sites project binding
 ├── CONTRIBUTING.md              Contribution safety rules
@@ -802,6 +815,8 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - `eslint` and `eslint-config-next`: code-quality checks.
 - `@openai/sites-vite-plugin`: Sites integration.
 - Cloudflare packages: Worker-compatible output and deployment tooling.
+
+`public/_headers` adds deployment-level defaults that deny framing, disable MIME sniffing, restrict referrer leakage and sensitive browser permissions, and isolate the opener context.
 
 ## 17. What works today
 
@@ -860,6 +875,8 @@ These sources justify the product split between independent challan verification
 ## 20. Deployment and the hackathon public-link requirement
 
 The project is connected to OpenAI Sites and can produce Cloudflare-compatible output.
+
+Production metadata defaults to the existing Sites origin when `NEXT_PUBLIC_SITE_URL` is not configured, preventing social-preview URLs from accidentally pointing to localhost. A different public origin should still set `NEXT_PUBLIC_SITE_URL` explicitly at build time.
 
 The builder guide requires the final submission link to open without requesting access. An owner-only or workspace-gated deployment does not satisfy that rule.
 

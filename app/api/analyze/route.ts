@@ -11,6 +11,35 @@ interface AnalyzePayload {
 }
 
 const acceptedFileTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+const vehicleFamilies = new Set(['Two-wheeler', 'Passenger car', 'Goods vehicle', 'Bus', 'Three-wheeler', 'Other', 'Unknown']);
+const stringFields = ['challanNumber', 'issueDate', 'recordPlate', 'photoPlate', 'rcPlate', 'photoFamily', 'rcFamily', 'occurredAt', 'location', 'offence', 'amount'] as const;
+
+function json(body: Record<string, unknown>, status = 200) {
+  return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
+}
+
+function validIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function validatedExtraction(value: unknown): Record<string, string | string[] | null> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const extraction: Record<string, string | string[] | null> = {};
+  for (const field of stringFields) {
+    const entry = record[field];
+    if (entry !== null && (typeof entry !== 'string' || entry.length > 500)) return null;
+    extraction[field] = entry as string | null;
+  }
+  if (typeof extraction.issueDate === 'string' && !validIsoDate(extraction.issueDate)) return null;
+  if (typeof extraction.photoFamily === 'string' && !vehicleFamilies.has(extraction.photoFamily)) return null;
+  if (typeof extraction.rcFamily === 'string' && !vehicleFamilies.has(extraction.rcFamily)) return null;
+  if (!Array.isArray(record.notes) || record.notes.length > 6 || record.notes.some((note) => typeof note !== 'string' || note.length > 500)) return null;
+  extraction.notes = record.notes as string[];
+  return extraction;
+}
 
 const extractionSchema = {
   type: 'object',
@@ -48,20 +77,25 @@ function outputText(response: Record<string, unknown>): string | null {
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return Response.json({ code: 'LIVE_EXTRACTION_NOT_CONFIGURED', message: 'Live extraction is not configured. Continue with the deterministic synthetic demo or enter the fields manually.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+    return json({ code: 'LIVE_EXTRACTION_NOT_CONFIGURED', message: 'Live extraction is not configured. Continue with the deterministic synthetic demo or enter the fields manually.' }, 503);
   }
 
-  let payload: AnalyzePayload;
+  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return json({ code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Send a JSON upload payload.' }, 415);
+  const contentLength = Number(request.headers.get('content-length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > 44_000_000) return json({ code: 'PAYLOAD_TOO_LARGE', message: 'The combined upload payload is too large.' }, 413);
+
+  let payload: AnalyzePayload | null;
   try {
     payload = await request.json() as AnalyzePayload;
   } catch {
-    return Response.json({ code: 'BAD_REQUEST', message: 'The upload payload could not be read.' }, { status: 400 });
+    return json({ code: 'BAD_REQUEST', message: 'The upload payload could not be read.' }, 400);
   }
 
-  const documents = payload.documents?.slice(0, 3) ?? [];
-  if (documents.length < 2) return Response.json({ code: 'MISSING_DOCUMENTS', message: 'Provide a challan and vehicle record.' }, { status: 400 });
-  if (documents.some((file) => !acceptedFileTypes.has(file.type) || !file.data.startsWith(`data:${file.type};base64,`) || file.data.length > 14_000_000)) {
-    return Response.json({ code: 'UNSUPPORTED_DOCUMENT', message: 'Use clear JPG, PNG or PDF files under 10 MB each.' }, { status: 413 });
+  const documents = payload && Array.isArray(payload.documents) ? payload.documents : [];
+  if (documents.length < 2) return json({ code: 'MISSING_DOCUMENTS', message: 'Provide a challan and vehicle record.' }, 400);
+  if (documents.length > 3) return json({ code: 'TOO_MANY_DOCUMENTS', message: 'Provide no more than three documents.' }, 400);
+  if (documents.some((file) => !file || typeof file.name !== 'string' || file.name.length > 255 || !acceptedFileTypes.has(file.type) || typeof file.data !== 'string' || !file.data.startsWith(`data:${file.type};base64,`) || file.data.length > 14_000_000)) {
+    return json({ code: 'UNSUPPORTED_DOCUMENT', message: 'Use clear JPG, PNG or PDF files under 10 MB each.' }, 413);
   }
 
   const fileParts = documents.map((file) => file.type === 'application/pdf'
@@ -92,22 +126,30 @@ export async function POST(request: Request) {
         }],
         text: { format: { type: 'json_schema', name: 'challan_evidence_extraction', strict: true, schema: extractionSchema } },
       }),
+      signal: AbortSignal.timeout(45_000),
     });
   } catch {
-    return Response.json({ code: 'EXTRACTION_UNREACHABLE', message: 'The extraction service could not be reached. Continue with manual verification; no finding will be generated from blank values.' }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+    return json({ code: 'EXTRACTION_UNREACHABLE', message: 'The extraction service could not be reached. Continue with manual verification; no finding will be generated from blank values.' }, 502);
   }
 
   if (!openAIResponse.ok) {
-    return Response.json({ code: 'EXTRACTION_FAILED', message: 'The documents could not be extracted safely. Continue with manual verification.', upstreamStatus: openAIResponse.status }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+    return json({ code: 'EXTRACTION_FAILED', message: 'The documents could not be extracted safely. Continue with manual verification.', upstreamStatus: openAIResponse.status }, 502);
   }
 
-  const raw = await openAIResponse.json() as Record<string, unknown>;
+  let raw: Record<string, unknown>;
+  try {
+    raw = await openAIResponse.json() as Record<string, unknown>;
+  } catch {
+    return json({ code: 'INVALID_UPSTREAM_RESPONSE', message: 'The extraction service returned an unreadable response. Continue manually.' }, 502);
+  }
   const text = outputText(raw);
-  if (!text) return Response.json({ code: 'EMPTY_EXTRACTION', message: 'No structured fields were returned. Continue manually.' }, { status: 502 });
+  if (!text) return json({ code: 'EMPTY_EXTRACTION', message: 'No structured fields were returned. Continue manually.' }, 502);
 
   try {
-    return Response.json({ extraction: JSON.parse(text), processing: 'OpenAI multimodal extraction', stored: false }, { headers: { 'Cache-Control': 'no-store' } });
+    const extraction = validatedExtraction(JSON.parse(text));
+    if (!extraction) return json({ code: 'INVALID_EXTRACTION', message: 'The extracted fields did not match the required safe structure.' }, 502);
+    return json({ extraction, processing: 'OpenAI multimodal extraction', stored: false });
   } catch {
-    return Response.json({ code: 'INVALID_EXTRACTION', message: 'The extraction could not be verified as structured data.' }, { status: 502 });
+    return json({ code: 'INVALID_EXTRACTION', message: 'The extraction could not be verified as structured data.' }, 502);
   }
 }

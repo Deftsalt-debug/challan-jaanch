@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { DemoCase, deadlineFor, formatDate, normaliseRegistration } from '../lib/cases';
+import { DemoCase, deadlineFor, formatDate, isValidIsoDate, normaliseRegistration } from '../lib/cases';
 
 type SourceKey = 'challan' | 'photo' | 'vehicle';
 type WorkbenchTab = 'sources' | 'diff' | 'timeline';
@@ -156,7 +156,7 @@ function PlateDiff({ caseFile, onSelect }: { caseFile: DemoCase; onSelect: (key:
 }
 
 function Timeline({ caseFile }: { caseFile: DemoCase }) {
-  const validIssue = /^\d{4}-\d{2}-\d{2}$/.test(caseFile.issueDate) && caseFile.issueDate >= '2026-01-20';
+  const validIssue = isValidIsoDate(caseFile.issueDate) && caseFile.issueDate >= '2026-01-20';
   const deadline = validIssue ? deadlineFor(caseFile) : null;
   return (
     <div className="rounded-xl border border-[#d5cfc4] bg-[#fbfaf7] p-5 sm:p-7">

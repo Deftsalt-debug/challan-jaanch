@@ -52,7 +52,7 @@ function stripTrailingPunctuation(value: string): string {
 }
 
 function extractDestinations(message: string): InspectedDestination[] {
-  const matches = message.match(/(?:https?:\/\/|www\.)[^\s<>{}\[\]"']+/giu) ?? [];
+  const matches = message.match(/(?:https?:\/\/|www\.)[^\s<>{}\[\]"']+|(?<![@\w/.])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?:\/[^\s<>{}\[\]"']*)?/giu) ?? [];
   const seen = new Set<string>();
   const destinations: InspectedDestination[] = [];
 
@@ -61,7 +61,7 @@ function extractDestinations(message: string): InspectedDestination[] {
     if (seen.has(raw)) continue;
     seen.add(raw);
     try {
-      const parsed = new URL(raw.startsWith('www.') ? `https://${raw}` : raw);
+      const parsed = new URL(/^https?:\/\//iu.test(raw) ? raw : `https://${raw}`);
       const hostname = parsed.hostname.toLowerCase().replace(/\.$/, '');
       const display = `${hostname}${parsed.pathname === '/' ? '' : parsed.pathname}`.slice(0, 96);
       const looksOfficial = impersonationWords.some((word) => `${hostname}${parsed.pathname}`.toLowerCase().includes(word));
@@ -74,7 +74,7 @@ function extractDestinations(message: string): InspectedDestination[] {
         explanation: isOfficial
           ? officialHosts.get(hostname) ?? 'Exact hostname on the recognised official transport-service allowlist.'
           : looksOfficial
-            ? 'Uses transport or challan wording but is not the known national eChallan hostname.'
+            ? 'Uses transport or challan wording but is not a recognised official transport-service hostname.'
             : 'Not one of the official destinations recognised by this checker.',
       });
     } catch {
@@ -92,6 +92,10 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
   const message = input.message.normalize('NFKC');
   const destinations = extractDestinations(message);
   const signals: ScamSignal[] = [];
+
+  if (input.channel === 'whatsapp' && /\b(?:challan|e-?challan|rto|parivahan|traffic police)\b/iu.test(message)) {
+    addSignal(signals, { id: 'whatsapp-challan', severity: 'caution', title: 'Unexpected challan over WhatsApp', detail: 'Current government cyber guidance warns about fake RTO and Parivahan messages distributed through WhatsApp. Verify independently rather than continuing in the chat.' });
+  }
 
   if (/\.apk\b|android\s+(?:package|app)|install\s+(?:this|the)\s+app|unknown\s+sources?/iu.test(message)) {
     addSignal(signals, { id: 'apk', severity: 'critical', title: 'App or APK installation request', detail: 'Government cyber advisories warn about fake RTO/Parivahan APKs sent through messages. Do not download, upload, or install the file.' });
@@ -111,7 +115,7 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
 
   for (const destination of destinations) {
     if (destination.classification === 'lookalike') {
-      addSignal(signals, { id: `lookalike-${destination.hostname}`, severity: 'critical', title: 'Lookalike challan destination', detail: `${destination.hostname} is not the known national eChallan hostname. Do not open it from the message.` });
+      addSignal(signals, { id: `lookalike-${destination.hostname}`, severity: 'critical', title: 'Lookalike challan destination', detail: `${destination.hostname} is not a recognised official transport-service hostname. Do not open it from the message.` });
     } else if (destination.classification === 'unverified') {
       addSignal(signals, { id: `unverified-${destination.hostname}`, severity: 'caution', title: 'Unverified destination', detail: `${destination.hostname} is outside the small official allowlist used by this checker. That does not prove fraud; verify through an independently opened government service.` });
     }

@@ -1,6 +1,6 @@
 # Challan Jaanch
 
-![Challan Jaanch social card](public/og.png)
+![Challan Jaanch social card](public/og-release.png)
 
 An evidence-first preflight for potentially incorrect or fraudulent Indian eChallans. It combines a source-linked contradiction checker with a local Scam Shield for suspicious messages, APK lures, credential requests, and lookalike payment destinations.
 
@@ -41,6 +41,8 @@ The synthetic evidence demo and Scam Shield are complete without an API key. Liv
 | Hosting | OpenAI Sites | Versioned deployment; public access is a separate release decision |
 | Persistence | None by design | No application database, analytics, or persistent document store |
 
+The production artifact also carries restrictive framing, referrer, MIME-sniffing, browser-permission, and opener-isolation headers.
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and npm.
@@ -67,6 +69,12 @@ npm run verify
 ```
 
 This runs linting, TypeScript checks, deterministic-rule tests, and the production build.
+
+For the full release gate, including the npm production-dependency advisory check:
+
+```bash
+npm run release:check
+```
 
 ## Repository map
 

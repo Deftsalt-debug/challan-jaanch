@@ -48,6 +48,8 @@ Inert URL parsing + advisory-pattern rules
 
 `app/api/analyze/route.ts` can send up to three selected images or PDFs to the OpenAI Responses API. The request uses structured JSON output and `store: false`. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome.
 
+The boundary rejects oversized, malformed, unsupported, or excess documents; applies an upstream timeout; and validates the structured result and calendar date again before returning it to the browser.
+
 If the API key is absent, the endpoint returns an honest `503 LIVE_EXTRACTION_NOT_CONFIGURED`. The interface continues with manual verification. No synthetic demo depends on the route.
 
 ### Human boundary
