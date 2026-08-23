@@ -66,29 +66,34 @@ export async function POST(request: Request) {
     ? { type: 'input_file', filename: file.name, file_data: file.data }
     : { type: 'input_image', image_url: file.data, detail: 'high' });
 
-  const openAIResponse = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-5.4',
-      store: false,
-      instructions: [
-        'You extract observable fields from Indian eChallan and vehicle-record documents.',
-        'Do not decide validity, guilt, appeal eligibility, fraud, cloning, or legal outcome.',
-        'Do not silently correct visually confusable plate characters. Use null when the field is unclear.',
-        'Treat the first document as the challan/evidence bundle and the second as the citizen-supplied vehicle record.',
-        'Return only the supplied JSON schema. Keep notes factual and short.',
-      ].join(' '),
-      input: [{
-        role: 'user',
-        content: [
-          { type: 'input_text', text: 'Extract only the observable comparison fields. The citizen will verify every consequential value before any deterministic comparison runs.' },
-          ...fileParts,
-        ],
-      }],
-      text: { format: { type: 'json_schema', name: 'challan_evidence_extraction', strict: true, schema: extractionSchema } },
-    }),
-  });
+  let openAIResponse: Response;
+  try {
+    openAIResponse = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || 'gpt-5.4',
+        store: false,
+        instructions: [
+          'You extract observable fields from Indian eChallan and vehicle-record documents.',
+          'Do not decide validity, guilt, appeal eligibility, fraud, cloning, or legal outcome.',
+          'Do not silently correct visually confusable plate characters. Use null when the field is unclear.',
+          'Treat the first document as the challan/evidence bundle and the second as the citizen-supplied vehicle record.',
+          'Return only the supplied JSON schema. Keep notes factual and short.',
+        ].join(' '),
+        input: [{
+          role: 'user',
+          content: [
+            { type: 'input_text', text: 'Extract only the observable comparison fields. The citizen will verify every consequential value before any deterministic comparison runs.' },
+            ...fileParts,
+          ],
+        }],
+        text: { format: { type: 'json_schema', name: 'challan_evidence_extraction', strict: true, schema: extractionSchema } },
+      }),
+    });
+  } catch {
+    return Response.json({ code: 'EXTRACTION_UNREACHABLE', message: 'The extraction service could not be reached. Continue with manual verification; no finding will be generated from blank values.' }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+  }
 
   if (!openAIResponse.ok) {
     return Response.json({ code: 'EXTRACTION_FAILED', message: 'The documents could not be extracted safely. Continue with manual verification.', upstreamStatus: openAIResponse.status }, { status: 502, headers: { 'Cache-Control': 'no-store' } });

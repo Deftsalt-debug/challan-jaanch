@@ -16,14 +16,52 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(247, 198, 74, 0.08), transparent 24rem),
+    radial-gradient(circle at 92% 32%, rgba(219, 95, 67, 0.055), transparent 28rem),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
 button:focus-visible, a:focus-visible { outline: 3px solid #db5f43; outline-offset: 3px; }
 input:focus-visible { outline: 2px solid #112629; outline-offset: 2px; }
 ::selection { background: #f7c64a; color: #112629; }
+
+@keyframes evidence-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes floating-note {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  50% { transform: translateY(-7px) rotate(-0.5deg); }
+}
+
+@keyframes scan {
+  0% { transform: translateX(-130%); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateX(230%); opacity: 0; }
+}
+
+.animate-evidence-in { animation: evidence-in 280ms cubic-bezier(.2,.8,.2,1) both; }
+.floating-note { animation: floating-note 4s ease-in-out infinite; }
+.scan-line {
+  position: absolute;
+  inset: 0 auto 0 -30%;
+  width: 24%;
+  background: linear-gradient(90deg, transparent, rgba(247, 198, 74, 0.38), transparent);
+  transform: skewX(-14deg);
+  animation: scan 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@supports (text-wrap: balance) {
+  h1, h2 { text-wrap: balance; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
