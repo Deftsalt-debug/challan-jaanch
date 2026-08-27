@@ -393,3 +393,39 @@ test('every next-step string is presentable in Hindi', () => {
 function pickEn(value) {
   return value.en;
 }
+
+/**
+ * Security headers are declared twice: in next.config.ts, which the current host
+ * honours, and in public/_headers, which a static host would read instead. They
+ * were found out of step once — _headers was missing Cross-Origin-Resource-Policy
+ * and Strict-Transport-Security — which means whichever layer a platform happens
+ * to honour silently decides the security posture. This keeps them identical.
+ */
+test('security headers are identical in next.config.ts and public/_headers', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const [config, headersFile] = await Promise.all([
+    readFile(new URL('../next.config.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../public/_headers', import.meta.url), 'utf8'),
+  ]);
+
+  const declared = new Map();
+  for (const [, key, value] of config.matchAll(/\{\s*key:\s*'([^']+)',\s*value:\s*'([^']+)'\s*\}/g)) {
+    declared.set(key.toLowerCase(), value);
+  }
+  assert.ok(declared.size >= 7, `expected the security header block, found ${declared.size}`);
+
+  const served = new Map();
+  for (const line of headersFile.split('\n')) {
+    const match = /^\s{2}([A-Za-z-]+):\s*(.+?)\s*$/.exec(line);
+    if (match) served.set(match[1].toLowerCase(), match[2]);
+  }
+
+  for (const [key, value] of declared) {
+    assert.equal(served.get(key), value, `public/_headers is missing or disagrees on ${key}`);
+  }
+
+  // Content-hashed assets must be cacheable in both places.
+  assert.match(headersFile, /\/_next\/static\/\*/);
+  assert.match(headersFile, /max-age=31536000, immutable/);
+  assert.match(config, /max-age=31536000, immutable/);
+});

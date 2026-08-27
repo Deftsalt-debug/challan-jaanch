@@ -1,9 +1,16 @@
+# Kept in exact agreement with the `headers()` block in next.config.ts.
+# The current host honours next.config.ts; this file is the fallback for a
+# static host that reads _headers instead. If the two ever disagree, whichever
+# one the platform happens to honour silently changes the security posture, so
+# change them together.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable

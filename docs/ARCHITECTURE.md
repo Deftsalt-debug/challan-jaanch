@@ -120,6 +120,12 @@ Parallel lane: `home → scam → verify | report-attempt | emergency`
 - OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
 - Next-compatible response headers, install metadata, bilingual skip navigation, and controlled error/404 recovery for production resilience.
 
+## Response headers
+
+Security headers are declared in `next.config.ts`, which is what the current host honours, and mirrored in `public/_headers` for a static host that reads that file instead. They were once out of step — `_headers` lacked `Cross-Origin-Resource-Policy` and `Strict-Transport-Security` — which meant whichever layer a platform happened to honour silently decided the security posture. A test now fails the build if the two disagree.
+
+Assets under `/_next/static` carry a content hash in the filename, so they are served `immutable` for a year. The deployed site was previously revalidating them on every visit, which is a real cost on the slow connections this product is meant for.
+
 ## Production-hardening backlog
 
 Before handling real citizen records at scale:

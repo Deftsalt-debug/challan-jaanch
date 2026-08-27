@@ -50,7 +50,7 @@ The synthetic evidence demo and Scam Shield are complete without an API key. Liv
 | Hosting | OpenAI Sites | Versioned deployment; public access is a separate release decision |
 | Persistence | None by design | No application database, analytics, or persistent document store |
 
-The production artifact also carries restrictive framing, referrer, MIME-sniffing, browser-permission, resource-isolation, and opener-isolation headers. It includes install metadata, a branded browser icon, bilingual keyboard skip navigation, and controlled error/404 recovery.
+The production artifact also carries restrictive framing, referrer, MIME-sniffing, browser-permission, resource-isolation, opener-isolation, and strict-transport headers, and serves content-hashed assets as immutable so repeat visits on a slow connection do not re-fetch them. Those headers are declared in `next.config.ts` and mirrored in `public/_headers`; a test fails the build if the two disagree. It includes install metadata, a branded browser icon, bilingual keyboard skip navigation, and controlled error/404 recovery.
 
 ## Run locally
 

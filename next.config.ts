@@ -16,7 +16,16 @@ const nextConfig: NextConfig = {
     return [{ source: '/favicon.ico', destination: '/favicon.png', permanent: true }];
   },
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }];
+    return [
+      { source: '/(.*)', headers: securityHeaders },
+      // Everything under /_next/static carries a content hash in its filename,
+      // so a stale copy is impossible and revalidating on every visit is pure
+      // cost on a slow connection.
+      {
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ];
   },
 };
 

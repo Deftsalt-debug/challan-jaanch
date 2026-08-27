@@ -650,8 +650,15 @@ export default function HomePage() {
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = `challan-jaanch-${caseFile.id.toLowerCase()}-manifest.json`;
+    // The anchor has to be in the document for a programmatic click to start a
+    // download in Firefox, and the object URL has to outlive the click for
+    // Safari to read it. Revoking synchronously drops the file on some phones,
+    // which matters because this packet is the point of the whole journey.
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(anchor);
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
   };
 
   const downloadPdf = async () => {
