@@ -1,5 +1,17 @@
 @import 'tailwindcss';
 
+/*
+ * Declare the source roots explicitly. Tailwind's automatic content detection
+ * silently found nothing in this project's build setup, which produced a
+ * stylesheet with the theme and base layers but zero utilities — a build that
+ * succeeds and deploys completely unstyled. An explicit @source makes the
+ * output deterministic across machines and CI. Keep this list in step with any
+ * new directory that contains class names.
+ */
+@source '../app';
+@source '../components';
+@source '../lib';
+
 :root {
   --background: #f3f1ec;
   --foreground: #172a33;
