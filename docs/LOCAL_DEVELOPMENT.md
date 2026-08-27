@@ -27,7 +27,7 @@ Set these values locally:
 
 ```dotenv
 OPENAI_API_KEY=your-key
-OPENAI_MODEL=gpt-5.4
+OPENAI_MODEL=gpt-5.6-terra
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 

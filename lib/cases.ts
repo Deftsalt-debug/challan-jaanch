@@ -1,32 +1,35 @@
+import type { Bilingual, Language } from './i18n.ts';
+import { bi, localeTag } from './i18n.ts';
+
 export type CaseKind = 'wrong-vehicle' | 'ambiguous-photo' | 'duplicate-event' | 'manual';
 export type Outcome = 'supported' | 'review' | 'unable' | 'none';
 export type FactSource = 'challan' | 'photo' | 'vehicle' | 'second-challan' | 'user';
 
 export interface CaseFact {
   key: string;
-  label: string;
+  label: Bilingual;
   value: string;
   source: FactSource;
-  sourceLabel: string;
+  sourceLabel: Bilingual;
   reliability: number;
   decisive?: boolean;
   alternatives?: { value: string; reliability: number }[];
-  help: string;
+  help: Bilingual;
 }
 
 export interface DemoCase {
   id: string;
   kind: CaseKind;
-  title: string;
-  shortTitle: string;
-  story: string;
+  title: Bilingual;
+  shortTitle: Bilingual;
+  story: Bilingual;
   issueDate: string;
-  jurisdiction: string;
+  jurisdiction: Bilingual;
   challanNumber: string;
   amount: string;
-  offence: string;
+  offence: Bilingual;
   occurredAt: string;
-  location: string;
+  location: Bilingual;
   facts: CaseFact[];
   documentNames: string[];
   synthetic: boolean;
@@ -34,100 +37,109 @@ export interface DemoCase {
 
 export interface Finding {
   id: string;
-  title: string;
-  neutralClaim: string;
+  title: Bilingual;
+  neutralClaim: Bilingual;
   rule: string;
   anchors: string[];
-  limitations: string[];
+  limitations: Bilingual[];
   packetEligible: boolean;
 }
 
 export interface CounterCheck {
-  label: string;
+  label: Bilingual;
   result: 'resolved' | 'unresolved' | 'not-applicable';
-  explanation: string;
+  explanation: Bilingual;
 }
 
 export interface Assessment {
   outcome: Outcome;
-  eyebrow: string;
-  headline: string;
-  explanation: string;
+  eyebrow: Bilingual;
+  headline: Bilingual;
+  explanation: Bilingual;
   findings: Finding[];
   counterChecks: CounterCheck[];
-  nextBestEvidence?: string;
+  nextBestEvidence?: Bilingual;
 }
 
 export const cases: Record<string, DemoCase> = {
   'wrong-vehicle': {
     id: 'CJ-DEMO-0001',
     kind: 'wrong-vehicle',
-    title: 'The photograph shows another vehicle',
-    shortTitle: 'Clear vehicle mismatch',
-    story: 'A synthetic challan is recorded against a blue hatchback, but its enforcement photograph shows a black two-wheeler with a different final plate digit.',
+    title: bi('The photograph shows another vehicle', 'फोटो में कोई दूसरा वाहन है'),
+    shortTitle: bi('Clear vehicle mismatch', 'साफ़ वाहन बेमेल'),
+    story: bi(
+      'A synthetic challan is recorded against a blue hatchback, but its enforcement photograph shows a black two-wheeler with a different final plate digit.',
+      'एक नकली चालान नीली हैचबैक पर दर्ज है, लेकिन उसकी कार्रवाई-फोटो में काला दोपहिया दिखता है और नंबर का आख़िरी अंक अलग है।',
+    ),
     issueDate: '2026-08-12',
-    jurisdiction: 'Maharashtra · demonstration pack',
+    jurisdiction: bi('Maharashtra · demonstration pack', 'महाराष्ट्र · डेमो पैक'),
     challanNumber: 'DEMO-MH-260812-1001',
     amount: '₹1,000',
-    offence: 'Red-light violation · demo code',
+    offence: bi('Red-light violation · demo code', 'लाल बत्ती उल्लंघन · डेमो कोड'),
     occurredAt: '11 Aug 2026 · 09:42:18 IST',
-    location: 'Demo Junction A, Pune',
+    location: bi('Demo Junction A, Pune', 'डेमो जंक्शन A, पुणे'),
     documentNames: ['synthetic-challan-0001.pdf', 'synthetic-vehicle-record-0001.pdf'],
     synthetic: true,
     facts: [
-      { key: 'recordPlate', label: 'Registration on challan', value: 'ZZ00CJ0001', source: 'challan', sourceLabel: 'Challan record · field 04', reliability: 0.99, decisive: true, help: 'Printed registration mark on the synthetic challan.' },
-      { key: 'photoPlate', label: 'Plate visible in photograph', value: 'ZZ00CJ0007', source: 'photo', sourceLabel: 'Enforcement photo · highlighted crop', reliability: 0.98, decisive: true, help: 'Visible plate read from the supplied enforcement photograph.' },
-      { key: 'rcPlate', label: 'Registration on vehicle record', value: 'ZZ00CJ0001', source: 'vehicle', sourceLabel: 'Vehicle record · registration field', reliability: 0.99, decisive: true, help: 'Registration confirmed from the supplied synthetic vehicle record.' },
-      { key: 'photoFamily', label: 'Vehicle family in photograph', value: 'Two-wheeler', source: 'photo', sourceLabel: 'Enforcement photo · full frame', reliability: 0.97, decisive: true, help: 'Broad vehicle family only; the system does not infer a specific model.' },
-      { key: 'rcFamily', label: 'Vehicle family on record', value: 'Passenger car', source: 'vehicle', sourceLabel: 'Vehicle record · class field', reliability: 0.99, decisive: true, help: 'Normalised from the vehicle-class field.' },
-      { key: 'rcColour', label: 'Colour on vehicle record', value: 'Blue', source: 'vehicle', sourceLabel: 'Vehicle record · colour field', reliability: 0.99, help: 'Colour is corroborating context only and never creates a finding by itself.' },
+      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), reliability: 0.99, decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
+      { key: 'photoPlate', label: bi('Plate visible in photograph', 'फोटो में दिख रहा नंबर'), value: 'ZZ00CJ0007', source: 'photo', sourceLabel: bi('Enforcement photo · highlighted crop', 'कार्रवाई-फोटो · चिह्नित हिस्सा'), reliability: 0.98, decisive: true, help: bi('Visible plate read from the supplied enforcement photograph.', 'दी गई कार्रवाई-फोटो से पढ़ा गया नंबर।') },
+      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Registration confirmed from the supplied synthetic vehicle record.', 'दिए गए नकली वाहन रिकॉर्ड से पुष्ट पंजीकरण।') },
+      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Two-wheeler', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), reliability: 0.97, decisive: true, help: bi('Broad vehicle family only; the system does not infer a specific model.', 'सिर्फ़ मोटा प्रकार; सिस्टम कोई ख़ास मॉडल नहीं बताता।') },
+      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
+      { key: 'rcColour', label: bi('Colour on vehicle record', 'वाहन रिकॉर्ड पर रंग'), value: 'Blue', source: 'vehicle', sourceLabel: bi('Vehicle record · colour field', 'वाहन रिकॉर्ड · रंग फ़ील्ड'), reliability: 0.99, help: bi('Colour is corroborating context only and never creates a finding by itself.', 'रंग सिर्फ़ सहायक संदर्भ है; अकेले इससे कोई निष्कर्ष नहीं बनता।') },
     ],
   },
   'ambiguous-photo': {
     id: 'CJ-DEMO-0002',
     kind: 'ambiguous-photo',
-    title: 'The image is too unclear to decide',
-    shortTitle: 'Ambiguous plate — refusal',
-    story: 'The final character may be Z or 2. Because that character would determine the finding, Challan Jaanch refuses to manufacture a mismatch.',
+    title: bi('The image is too unclear to decide', 'तस्वीर इतनी धुंधली है कि फ़ैसला नहीं हो सकता'),
+    shortTitle: bi('Ambiguous plate — refusal', 'अस्पष्ट नंबर — इनकार'),
+    story: bi(
+      'The final character may be Z or 2. Because that character would determine the finding, Challan Jaanch refuses to manufacture a mismatch.',
+      'आख़िरी अक्षर Z भी हो सकता है और 2 भी। चूँकि यही अक्षर नतीजा तय करता, चालान जाँच झूठा बेमेल बनाने से इनकार करता है।',
+    ),
     issueDate: '2026-08-15',
-    jurisdiction: 'Maharashtra · demonstration pack',
+    jurisdiction: bi('Maharashtra · demonstration pack', 'महाराष्ट्र · डेमो पैक'),
     challanNumber: 'DEMO-MH-260815-2001',
     amount: '₹2,000',
-    offence: 'Speeding · demo code',
+    offence: bi('Speeding · demo code', 'तेज़ रफ़्तार · डेमो कोड'),
     occurredAt: '14 Aug 2026 · 21:16:09 IST',
-    location: 'Demo Junction B, Mumbai',
+    location: bi('Demo Junction B, Mumbai', 'डेमो जंक्शन B, मुंबई'),
     documentNames: ['synthetic-challan-0002.pdf', 'synthetic-vehicle-record-0002.pdf'],
     synthetic: true,
     facts: [
-      { key: 'recordPlate', label: 'Registration on challan', value: 'ZZ00CJ0002', source: 'challan', sourceLabel: 'Challan record · field 04', reliability: 0.99, decisive: true, help: 'Printed registration mark on the synthetic challan.' },
-      { key: 'photoPlate', label: 'Possible plate in photograph', value: 'ZZ00CJ000Z', source: 'photo', sourceLabel: 'Enforcement photo · blurred crop', reliability: 0.56, decisive: true, alternatives: [{ value: 'ZZ00CJ0002', reliability: 0.44 }], help: 'Two readings remain plausible; neither is safe to treat as fact.' },
-      { key: 'rcPlate', label: 'Registration on vehicle record', value: 'ZZ00CJ0002', source: 'vehicle', sourceLabel: 'Vehicle record · registration field', reliability: 0.99, decisive: true, help: 'Registration confirmed from the supplied synthetic record.' },
-      { key: 'photoFamily', label: 'Vehicle family in photograph', value: 'Unknown', source: 'photo', sourceLabel: 'Enforcement photo · full frame', reliability: 0.45, decisive: true, help: 'The frame is too dark for a dependable broad-class reading.' },
-      { key: 'rcFamily', label: 'Vehicle family on record', value: 'Passenger car', source: 'vehicle', sourceLabel: 'Vehicle record · class field', reliability: 0.99, decisive: true, help: 'Normalised from the vehicle-class field.' },
+      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), reliability: 0.99, decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
+      { key: 'photoPlate', label: bi('Possible plate in photograph', 'फोटो में संभावित नंबर'), value: 'ZZ00CJ000Z', source: 'photo', sourceLabel: bi('Enforcement photo · blurred crop', 'कार्रवाई-फोटो · धुंधला हिस्सा'), reliability: 0.56, decisive: true, alternatives: [{ value: 'ZZ00CJ0002', reliability: 0.44 }], help: bi('Two readings remain plausible; neither is safe to treat as fact.', 'दो पाठ संभव हैं; किसी को भी तथ्य मानना सुरक्षित नहीं।') },
+      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Registration confirmed from the supplied synthetic record.', 'दिए गए नकली रिकॉर्ड से पुष्ट पंजीकरण।') },
+      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Unknown', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), reliability: 0.45, decisive: true, help: bi('The frame is too dark for a dependable broad-class reading.', 'फ़्रेम इतना अंधेरा है कि मोटा प्रकार भी भरोसे से नहीं पढ़ा जा सकता।') },
+      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
     ],
   },
   'duplicate-event': {
     id: 'CJ-DEMO-0003',
     kind: 'duplicate-event',
-    title: 'One capture appears twice',
-    shortTitle: 'Exact duplicate event',
-    story: 'Two distinct synthetic challan numbers point to the same capture identifier, timestamp, camera, offence and amount.',
+    title: bi('One capture appears twice', 'एक ही कैप्चर दो बार दर्ज है'),
+    shortTitle: bi('Exact duplicate event', 'बिल्कुल एक जैसी घटना'),
+    story: bi(
+      'Two distinct synthetic challan numbers point to the same capture identifier, timestamp, camera, offence and amount.',
+      'दो अलग-अलग नकली चालान नंबर एक ही कैप्चर पहचान, समय, कैमरे, अपराध और राशि की ओर इशारा करते हैं।',
+    ),
     issueDate: '2026-08-14',
-    jurisdiction: 'Maharashtra · demonstration pack',
+    jurisdiction: bi('Maharashtra · demonstration pack', 'महाराष्ट्र · डेमो पैक'),
     challanNumber: 'DEMO-MH-260814-3001 / 3002',
     amount: '₹500 each',
-    offence: 'Stop-line violation · demo code',
+    offence: bi('Stop-line violation · demo code', 'स्टॉप-लाइन उल्लंघन · डेमो कोड'),
     occurredAt: '14 Aug 2026 · 18:07:04 IST',
-    location: 'Demo Junction C, Mumbai',
+    location: bi('Demo Junction C, Mumbai', 'डेमो जंक्शन C, मुंबई'),
     documentNames: ['synthetic-challan-3001.pdf', 'synthetic-challan-3002.pdf', 'synthetic-vehicle-record-0003.pdf'],
     synthetic: true,
     facts: [
-      { key: 'challanA', label: 'First challan number', value: 'DEMO-MH-260814-3001', source: 'challan', sourceLabel: 'Challan A · heading', reliability: 0.99, decisive: true, help: 'First independently issued synthetic challan number.' },
-      { key: 'challanB', label: 'Second challan number', value: 'DEMO-MH-260814-3002', source: 'second-challan', sourceLabel: 'Challan B · heading', reliability: 0.99, decisive: true, help: 'Second independently issued synthetic challan number.' },
-      { key: 'captureA', label: 'Capture ID · first record', value: 'CJ-CAM-44-000771', source: 'challan', sourceLabel: 'Challan A · evidence metadata', reliability: 0.99, decisive: true, help: 'Capture identifier included in the supplied evidence bundle.' },
-      { key: 'captureB', label: 'Capture ID · second record', value: 'CJ-CAM-44-000771', source: 'second-challan', sourceLabel: 'Challan B · evidence metadata', reliability: 0.99, decisive: true, help: 'Same capture identifier appears on the second record.' },
-      { key: 'eventA', label: 'Event fingerprint · first', value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'challan', sourceLabel: 'Challan A · event fields', reliability: 0.99, decisive: true, help: 'Time, camera and amount condensed for comparison.' },
-      { key: 'eventB', label: 'Event fingerprint · second', value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'second-challan', sourceLabel: 'Challan B · event fields', reliability: 0.99, decisive: true, help: 'Same time, camera and amount on the second record.' },
+      { key: 'challanA', label: bi('First challan number', 'पहला चालान नंबर'), value: 'DEMO-MH-260814-3001', source: 'challan', sourceLabel: bi('Challan A · heading', 'चालान A · शीर्षक'), reliability: 0.99, decisive: true, help: bi('First independently issued synthetic challan number.', 'अलग से जारी पहला नकली चालान नंबर।') },
+      { key: 'challanB', label: bi('Second challan number', 'दूसरा चालान नंबर'), value: 'DEMO-MH-260814-3002', source: 'second-challan', sourceLabel: bi('Challan B · heading', 'चालान B · शीर्षक'), reliability: 0.99, decisive: true, help: bi('Second independently issued synthetic challan number.', 'अलग से जारी दूसरा नकली चालान नंबर।') },
+      { key: 'captureA', label: bi('Capture ID · first record', 'कैप्चर पहचान · पहला रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'challan', sourceLabel: bi('Challan A · evidence metadata', 'चालान A · साक्ष्य मेटाडेटा'), reliability: 0.99, decisive: true, help: bi('Capture identifier included in the supplied evidence bundle.', 'दिए गए साक्ष्य बंडल में शामिल कैप्चर पहचान।') },
+      { key: 'captureB', label: bi('Capture ID · second record', 'कैप्चर पहचान · दूसरा रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'second-challan', sourceLabel: bi('Challan B · evidence metadata', 'चालान B · साक्ष्य मेटाडेटा'), reliability: 0.99, decisive: true, help: bi('Same capture identifier appears on the second record.', 'वही कैप्चर पहचान दूसरे रिकॉर्ड पर भी है।') },
+      { key: 'eventA', label: bi('Event fingerprint · first', 'घटना पहचान · पहली'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'challan', sourceLabel: bi('Challan A · event fields', 'चालान A · घटना फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Time, camera and amount condensed for comparison.', 'तुलना के लिए समय, कैमरा और राशि एक साथ।') },
+      { key: 'eventB', label: bi('Event fingerprint · second', 'घटना पहचान · दूसरी'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'second-challan', sourceLabel: bi('Challan B · event fields', 'चालान B · घटना फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Same time, camera and amount on the second record.', 'दूसरे रिकॉर्ड पर भी वही समय, कैमरा और राशि।') },
     ],
   },
 };
@@ -149,19 +161,41 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
 
   if (caseFile.kind === 'duplicate-event') {
     const keys = ['challanA', 'challanB', 'captureA', 'captureB', 'eventA', 'eventB'];
-    if (!allConfirmed(keys, confirmed)) return pendingAssessment('Confirm all six decisive fields before comparing the records.');
+    if (!allConfirmed(keys, confirmed)) {
+      return pendingAssessment(bi(
+        'Confirm all six decisive fields before comparing the records.',
+        'रिकॉर्ड मिलाने से पहले छहों निर्णायक फ़ील्ड पुष्ट करें।',
+      ));
+    }
     const exactDuplicate = byKey.challanA.value !== byKey.challanB.value && byKey.captureA.value === byKey.captureB.value && byKey.eventA.value === byKey.eventB.value;
     if (exactDuplicate) {
       return {
         outcome: 'supported',
-        eyebrow: 'Objective ground found',
-        headline: 'The supplied records describe the same capture twice.',
-        explanation: 'Distinct challan numbers share an identical capture identifier and event fingerprint. This is a record-level contradiction, not a prediction about the authority’s decision.',
-        findings: [{ id: 'F-DUP-01', title: 'Exact duplicate event', neutralClaim: 'Two distinct challan numbers in the supplied records point to the same capture identifier, time, camera and amount.', rule: 'EXACT_DUPLICATE_EVENT', anchors: keys, limitations: ['The authority must confirm whether the records represent separate statutory offences.'], packetEligible: true }],
+        eyebrow: bi('Objective ground found', 'वस्तुनिष्ठ आधार मिला'),
+        headline: bi('The supplied records describe the same capture twice.', 'दिए गए रिकॉर्ड एक ही कैप्चर को दो बार दर्ज करते हैं।'),
+        explanation: bi(
+          'Distinct challan numbers share an identical capture identifier and event fingerprint. This is a record-level contradiction, not a prediction about the authority’s decision.',
+          'अलग-अलग चालान नंबरों की कैप्चर पहचान और घटना पहचान एक जैसी है। यह रिकॉर्ड-स्तर का विरोधाभास है, अधिकारी के फ़ैसले की भविष्यवाणी नहीं।',
+        ),
+        findings: [{
+          id: 'F-DUP-01',
+          title: bi('Exact duplicate event', 'बिल्कुल एक जैसी घटना'),
+          neutralClaim: bi(
+            'Two distinct challan numbers in the supplied records point to the same capture identifier, time, camera and amount.',
+            'दिए गए रिकॉर्ड में दो अलग चालान नंबर एक ही कैप्चर पहचान, समय, कैमरे और राशि की ओर इशारा करते हैं।',
+          ),
+          rule: 'EXACT_DUPLICATE_EVENT',
+          anchors: keys,
+          limitations: [bi(
+            'The authority must confirm whether the records represent separate statutory offences.',
+            'यह अधिकारी को तय करना है कि दोनों रिकॉर्ड अलग-अलग वैधानिक अपराध हैं या नहीं।',
+          )],
+          packetEligible: true,
+        }],
         counterChecks: [
-          { label: 'Distinct challan numbers', result: 'resolved', explanation: 'The two record identifiers are different.' },
-          { label: 'Same underlying capture', result: 'resolved', explanation: 'Capture identifier, time, camera and amount match exactly.' },
-          { label: 'Separate offences ruled out', result: 'unresolved', explanation: 'Only the issuing authority can confirm whether separate provisions were intentionally charged.' },
+          { label: bi('Distinct challan numbers', 'अलग-अलग चालान नंबर'), result: 'resolved', explanation: bi('The two record identifiers are different.', 'दोनों रिकॉर्ड की पहचान अलग है।') },
+          { label: bi('Same underlying capture', 'एक ही मूल कैप्चर'), result: 'resolved', explanation: bi('Capture identifier, time, camera and amount match exactly.', 'कैप्चर पहचान, समय, कैमरा और राशि पूरी तरह मेल खाते हैं।') },
+          { label: bi('Separate offences ruled out', 'अलग अपराध होने की संभावना'), result: 'unresolved', explanation: bi('Only the issuing authority can confirm whether separate provisions were intentionally charged.', 'सिर्फ़ जारी करने वाला अधिकारी बता सकता है कि अलग धाराएँ जानबूझकर लगाई गई थीं या नहीं।') },
         ],
       };
     }
@@ -170,22 +204,41 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
 
   const plateKeys = ['recordPlate', 'photoPlate', 'rcPlate'];
   const classKeys = ['photoFamily', 'rcFamily'];
-  if (!allConfirmed([...plateKeys, ...classKeys], confirmed)) return pendingAssessment('Confirm the five decisive facts before the comparison runs.');
+  if (!allConfirmed([...plateKeys, ...classKeys], confirmed)) {
+    return pendingAssessment(bi(
+      'Confirm the five decisive facts before the comparison runs.',
+      'तुलना चलाने से पहले पाँचों निर्णायक तथ्य पुष्ट करें।',
+    ));
+  }
 
   const photoPlate = byKey.photoPlate;
   if (photoPlate.reliability < 0.7 || (photoPlate.alternatives?.length && Math.abs(photoPlate.reliability - photoPlate.alternatives[0].reliability) < 0.15)) {
+    const alternate = photoPlate.alternatives?.[0]?.value;
     return {
       outcome: 'unable',
-      eyebrow: 'Unable to assess safely',
-      headline: 'The decisive character is too ambiguous.',
-      explanation: 'Two different plate readings remain plausible. Challan Jaanch will not turn an uncertain OCR reading into an allegation.',
+      eyebrow: bi('Unable to assess safely', 'सुरक्षित रूप से आकलन संभव नहीं'),
+      headline: bi('The decisive character is too ambiguous.', 'निर्णायक अक्षर बहुत अस्पष्ट है।'),
+      explanation: bi(
+        'Two different plate readings remain plausible. Challan Jaanch will not turn an uncertain OCR reading into an allegation.',
+        'नंबर के दो अलग पाठ संभव हैं। चालान जाँच किसी अनिश्चित पाठ को आरोप में नहीं बदलेगा।',
+      ),
       findings: [],
       counterChecks: [
-        { label: 'Full plate visible', result: 'unresolved', explanation: 'The final character is blurred.' },
-        { label: 'Alternative OCR reading ruled out', result: 'unresolved', explanation: `${photoPlate.alternatives?.[0]?.value ?? 'Another reading'} remains plausible.` },
-        { label: 'Vehicle family independently visible', result: 'unresolved', explanation: 'The broad vehicle class cannot be read dependably from this frame.' },
+        { label: bi('Full plate visible', 'पूरा नंबर दिख रहा है'), result: 'unresolved', explanation: bi('The final character is blurred.', 'आख़िरी अक्षर धुंधला है।') },
+        {
+          label: bi('Alternative OCR reading ruled out', 'दूसरा संभावित पाठ ख़ारिज'),
+          result: 'unresolved',
+          explanation: bi(
+            `${alternate ?? 'Another reading'} remains plausible.`,
+            `${alternate ?? 'कोई दूसरा पाठ'} अब भी संभव है।`,
+          ),
+        },
+        { label: bi('Vehicle family independently visible', 'वाहन का प्रकार अलग से दिख रहा है'), result: 'unresolved', explanation: bi('The broad vehicle class cannot be read dependably from this frame.', 'इस फ़्रेम से वाहन का मोटा प्रकार भी भरोसे से नहीं पढ़ा जा सकता।') },
       ],
-      nextBestEvidence: 'Download or request the original, uncropped enforcement photograph.',
+      nextBestEvidence: bi(
+        'Download or request the original, uncropped enforcement photograph.',
+        'मूल, बिना काटी गई कार्रवाई-फोटो डाउनलोड करें या माँगें।',
+      ),
     };
   }
 
@@ -196,31 +249,129 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
   const familyConflict = byKey.photoFamily.value !== 'Unknown' && byKey.photoFamily.value !== byKey.rcFamily.value && Math.min(byKey.photoFamily.reliability, byKey.rcFamily.reliability) >= 0.92;
 
   const findings: Finding[] = [];
-  if (plateConflict) findings.push({ id: 'F-REG-01', title: 'Registration-mark conflict', neutralClaim: `The challan and vehicle record show ${byKey.rcPlate.value}, while the supplied enforcement photograph shows ${photoPlate.value}.`, rule: 'REGISTRATION_MARK_CONFLICT', anchors: plateKeys, limitations: ['The product does not determine why the records conflict.'], packetEligible: true });
-  if (familyConflict) findings.push({ id: 'F-CLASS-01', title: 'Broad vehicle-family conflict', neutralClaim: `The enforcement photograph appears to show a ${byKey.photoFamily.value.toLowerCase()}, while the supplied vehicle record says ${byKey.rcFamily.value.toLowerCase()}.`, rule: 'VEHICLE_FAMILY_CONFLICT', anchors: classKeys, limitations: ['Only broad vehicle families are compared; model identity is not inferred.'], packetEligible: true });
+  if (plateConflict) {
+    findings.push({
+      id: 'F-REG-01',
+      title: bi('Registration-mark conflict', 'पंजीकरण नंबर में विरोधाभास'),
+      neutralClaim: bi(
+        `The challan and vehicle record show ${byKey.rcPlate.value}, while the supplied enforcement photograph shows ${photoPlate.value}.`,
+        `चालान और वाहन रिकॉर्ड में ${byKey.rcPlate.value} है, जबकि दी गई कार्रवाई-फोटो में ${photoPlate.value} दिखता है।`,
+      ),
+      rule: 'REGISTRATION_MARK_CONFLICT',
+      anchors: plateKeys,
+      limitations: [bi('The product does not determine why the records conflict.', 'यह उत्पाद यह तय नहीं करता कि रिकॉर्ड में अंतर क्यों है।')],
+      packetEligible: true,
+    });
+  }
+  if (familyConflict) {
+    findings.push({
+      id: 'F-CLASS-01',
+      title: bi('Broad vehicle-family conflict', 'वाहन के प्रकार में विरोधाभास'),
+      neutralClaim: bi(
+        `The enforcement photograph appears to show a ${byKey.photoFamily.value.toLowerCase()}, while the supplied vehicle record says ${byKey.rcFamily.value.toLowerCase()}.`,
+        `कार्रवाई-फोटो में ${vehicleFamilyHindi(byKey.photoFamily.value)} दिखता है, जबकि दिए गए वाहन रिकॉर्ड में ${vehicleFamilyHindi(byKey.rcFamily.value)} लिखा है।`,
+      ),
+      rule: 'VEHICLE_FAMILY_CONFLICT',
+      anchors: classKeys,
+      limitations: [bi('Only broad vehicle families are compared; model identity is not inferred.', 'सिर्फ़ मोटे प्रकार की तुलना होती है; मॉडल की पहचान नहीं की जाती।')],
+      packetEligible: true,
+    });
+  }
 
   if (!findings.length) return noGroundAssessment();
   return {
     outcome: 'supported',
-    eyebrow: 'Objective ground found',
-    headline: findings.length > 1 ? 'Two independent contradictions are supported.' : 'One objective contradiction is supported.',
-    explanation: 'The conclusion is limited to conflicts visible in the supplied records. It does not declare the challan invalid or predict the grievance outcome.',
+    eyebrow: bi('Objective ground found', 'वस्तुनिष्ठ आधार मिला'),
+    headline: findings.length > 1
+      ? bi('Two independent contradictions are supported.', 'दो अलग-अलग विरोधाभास प्रमाणित हैं।')
+      : bi('One objective contradiction is supported.', 'एक वस्तुनिष्ठ विरोधाभास प्रमाणित है।'),
+    explanation: bi(
+      'The conclusion is limited to conflicts visible in the supplied records. It does not declare the challan invalid or predict the grievance outcome.',
+      'यह निष्कर्ष सिर्फ़ दिए गए रिकॉर्ड में दिखने वाले अंतर तक सीमित है। यह चालान को अमान्य नहीं बताता और न शिकायत का नतीजा बताता है।',
+    ),
     findings,
     counterChecks: [
-      { label: 'Confusable character ruled out', result: 'resolved', explanation: 'The decisive digit is visible in the synthetic full-resolution crop and was confirmed by the user.' },
-      { label: 'Vehicle classes are comparable', result: 'resolved', explanation: 'A two-wheeler and passenger car are different broad families.' },
-      { label: 'Record could be stale', result: 'not-applicable', explanation: 'Plate and class findings do not rely on colour or specific model data.' },
-      { label: 'Cause of the mismatch known', result: 'unresolved', explanation: 'The product reports the contradiction but does not infer cloning, fraud or authority error.' },
+      { label: bi('Confusable character ruled out', 'भ्रम पैदा करने वाला अक्षर ख़ारिज'), result: 'resolved', explanation: bi('The decisive digit is visible in the synthetic full-resolution crop and was confirmed by the user.', 'निर्णायक अंक पूरे रिज़ॉल्यूशन वाले नकली हिस्से में दिखता है और उपयोगकर्ता ने उसे पुष्ट किया।') },
+      { label: bi('Vehicle classes are comparable', 'वाहन श्रेणियाँ तुलना योग्य हैं'), result: 'resolved', explanation: bi('A two-wheeler and passenger car are different broad families.', 'दोपहिया और कार अलग-अलग मोटे प्रकार हैं।') },
+      { label: bi('Record could be stale', 'रिकॉर्ड पुराना हो सकता है'), result: 'not-applicable', explanation: bi('Plate and class findings do not rely on colour or specific model data.', 'नंबर और श्रेणी के निष्कर्ष रंग या मॉडल की जानकारी पर निर्भर नहीं हैं।') },
+      { label: bi('Cause of the mismatch known', 'बेमेल का कारण ज्ञात'), result: 'unresolved', explanation: bi('The product reports the contradiction but does not infer cloning, fraud or authority error.', 'उत्पाद विरोधाभास बताता है, पर क्लोनिंग, धोखाधड़ी या विभागीय ग़लती का अनुमान नहीं लगाता।') },
     ],
   };
 }
 
-function pendingAssessment(explanation: string): Assessment {
-  return { outcome: 'review', eyebrow: 'Confirmation required', headline: 'The comparison has not run yet.', explanation, findings: [], counterChecks: [] };
+/**
+ * Broad vehicle families and colours are closed sets used as canonical values by
+ * the comparison rules, so they are stored in English and only *displayed* in
+ * the reader's language. Translating the stored value would break the rules;
+ * leaving it untranslated on screen would strand a Hindi reader.
+ */
+const vehicleFamilies: Record<string, string> = {
+  'Two-wheeler': 'दोपहिया',
+  'Passenger car': 'कार',
+  'Goods vehicle': 'माल वाहन',
+  Bus: 'बस',
+  'Three-wheeler': 'तिपहिया',
+  Other: 'अन्य',
+  Unknown: 'अज्ञात',
+};
+
+const colours: Record<string, string> = {
+  Blue: 'नीला',
+  Black: 'काला',
+  White: 'सफ़ेद',
+  Red: 'लाल',
+  Silver: 'सिल्वर',
+  Grey: 'स्लेटी',
+  Gray: 'स्लेटी',
+  Green: 'हरा',
+  Yellow: 'पीला',
+  Orange: 'नारंगी',
+  Brown: 'भूरा',
+};
+
+function vehicleFamilyHindi(value: string): string {
+  return vehicleFamilies[value] ?? value.toLowerCase();
+}
+
+/** Display-only label for a canonical vehicle-family value. */
+export function vehicleFamilyLabel(value: string, language: Language): string {
+  if (language === 'en') return value;
+  return vehicleFamilies[value] ?? value;
+}
+
+/** Display-only label for a canonical colour value. */
+export function colourLabel(value: string, language: Language): string {
+  if (language === 'en') return value;
+  return colours[value] ?? value;
+}
+
+function pendingAssessment(explanation: Bilingual): Assessment {
+  return {
+    outcome: 'review',
+    eyebrow: bi('Confirmation required', 'पुष्टि ज़रूरी'),
+    headline: bi('The comparison has not run yet.', 'तुलना अभी चली नहीं है।'),
+    explanation,
+    findings: [],
+    counterChecks: [],
+  };
 }
 
 function noGroundAssessment(): Assessment {
-  return { outcome: 'none', eyebrow: 'No objective ground found', headline: 'The confirmed fields do not conflict.', explanation: 'This does not mean the challan is valid. It only means this tool found no supported objective mismatch in the supplied fields.', findings: [], counterChecks: [{ label: 'Confirmed record fields compared', result: 'resolved', explanation: 'No supported contradiction was found under the narrow rules.' }] };
+  return {
+    outcome: 'none',
+    eyebrow: bi('No objective ground found', 'कोई वस्तुनिष्ठ आधार नहीं मिला'),
+    headline: bi('The confirmed fields do not conflict.', 'पुष्ट किए गए फ़ील्ड में कोई अंतर नहीं है।'),
+    explanation: bi(
+      'This does not mean the challan is valid. It only means this tool found no supported objective mismatch in the supplied fields.',
+      'इसका मतलब यह नहीं कि चालान सही है। इसका मतलब सिर्फ़ इतना है कि दिए गए फ़ील्ड में इस टूल को कोई प्रमाणित बेमेल नहीं मिला।',
+    ),
+    findings: [],
+    counterChecks: [{
+      label: bi('Confirmed record fields compared', 'पुष्ट रिकॉर्ड फ़ील्ड की तुलना हुई'),
+      result: 'resolved',
+      explanation: bi('No supported contradiction was found under the narrow rules.', 'सीमित नियमों के तहत कोई प्रमाणित विरोधाभास नहीं मिला।'),
+    }],
+  };
 }
 
 export function addCalendarDays(date: string, days: number): string {
@@ -237,10 +388,10 @@ export function isValidIsoDate(date: string): boolean {
   return !Number.isNaN(value.getTime()) && value.toISOString().slice(0, 10) === date;
 }
 
-export function formatDate(date: string): string {
-  if (!isValidIsoDate(date)) return 'Date not confirmed';
+export function formatDate(date: string, language: Language = 'en'): string {
+  if (!isValidIsoDate(date)) return language === 'hi' ? 'तारीख़ पुष्ट नहीं' : 'Date not confirmed';
   const [year, month, day] = date.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(Date.UTC(year, month - 1, day)));
+  return new Intl.DateTimeFormat(localeTag[language], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
 export function deadlineFor(caseFile: DemoCase, today = new Date()): { date: string; daysLeft: number; status: 'open' | 'today' | 'passed' } {

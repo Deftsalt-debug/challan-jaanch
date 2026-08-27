@@ -14,7 +14,9 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
 - **Human verification gates:** editing a decisive field invalidates its confirmation and the prior result.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
+- **Complete Hindi and English:** the language toggle switches the entire journey — workbench, findings, refusals, packet and Scam Shield — and tests fail if any rule-layer string lacks Hindi.
 - **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened.
+- **Hinglish and Devanagari triage:** scam patterns match the way these messages actually arrive in India, not only their English translations.
 - **Incident-aware routing:** attempted impersonation routes to I4C Report Suspect, while payments, credential exposure, or APK installation route to 1930 and the National Cyber Crime Reporting Portal.
 - **No government impersonation:** the app never asks for portal credentials, submits a grievance, or claims a government decision.
 
@@ -36,8 +38,9 @@ The synthetic evidence demo and Scam Shield are complete without an API key. Liv
 | Layer | Choice | Role |
 | --- | --- | --- |
 | Interface | React 19, TypeScript, Tailwind CSS 4 | Responsive state-machine journey and accessible interactions |
+| Language | Hand-written English and Hindi source strings | Complete bilingual journey; no runtime machine translation |
 | App framework | Vinext, Vite 8, Next-compatible routing | Fast development and Cloudflare Worker output |
-| Extraction | OpenAI Responses API, optional | Structured multimodal field extraction with `store: false` |
+| Extraction | OpenAI Responses API (`gpt-5.6-terra`), optional | Structured multimodal field extraction with `store: false` |
 | Decision layer | Deterministic TypeScript | Plate, vehicle-family, duplicate-event, and deadline rules |
 | Scam triage | Deterministic TypeScript | Exact-host allowlisting, inert URL parsing, advisory-pattern detection, and exposure routing |
 | Exports | jsPDF and browser Web APIs | Client-side PDF, JSON manifest, SHA-256 hashes, audio guidance |
@@ -89,8 +92,12 @@ components/ProductGuide.tsx       Audio guide and in-product architecture drawer
 components/ScamShield.tsx         Local scam triage, recovery plan, and official routing
 lib/cases.ts                       Typed fixtures, comparison rules, date logic
 lib/scam-shield.ts                 Pure scam signals, URL classification, and response tracks
-tests/rules.test.mjs               Deterministic rule and API-boundary tests
+lib/i18n.ts                        Bilingual primitives shared by rules and interface
+lib/use-language.ts                Persisted, tab-synchronised language selection
+tests/rules.test.mjs               Deterministic rule, API-boundary, and bilingual-completeness tests
 docs/ARCHITECTURE.md               Trust boundaries and data flow
+docs/HOW_WE_BUILT_IT.md            Where the OpenAI model runs and how the build was produced
+docs/LOCALISATION.md               Bilingual design and the tests that protect it
 docs/LOCAL_DEVELOPMENT.md          Setup and troubleshooting
 docs/DEMO_SCRIPT.md                Timed two-minute submission walkthrough
 docs/VIDEO_NARRATION.txt           Clean voice-over copy for the submission video
@@ -100,6 +107,8 @@ docs/VIDEO_NARRATION.txt           Clean voice-over copy for the submission vide
 
 Challan Jaanch reports conflicts visible in supplied records and risk patterns in pasted communications. It does not declare a challan invalid, authenticate a sender, certify a message as safe, infer fraud or cloning, predict grievance success, provide legal advice, or perform an official submission. The Rule 167 and cyber-advisory source packs are dated and must be rechecked before production use.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete design.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete design,
+[docs/HOW_WE_BUILT_IT.md](docs/HOW_WE_BUILT_IT.md) for where the OpenAI model runs and what it is
+forbidden from deciding, and [docs/LOCALISATION.md](docs/LOCALISATION.md) for the bilingual contract.
 
 For a full, explanatory walkthrough of every stage, program, data boundary, rule, deployment mode, and the no-database decision, read [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md).

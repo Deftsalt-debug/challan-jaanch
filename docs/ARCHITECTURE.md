@@ -46,7 +46,7 @@ Inert URL parsing + advisory-pattern rules
 
 ### Extraction boundary
 
-`app/api/analyze/route.ts` can send up to three selected images or PDFs to the OpenAI Responses API. The request uses structured JSON output and `store: false`. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome.
+`app/api/analyze/route.ts` can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. The request uses structured JSON output and `store: false`. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
 
 The boundary rejects oversized, malformed, unsupported, or excess documents; applies an upstream timeout; and validates the structured result and calendar date again before returning it to the browser.
 
@@ -74,6 +74,12 @@ The MVP has no database, R2 bucket, analytics, account system, or application-ow
 
 The API route necessarily transmits selected files to OpenAI only when the user chooses live extraction and a server-side key is configured. Production deployments should add an explicit consent receipt, retention verification, rate limits, and abuse controls before accepting real documents.
 
+### Language boundary
+
+Both languages are written as source. Interface copy uses `t(language, english, hindi)`; the rule layer returns `Bilingual` `{ en, hi }` values that components resolve with `pick()`. No translation happens at runtime, so a language switch cannot degrade safety advice into an approximate rendering, and four tests fail the build if any rule-layer string loses its Hindi.
+
+Canonical values compared by the rules — vehicle family, colour — stay in English and are translated for display only. Registration marks, challan numbers and capture identifiers are identifiers and are never altered. See [LOCALISATION.md](LOCALISATION.md).
+
 ### Scam-navigation boundary
 
 `lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled government URLs are clickable. The checker can label a known exact host, a lookalike, or an unverified destination; it never labels a sender or message safe.
@@ -97,7 +103,8 @@ Parallel lane: `home → scam → verify | report-attempt | emergency`
 - React 19 and TypeScript for a typed client workflow.
 - Vinext/Vite for Next-compatible routes and Cloudflare output.
 - Tailwind CSS 4 plus a small global motion layer.
-- OpenAI Responses API for optional multimodal extraction.
+- OpenAI Responses API (`gpt-5.6-terra`) for optional multimodal extraction.
+- Hand-written English and Hindi source strings, with `useSyncExternalStore` for a persisted, tab-synchronised language choice.
 - Pure TypeScript scam rules for advisory patterns, URL classification, and exposure routing.
 - jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
 - OpenAI Sites for versioned hosting, with public access treated as a separate release decision.

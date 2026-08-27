@@ -719,7 +719,7 @@ Edit `.env.local`:
 
 ```dotenv
 OPENAI_API_KEY=your-server-side-key
-OPENAI_MODEL=gpt-5.4
+OPENAI_MODEL=gpt-5.6-terra
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
@@ -762,6 +762,33 @@ npm test
 npm run build
 ```
 
+## 14a. Language coverage
+
+The product runs completely in English and Hindi. The toggle switches every
+screen — the evidence workbench, the verification checklist, the finding, the
+refusal, the counter-checks, the packet builder and the whole of Scam Shield.
+
+Two mechanisms carry it. Interface copy uses `t(language, english, hindi)` so the
+English text stays readable at the call site. Everything produced by the rule
+layer — findings, counter-checks, assessments, scam signals, the recovery plan —
+is returned as a `Bilingual` `{ en, hi }` value and resolved by the component.
+Nothing is machine-translated at runtime, so a language switch can never turn
+safety advice into an approximation.
+
+Canonical values that the rules compare, such as `Passenger car` or `Blue`, stay
+in English and are translated for display only; translating the stored value
+would break the comparison. Registration marks and challan numbers are
+identifiers and are never altered. The generated PDF stays in English because the
+core PDF font set carries no Devanagari, but the JSON manifest records the
+interface language and both language forms of every claim.
+
+Scam triage reads Hindi as well as English: the patterns in `lib/scam-shield.ts`
+match Hinglish and Devanagari lures, which is how these messages actually arrive.
+
+Four tests walk the rule layer and fail the build if any string is missing Hindi,
+is identical to its English form, or is not written in Devanagari. Full detail is
+in [docs/LOCALISATION.md](docs/LOCALISATION.md).
+
 ## 15. Repository structure
 
 ```text
@@ -778,12 +805,16 @@ challan-jaanch/
 ├── docs/
 │   ├── ARCHITECTURE.md          Short architecture reference
 │   ├── DEMO_SCRIPT.md           Judge-ready demonstration
+│   ├── HOW_WE_BUILT_IT.md       Where the OpenAI model runs and how the build was produced
+│   ├── LOCALISATION.md          Bilingual contract and the tests that protect it
 │   └── LOCAL_DEVELOPMENT.md     Compact setup guide
 ├── lib/
 │   ├── cases.ts                 Types, fixtures, deterministic evidence rules
-│   └── scam-shield.ts           Scam patterns, URL classification, response tracks
+│   ├── i18n.ts                  Bilingual primitives shared by rules and interface
+│   ├── scam-shield.ts           Scam patterns, URL classification, response tracks
+│   └── use-language.ts          Persisted, tab-synchronised language selection
 ├── tests/
-│   └── rules.test.mjs           Rule and boundary tests
+│   └── rules.test.mjs           Rule, boundary, and bilingual-completeness tests
 ├── public/
 │   ├── _headers                 Security and immutable-asset cache headers
 │   ├── og-release.png           Active release social preview

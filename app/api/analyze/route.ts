@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-5.4',
+        model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
         store: false,
         instructions: [
           'You extract observable fields from Indian eChallan and vehicle-record documents.',

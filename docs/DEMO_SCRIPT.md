@@ -80,3 +80,20 @@ Target length: **1:52–1:58**. The first minute is the citizen experience. The 
 - Show only synthetic fixtures—never a real registration, phone number or challan.
 - Keep the public URL visible briefly at the beginning or end.
 - Export as H.264 MP4, 1080p or 720p, with clearly audible narration.
+
+## If you re-record for the mentorship round
+
+The submitted cut is accurate as it stands. If the video is remade for the
+7 September resubmission, two things are worth two seconds each, because they
+answer judging criteria the current cut only implies:
+
+- **Press the language toggle mid-journey**, on the result or Scam Shield screen
+  rather than the home page. Seeing the finding, the counter-checks and the
+  recovery plan turn into Hindi makes the point that the toggle is not decorative
+  far faster than saying so. Suggested line: "The whole journey works in Hindi —
+  not just the landing page."
+- **Name the model boundary out loud** during the build minute: "One model call,
+  reading observable fields into a strict schema. It is forbidden from deciding
+  validity, and the deterministic rules make the finding."
+
+Both fit inside the existing timings by trimming the architecture diagram beat.

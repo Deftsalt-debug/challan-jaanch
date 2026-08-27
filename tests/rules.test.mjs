@@ -11,7 +11,7 @@ import {
   formatDate,
   isValidIsoDate,
 } from '../lib/cases.ts';
-import { inspectChallanMessage } from '../lib/scam-shield.ts';
+import { inspectChallanMessage, responseSteps } from '../lib/scam-shield.ts';
 
 function confirmDecisive(caseFile) {
   return new Set(caseFile.facts.filter((fact) => fact.decisive).map((fact) => fact.key));
@@ -37,7 +37,8 @@ test('ambiguous decisive character refuses to create a finding', () => {
   const assessment = assessCase(caseFile, confirmDecisive(caseFile));
   assert.equal(assessment.outcome, 'unable');
   assert.equal(assessment.findings.length, 0);
-  assert.match(assessment.nextBestEvidence, /original/i);
+  assert.match(assessment.nextBestEvidence.en, /original/i);
+  assert.match(assessment.nextBestEvidence.hi, /मूल/);
 });
 
 test('exact duplicate event is supported only across distinct challan numbers', () => {
@@ -173,4 +174,113 @@ test('Scam Shield catches bare lookalike domains and uses the selected WhatsApp 
   assert.equal(assessment.outcome, 'danger');
   assert.equal(assessment.destinations[0].hostname, 'echallan-payment.example');
   assert.ok(assessment.signals.some((signal) => signal.id === 'whatsapp-challan'));
+});
+
+test('Scam Shield reads Devanagari and Hinglish lures, not only English ones', () => {
+  const hindi = inspectChallanMessage({
+    message: 'अंतिम चेतावनी: चालान ₹2,000 बाकी है। तुरंत भुगतान करें वरना वाहन ज़ब्त होगा। ऐप डाउनलोड करें।',
+    channel: 'whatsapp',
+    clicked: false,
+    installed: false,
+    paid: false,
+    sharedCredentials: false,
+  });
+  assert.equal(hindi.outcome, 'danger');
+  assert.ok(hindi.signals.some((signal) => signal.id === 'apk'));
+  assert.ok(hindi.signals.some((signal) => signal.id === 'threat'));
+  assert.ok(hindi.signals.some((signal) => signal.id === 'whatsapp-challan'));
+
+  const otpHindi = inspectChallanMessage({ message: 'चालान रद्द करने के लिए ओटीपी बताइए', channel: 'call', clicked: false, installed: false, paid: false, sharedCredentials: false });
+  assert.ok(otpHindi.signals.some((signal) => signal.id === 'credentials'));
+});
+
+test('recovery plan is ordered containment first and is written in both languages', () => {
+  const installed = responseSteps({ message: '', channel: 'sms', clicked: false, installed: true, paid: false, sharedCredentials: false });
+  assert.match(installed[0].en, /Disconnect/i);
+  assert.match(installed[1].en, /1930/);
+
+  const paid = responseSteps({ message: '', channel: 'sms', clicked: false, installed: false, paid: true, sharedCredentials: false });
+  assert.match(paid[0].en, /1930/);
+
+  for (const step of [...installed, ...paid]) {
+    assert.ok(step.hi.trim().length > 0, 'every recovery step needs Hindi');
+    assert.notEqual(step.hi, step.en);
+  }
+});
+
+/**
+ * The language toggle must never drop a citizen onto a screen that silently
+ * falls back to English. These walk the rule layer's own output rather than the
+ * components, which is where the untranslated copy used to hide.
+ */
+function assertBilingual(value, where) {
+  assert.ok(value && typeof value === 'object', `${where} should be a bilingual value`);
+  assert.ok(typeof value.en === 'string' && value.en.trim().length > 0, `${where} is missing English`);
+  assert.ok(typeof value.hi === 'string' && value.hi.trim().length > 0, `${where} is missing Hindi`);
+  assert.ok(/[ऀ-ॿ]/u.test(value.hi), `${where} Hindi is not written in Devanagari`);
+}
+
+test('every fixture field carries real Hindi, not an English fallback', () => {
+  for (const [key, fixture] of Object.entries(cases)) {
+    assertBilingual(fixture.title, `${key}.title`);
+    assertBilingual(fixture.shortTitle, `${key}.shortTitle`);
+    assertBilingual(fixture.story, `${key}.story`);
+    assertBilingual(fixture.offence, `${key}.offence`);
+    assertBilingual(fixture.location, `${key}.location`);
+    for (const fact of fixture.facts) {
+      assertBilingual(fact.label, `${key}.${fact.key}.label`);
+      assertBilingual(fact.sourceLabel, `${key}.${fact.key}.sourceLabel`);
+      assertBilingual(fact.help, `${key}.${fact.key}.help`);
+    }
+  }
+});
+
+test('every assessment outcome is presentable in Hindi', () => {
+  const states = [
+    assessCase(cloneCase(cases['wrong-vehicle']), confirmDecisive(cases['wrong-vehicle'])),
+    assessCase(cloneCase(cases['ambiguous-photo']), confirmDecisive(cases['ambiguous-photo'])),
+    assessCase(cloneCase(cases['duplicate-event']), confirmDecisive(cases['duplicate-event'])),
+    assessCase(cloneCase(cases['wrong-vehicle']), new Set()),
+  ];
+  for (const assessment of states) {
+    assertBilingual(assessment.eyebrow, `${assessment.outcome}.eyebrow`);
+    assertBilingual(assessment.headline, `${assessment.outcome}.headline`);
+    assertBilingual(assessment.explanation, `${assessment.outcome}.explanation`);
+    for (const finding of assessment.findings) {
+      assertBilingual(finding.title, `${finding.id}.title`);
+      assertBilingual(finding.neutralClaim, `${finding.id}.neutralClaim`);
+      for (const limitation of finding.limitations) assertBilingual(limitation, `${finding.id}.limitation`);
+    }
+    for (const check of assessment.counterChecks) {
+      assertBilingual(check.label, 'counterCheck.label');
+      assertBilingual(check.explanation, 'counterCheck.explanation');
+    }
+  }
+});
+
+test('every scam signal and destination verdict is presentable in Hindi', () => {
+  const assessment = inspectChallanMessage({
+    message: 'FINAL WARNING pay ₹2,000 at http://echallan-parivahan.example/pay or share your OTP. Install RTO-Challan.apk via bit.ly/x and use AnyDesk.',
+    channel: 'whatsapp',
+    clicked: true,
+    installed: true,
+    paid: true,
+    sharedCredentials: true,
+  });
+  assertBilingual(assessment.eyebrow, 'scam.eyebrow');
+  assertBilingual(assessment.headline, 'scam.headline');
+  assertBilingual(assessment.explanation, 'scam.explanation');
+  assert.ok(assessment.signals.length >= 6);
+  for (const signal of assessment.signals) {
+    assertBilingual(signal.title, `signal.${signal.id}.title`);
+    assertBilingual(signal.detail, `signal.${signal.id}.detail`);
+  }
+  for (const destination of assessment.destinations) assertBilingual(destination.explanation, `destination.${destination.hostname}`);
+});
+
+test('dates render in the reader’s own language', () => {
+  assert.equal(formatDate('2026-02-30', 'hi'), 'तारीख़ पुष्ट नहीं');
+  const hindiDate = formatDate('2026-08-12', 'hi');
+  assert.ok(/[ऀ-ॿ]/u.test(hindiDate), `expected Devanagari date, received ${hindiDate}`);
+  assert.notEqual(hindiDate, formatDate('2026-08-12', 'en'));
 });
