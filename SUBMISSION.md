@@ -32,6 +32,23 @@ The ready-to-submit cut is [submission/challan-jaanch-submission.mp4](submission
 
 [docs/LOCALISATION.md](docs/LOCALISATION.md) explains why the Hindi coverage is complete rather than partial, which canonical values stay in English and why, and the four tests that fail the build if any rule-layer string loses its Hindi.
 
+## Against the builder brief's rules
+
+The brief lists eight things not to do. How this build stands against each:
+
+| Rule | How this build stands |
+| --- | --- |
+| Do not access, test or interfere with a live government system | The only outbound request the product makes is to `api.openai.com`, and only when a citizen supplies their own files and a server key is configured. Every government destination is an `<a target="_blank">` the citizen clicks in their own browser. The scam checker's allowlist compares hostnames as local strings and never fetches them. |
+| Do not reverse-engineer private systems or use undocumented APIs | No government or private API is called. The extraction endpoint uses the public, documented OpenAI Responses API. |
+| Do not scrape personal or restricted information | Nothing is scraped. There is no crawler, no database, and no analytics. Files a citizen selects stay in browser memory. |
+| Do not use real Aadhaar, PAN, passwords, OTPs, payment or health data | All fixtures are synthetic. Registration marks use the prefix `ZZ`, which is not an assigned Indian state code, and challan numbers are `DEMO-` prefixed. The app never asks for a portal password or OTP, and Scam Shield exists partly to tell citizens not to share one. |
+| Do not present the prototype as an official government product | Every screen carries an independence line, the packet is stamped "Not government-issued", and the onward-routes section states that the authorities named run those destinations and have no affiliation with this tool. |
+| Do not use government logos to suggest approval or partnership | No emblem, seal, tricolour or departmental logo appears anywhere. The mark is an abstract shield and road. |
+| Do not submit an old project with only small changes | The public commit history shows the build and its rewrites. |
+| Do not include code, assets or data without permission | Dependencies are open-source and listed in `package.json`; the project is MIT-licensed. Images are original to the project. |
+
+Every outbound link in the app was re-checked on 28 August 2026 and resolves without a login: the eChallan check and grievance pages, the grievance ticket-status page, mParivahan, the Virtual Court, NALSA Lok Adalat, the cybercrime portal and suspect-report form, the controlling Gazette PDF, and the Rajya Sabha answer PDF.
+
 ## Submission boundary
 
 - Independent civic-tech prototype; not affiliated with a government authority.

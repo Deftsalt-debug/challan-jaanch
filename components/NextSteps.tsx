@@ -40,7 +40,7 @@ export function NextSteps({ language, outcome, deadline }: { language: Language;
                 <div className="flex min-w-0 items-start gap-3">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#172a33] text-xs font-black text-white">{index + 1}</span>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#7b8582]">{pick(language, route.authority)}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#7b8582]">{t(language, 'Run by', 'संचालक')} · {pick(language, route.authority)}</p>
                     <h3 className="mt-1 text-base font-black leading-5">{pick(language, route.title)}</h3>
                   </div>
                 </div>
@@ -67,6 +67,14 @@ export function NextSteps({ language, outcome, deadline }: { language: Language;
 
       <p className="mt-5 rounded-lg border border-[#d6c28d] bg-[#faf5e7] p-4 text-xs leading-5 text-[#665321]">
         <strong>{t(language, 'What this tool does not know:', 'यह टूल क्या नहीं जानता:')}</strong> {pick(language, plan.caution)}
+      </p>
+
+      <p className="mt-3 text-[10px] leading-4 text-[#77827f]">
+        {t(
+          language,
+          'Each authority named above runs the destination it is listed against. Challan Jaanch is an independent prototype: it is not affiliated with, endorsed by, or acting for any of them, and it files nothing on your behalf.',
+          'ऊपर बताया गया हर विभाग सिर्फ़ अपने साथ लिखे गए पते को चलाता है। चालान जाँच एक स्वतंत्र प्रोटोटाइप है: यह इनमें से किसी से संबद्ध नहीं है, न इनका अनुमोदन प्राप्त है, न इनकी ओर से काम करता है, और यह आपकी ओर से कुछ भी दाख़िल नहीं करता।',
+        )}
       </p>
     </section>
   );
