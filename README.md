@@ -52,8 +52,6 @@ The synthetic evidence demo and Scam Shield are complete without an API key. Liv
 
 The production artifact also carries restrictive framing, referrer, MIME-sniffing, browser-permission, resource-isolation, and opener-isolation headers. It includes install metadata, a branded browser icon, bilingual keyboard skip navigation, and controlled error/404 recovery.
 
-GitHub also runs the complete `npm run verify` gate on every push to `main` and every pull request, so the public repository cannot silently drift from the tested release standard.
-
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and npm.
@@ -105,7 +103,6 @@ lib/i18n.ts                        Bilingual primitives shared by rules and inte
 lib/routes.ts                      Official next-step destinations and their ordering
 lib/use-language.ts                Persisted, tab-synchronised language selection
 tests/rules.test.mjs               Deterministic rule, API-boundary, and bilingual-completeness tests
-.github/workflows/verify.yml       GitHub lint, type, test, and production-build gate
 docs/ARCHITECTURE.md               Trust boundaries and data flow
 docs/HOW_WE_BUILT_IT.md            Where the OpenAI model runs and how the build was produced
 docs/LOCALISATION.md               Bilingual design and the tests that protect it
