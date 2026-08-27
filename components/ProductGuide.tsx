@@ -78,7 +78,8 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
   const scamCards: Array<[string, string]> = [
     [t(language, 'Detect high-risk patterns', 'उच्च जोखिम पैटर्न पहचानें'), t(language, 'Flags APK installation, OTP/PIN requests, remote access, urgency, direct-payment pressure, short links and lookalike domains.', 'APK इंस्टॉल, OTP/PIN की माँग, रिमोट एक्सेस, जल्दबाज़ी, सीधे भुगतान का दबाव, छोटे लिंक और नकली पते चिह्नित करता है।')],
     [t(language, 'Never label a message safe', 'किसी संदेश को सुरक्षित नहीं बताता'), t(language, 'The lowest-risk result is “No obvious red flag.” The sender still must be verified independently.', 'सबसे कम जोखिम वाला नतीजा है “कोई स्पष्ट ख़तरे का निशान नहीं”। भेजने वाले की जाँच फिर भी अलग से ज़रूरी है।')],
-    [t(language, 'Separate attempt from loss', 'कोशिश और नुक़सान में फ़र्क़'), t(language, 'A suspicious attempt routes to I4C Report Suspect. A payment or credential exposure routes to 1930 and the cybercrime complaint portal.', 'संदिग्ध कोशिश I4C “संदिग्ध की शिकायत” पर भेजी जाती है। पैसा जाने या जानकारी साझा होने पर 1930 और साइबर अपराध पोर्टल पर।')],
+    [t(language, 'Match the response to the exposure', 'घटना के हिसाब से जवाब'), t(language, 'Opened, downloaded, installed, dangerous-permission, credential and payment states each receive a different ordered response.', 'लिंक खोलने, डाउनलोड, इंस्टॉल, ख़तरनाक अनुमति, गोपनीय जानकारी और भुगतान — हर स्थिति के लिए अलग क्रमवार कार्रवाई मिलती है।')],
+    [t(language, 'Separate attempt from loss', 'कोशिश और नुक़सान में फ़र्क़'), t(language, 'Suspicious calls, SMS and WhatsApp can go to Chakshu; suspect identifiers can go to I4C. Payment or credential exposure routes to 1930 and the cybercrime portal.', 'संदिग्ध कॉल, SMS और WhatsApp की शिकायत Chakshu पर और संदिग्ध पहचान की शिकायत I4C पर की जा सकती है। पैसा जाने या जानकारी साझा होने पर 1930 और साइबर अपराध पोर्टल का रास्ता मिलता है।')],
     [t(language, 'Use a clean escape route', 'सुरक्षित रास्ता ही खुलता है'), t(language, 'The only clickable destinations are hard-coded government services. User-supplied links remain inert.', 'सिर्फ़ पहले से तय सरकारी सेवाएँ ही क्लिक हो सकती हैं। उपयोगकर्ता के दिए लिंक निष्क्रिय रहते हैं।')],
   ];
 
@@ -160,7 +161,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
             <div className="grid gap-3 sm:grid-cols-2">
               {scamCards.map(([title, body]) => <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5"><h3 className="font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p></article>)}
             </div>
-            <p className="text-xs leading-5 text-[#6a7774]">{t(language, 'Government basis: MoRTH’s eChallan impersonation warning, I4C reporting routes, and the CRPF advisory on fake RTO/Parivahan APKs. Sources were rechecked on 24 August 2026.', 'सरकारी आधार: MoRTH की ई-चालान नक़ल चेतावनी, I4C शिकायत रास्ते, और नकली RTO/परिवहन APK पर CRPF सलाह। स्रोत 24 अगस्त 2026 को दोबारा जाँचे गए।')}</p>
+            <p className="text-xs leading-5 text-[#6a7774]">{t(language, 'Government basis: MoRTH’s eChallan impersonation warning, CERT-In’s March 2026 RTO/eChallan malware advisory, I4C reporting routes, and DoT Chakshu. Sources were rechecked on 28 August 2026.', 'सरकारी आधार: MoRTH की ई-चालान नक़ल चेतावनी, CERT-In की मार्च 2026 RTO/ई-चालान मालवेयर सलाह, I4C शिकायत रास्ते और DoT Chakshu। स्रोत 28 अगस्त 2026 को दोबारा जाँचे गए।')}</p>
           </div>
         )}
 

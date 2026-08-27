@@ -6,7 +6,7 @@ Here the photograph shows seven, while the challan and vehicle record show one. 
 
 The comparison stays locked until I confirm every decisive value. If I edit one, that confirmation and any earlier result are invalidated. The result reports two source-linked contradictions. It does not declare the challan invalid, accuse an authority, or predict whether a grievance will succeed. [[slnc 350]]
 
-Scam Shield inspects suspicious wording and destinations as inert text, never opening the APK or payment route. [[slnc 700]]
+Scam Shield keeps the lure inert, distinguishes a download from an installation, and routes the citizen to Chakshu, I4C or urgent 1930 containment. [[slnc 700]]
 
 The interface is React 19 and TypeScript, built with Vinext, Vite, and Tailwind for a Cloudflare-compatible deployment. Optional multimodal extraction returns structured observable fields with storage disabled. [[slnc 300]]
 

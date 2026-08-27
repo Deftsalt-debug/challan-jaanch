@@ -41,10 +41,10 @@ export interface RoutePlan {
   routes: NextRoute[];
 }
 
-export const GRIEVANCE_URL = 'https://echallan.parivahan.gov.in/index/complaint';
+export const GRIEVANCE_URL = 'https://echallan.parivahan.gov.in/';
 export const GRIEVANCE_STATUS_URL = 'https://echallan.parivahan.gov.in/gsticket/';
 export const VIRTUAL_COURT_URL = 'https://vcourts.gov.in/virtualcourt/';
-export const LOK_ADALAT_URL = 'https://nalsa.gov.in/lok-adalat';
+export const LOK_ADALAT_URL = 'https://nalsa.gov.in/regular-lok-adalat/';
 
 /** Mirrors the `status` field of `deadlineFor()`. */
 export type ClockStatus = 'open' | 'today' | 'passed';
@@ -84,10 +84,10 @@ export function nextRoutes(outcome: Outcome, deadline: { status: ClockStatus; da
       status: urgent ? 'act-now' : 'closing',
       url: GRIEVANCE_URL,
       authority: bi('Ministry of Road Transport and Highways', 'सड़क परिवहन और राजमार्ग मंत्रालय'),
-      title: bi('Raise a grievance on the official eChallan service', 'आधिकारिक ई-चालान सेवा पर शिकायत दर्ज करें'),
+      title: bi('Open eChallan and choose Grievance', 'ई-चालान खोलें और Grievance चुनें'),
       what: bi(
-        'The eChallan service has its own complaint form for a challan you believe is wrong. It records the challan number and your description of the error, and gives you a ticket number.',
-        'ई-चालान सेवा पर ग़लत लगने वाले चालान के लिए अपना शिकायत फ़ॉर्म है। इसमें चालान नंबर और ग़लती का आपका विवरण दर्ज होता है, और आपको एक टिकट नंबर मिलता है।',
+        'The national eChallan service exposes its grievance flow from the official portal. Open the service independently, choose Grievance, and follow the current instructions shown there.',
+        'राष्ट्रीय ई-चालान सेवा अपने आधिकारिक पोर्टल से शिकायत का रास्ता देती है। सेवा अलग से खोलें, Grievance चुनें और वहाँ दिख रहे मौजूदा निर्देश मानें।',
       ),
       when: bi(
         'The earliest route, and the one your evidence packet is written for. Raise it while the record is still with the issuing authority rather than after it moves on.',
@@ -105,8 +105,8 @@ export function nextRoutes(outcome: Outcome, deadline: { status: ClockStatus; da
       authority: bi('eCourts, Department of Justice', 'ई-कोर्ट्स, न्याय विभाग'),
       title: bi('Look the challan up in the Virtual Court', 'वर्चुअल कोर्ट में चालान देखें'),
       what: bi(
-        'When a challan is placed before a virtual court you can find it there and either pay the stated amount or plead not guilty. Pleading not guilty moves the matter to the regular court that has jurisdiction, where it is heard.',
-        'जब कोई चालान वर्चुअल कोर्ट के सामने रखा जाता है, तो आप उसे वहाँ देख सकते हैं और या तो बताई गई राशि भर सकते हैं या ख़ुद को निर्दोष बता सकते हैं। निर्दोष कहने पर मामला संबंधित नियमित अदालत में चला जाता है, जहाँ सुनवाई होती है।',
+        'When a challan appears in Virtual Court, its current service lets you pay the stated fine or choose “Request to Contest.” After verification, a contest request produces an acknowledgement with the assigned physical court and date.',
+        'जब कोई चालान वर्चुअल कोर्ट में दिखता है, तो उसकी मौजूदा सेवा पर आप बताई गई राशि भर सकते हैं या “Request to Contest” चुन सकते हैं। पुष्टि के बाद contest request की रसीद में तय भौतिक अदालत और तारीख़ मिलती है।',
       ),
       when: bi(
         'Only once your challan actually appears there. Search by challan or vehicle number to find out; do not assume it has moved.',

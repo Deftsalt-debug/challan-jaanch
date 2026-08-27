@@ -197,7 +197,8 @@ A final attestation is required before downloads are enabled.
 The system generates:
 
 - a citizen-prepared PDF;
-- a JSON manifest containing claims, anchor IDs, hashes, privacy declarations, and limitations.
+- a JSON manifest containing claims, anchor IDs, hashes, privacy declarations, and limitations;
+- a bilingual share-safe brief for a redacted or official handoff.
 
 Original uploaded files are not embedded in either export.
 
@@ -209,11 +210,11 @@ The citizen can:
 
 1. choose whether the communication arrived through WhatsApp, SMS, a call, email, or another channel;
 2. paste the wording or URL as plain text;
-3. indicate whether they opened a link, installed an app/APK, sent money, or shared an OTP, PIN, or password;
+3. indicate whether they opened a link, downloaded a file, installed an app/APK, granted SMS/Accessibility/VPN access, sent money, or shared an OTP, PIN, or password;
 4. receive a live deterministic risk explanation;
 5. inspect extracted destinations as inert text;
-6. copy an ordered safety plan;
-7. continue only through hard-coded official government destinations.
+6. copy a privacy-safe, report-ready brief containing exposure choices, detected signals, inert hostnames, and ordered recovery steps without copying the original lure;
+7. continue only through hard-coded official destinations: eChallan for verification, DoT Chakshu for suspicious calls/SMS/WhatsApp, I4C for suspect identifiers, and NCRP/1930 after exposure or loss.
 
 The checker looks for:
 
@@ -244,8 +245,8 @@ There are also three response tracks:
 | Track | Trigger | Route |
 | --- | --- | --- |
 | `verify` | No obvious signal or a known official hostname | Independently open the official eChallan service. |
-| `report-attempt` | Suspicious or high-risk lure without known exposure | Preserve the message and use I4C Report Suspect. |
-| `emergency` | Money sent, credentials shared, or suspicious app installed | Use a clean device, call 1930, contact the financial provider, preserve evidence, and report at cybercrime.gov.in. |
+| `report-attempt` | Suspicious or high-risk lure without known compromise | Preserve the message; use Chakshu for the communication and I4C Report Suspect for identifiers. A downloaded-but-not-installed file remains on this track. |
+| `emergency` | Money sent, credentials shared, a suspicious app installed, or dangerous device permissions granted | Keep the affected device offline; use a clean device, call 1930, contact the financial provider, preserve evidence, remove the app and permissions, scan/update the phone, and report at cybercrime.gov.in. |
 
 The application does not display a user-supplied address as a link. The only clickable safety destinations are constants controlled in source code.
 
@@ -907,9 +908,10 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - Four synthetic scam patterns.
 - Inert URL extraction and exact-host allowlisting.
 - APK, secret-request, remote-access, threat, and payment-pressure signals.
+- Separate opened, downloaded, installed, dangerous-permission, credential, and payment exposure states.
 - Separate verify, report-attempt, and emergency routes.
-- Copyable incident-response plan.
-- Direct links to the official eChallan service, I4C Report Suspect, NCRP, and `tel:1930` for exposed users.
+- Copyable report-ready safety brief that omits the original lure.
+- Direct links to the official eChallan service, DoT Chakshu, I4C Report Suspect, NCRP, CERT-In guidance, and `tel:1930` for exposed users.
 
 ## 18. What is mocked or limited
 
@@ -920,24 +922,25 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - The deadline is a dated rule interpretation, not portal status.
 - Live extraction needs a configured server-side key.
 - The product covers only narrow mismatch rules.
-- Hindi localization is partial, not a complete translation.
+- English and Hindi cover the complete citizen journey; this is still not a substitute for usability testing with Indian-language users.
 - No account, saved draft, sync, reminder, or collaboration exists.
 - No production consent, malware-scanning, or support operation exists.
 - Scam Shield does not query a live domain-reputation feed, expand short links, inspect message headers, reverse-lookup phone numbers, or scan APK binaries.
 - A lack of detected signals does not authenticate the sender or establish that a message is genuine.
 - The recognised official-host list is deliberately narrow and is not a complete directory of state traffic portals.
-- The current owner-only hosted URL is not suitable for the hackathon's public-link requirement until access is deliberately changed.
+- The current Sites deployment is public and opens without a consumer login; availability still depends on the hosting provider.
 
 ## 19. Cyber-advisory basis for Scam Shield
 
-The anti-scam rules were rechecked on 24 August 2026 against primary government sources:
+The anti-scam rules were rechecked on 28 August 2026 against primary government sources:
 
 - [MoRTH national eChallan service](https://echallan.parivahan.gov.in/index/check-challan-status): warns about fraudulent websites and mobile apps and says the service does not request passwords, OTPs, payment details, or sensitive personal information through calls, emails, messages, or links.
-- [CRPF Cyber Byte, January 2026](https://crpf.gov.in/Upload/MediaGallery/CYBER_BYTE_ENG-24012026.pdf): describes fake RTO/Parivahan APKs distributed through WhatsApp and tells citizens to verify through the official eChallan service or mParivahan.
+- [CERT-In RTO/eChallan malware advisory, 17 March 2026](https://www.cert-in.org.in/s2cMainServlet?CACODE=CICA-2026-3492&pageid=PUBADV01): describes the current multi-stage Android campaign and recommends disconnecting an affected phone, uninstalling suspicious apps, scanning the device, changing passwords/UPI PINs, checking statements, keeping unknown-source installation disabled, and using Play Protect.
+- [DoT Chakshu on Sanchar Saathi](https://sancharsaathi.gov.in/sfc/): accepts reports about suspected fraudulent communications received through calls, SMS, or WhatsApp; victims of cybercrime or financial fraud are directed to NCRP/1930 instead.
 - [I4C Report Suspect](https://www.cybercrime.gov.in/Webform/cyber_suspect.aspx): accepts reports about suspicious website URLs, WhatsApp or Telegram handles, phone numbers, emails, SMS headers, and social-media URLs.
 - [National Cyber Crime Reporting Portal](https://www.cybercrime.gov.in/): directs victims of financial cyber fraud to report immediately and use the national helpline `1930`.
 
-These sources justify the product split between independent challan verification, attempted-scam reporting, and urgent post-loss response. They do not justify declaring every unfamiliar URL fraudulent, so the system retains an explicit `unverified` state.
+These sources justify the product split between independent challan verification, communication/identifier reporting, downloaded-but-not-installed guidance, and urgent post-installation or post-loss response. They do not justify declaring every unfamiliar URL fraudulent, so the system retains an explicit `unverified` state.
 
 ## 20. Deployment and the hackathon public-link requirement
 

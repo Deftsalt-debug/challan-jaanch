@@ -9,7 +9,9 @@ export interface ScamInput {
   message: string;
   channel: ScamChannel;
   clicked: boolean;
+  downloaded: boolean;
   installed: boolean;
+  grantedPermissions: boolean;
   paid: boolean;
   sharedCredentials: boolean;
 }
@@ -42,6 +44,9 @@ export interface ScamAssessment {
 export const OFFICIAL_ECHALLAN_URL = 'https://echallan.parivahan.gov.in/index/check-challan-status';
 export const CYBERCRIME_REPORT_URL = 'https://www.cybercrime.gov.in/';
 export const CYBERCRIME_SUSPECT_URL = 'https://www.cybercrime.gov.in/Webform/cyber_suspect.aspx';
+export const CHAKSHU_URL = 'https://sancharsaathi.gov.in/sfc/';
+export const CERT_IN_ECHALLAN_ADVISORY_URL = 'https://www.cert-in.org.in/s2cMainServlet?CACODE=CICA-2026-3492&pageid=PUBADV01';
+export const officialSafetyUrls = [OFFICIAL_ECHALLAN_URL, CYBERCRIME_REPORT_URL, CYBERCRIME_SUSPECT_URL, CHAKSHU_URL, CERT_IN_ECHALLAN_ADVISORY_URL] as const;
 
 const officialHosts = new Map<string, Bilingual>([
   ['echallan.parivahan.gov.in', bi('Exact HTTPS hostname used by the national eChallan service.', 'राष्ट्रीय ई-चालान सेवा का असली HTTPS पता।')],
@@ -240,6 +245,17 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
       ),
     });
   }
+  if (input.downloaded) {
+    addSignal(signals, {
+      id: 'downloaded',
+      severity: 'caution',
+      title: bi('A file or APK was downloaded', 'फ़ाइल या APK डाउनलोड हो चुका है'),
+      detail: bi(
+        'Downloading is not the same as installing, but do not open the file. Record its name and remove it without granting any install prompt.',
+        'डाउनलोड करना इंस्टॉल करने जैसा नहीं है, लेकिन फ़ाइल न खोलें। उसका नाम लिख लें और किसी इंस्टॉल अनुमति के बिना उसे हटा दें।',
+      ),
+    });
+  }
   if (input.installed) {
     addSignal(signals, {
       id: 'installed',
@@ -248,6 +264,17 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
       detail: bi(
         'Disconnect that device from the internet. Use another device to contact your bank and 1930; do not enter new credentials on the affected device.',
         'उस फ़ोन का इंटरनेट बंद करें। बैंक और 1930 से संपर्क के लिए दूसरा फ़ोन इस्तेमाल करें; प्रभावित फ़ोन पर नया पासवर्ड या OTP न डालें।',
+      ),
+    });
+  }
+  if (input.grantedPermissions) {
+    addSignal(signals, {
+      id: 'permissions',
+      severity: 'critical',
+      title: bi('Dangerous device permission may be active', 'फ़ोन की ख़तरनाक अनुमति चालू हो सकती है'),
+      detail: bi(
+        'SMS, Accessibility, phone, background, or VPN access can let a malicious app intercept codes or control traffic. Treat the device as potentially compromised.',
+        'SMS, Accessibility, फ़ोन, बैकग्राउंड या VPN अनुमति से दुर्भावनापूर्ण ऐप कोड पकड़ सकता है या ट्रैफ़िक नियंत्रित कर सकता है। फ़ोन को संभावित रूप से प्रभावित मानें।',
       ),
     });
   }
@@ -275,7 +302,7 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
   }
 
   const critical = signals.filter((signal) => signal.severity === 'critical').length;
-  const exposed = input.installed || input.paid || input.sharedCredentials;
+  const exposed = input.installed || input.grantedPermissions || input.paid || input.sharedCredentials;
   const outcome: ScamOutcome = critical > 0 || signals.length >= 3 ? 'danger' : signals.length > 0 ? 'suspicious' : 'unverified';
   const track: ScamTrack = exposed ? 'emergency' : outcome === 'unverified' ? 'verify' : 'report-attempt';
 
@@ -336,12 +363,13 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
  * by the deterministic tests.
  */
 export function responseSteps(input: ScamInput): Bilingual[] {
-  if (input.installed) {
+  if (input.installed || input.grantedPermissions) {
     return [
       bi('Disconnect the affected phone from mobile data and Wi-Fi. Do not enter another password, PIN, or OTP on it.', 'प्रभावित फ़ोन का मोबाइल डेटा और Wi-Fi बंद करें। उस पर कोई और पासवर्ड, PIN या OTP न डालें।'),
-      bi('From a different, trusted device, call 1930 and contact your bank or payment provider.', 'किसी दूसरे भरोसेमंद फ़ोन से 1930 पर कॉल करें और अपने बैंक या भुगतान सेवा से संपर्क करें।'),
-      bi('Preserve screenshots, the sender number, APK name, permissions shown, transaction alerts, and timestamps.', 'स्क्रीनशॉट, भेजने वाले का नंबर, APK का नाम, माँगी गई अनुमतियाँ, लेन-देन अलर्ट और समय सुरक्षित रखें।'),
-      bi('Report at cybercrime.gov.in and arrange professional device cleanup or a secure reset before using banking again.', 'cybercrime.gov.in पर शिकायत करें और बैंकिंग दोबारा इस्तेमाल करने से पहले फ़ोन की पेशेवर सफ़ाई या सुरक्षित रीसेट कराएँ।'),
+      bi('From a different, trusted device, call 1930, contact your bank or payment provider, and preserve the sender, APK name, permissions, alerts, and timestamps.', 'किसी दूसरे भरोसेमंद फ़ोन से 1930 पर कॉल करें, बैंक या भुगतान सेवा से संपर्क करें, और भेजने वाला, APK नाम, अनुमतियाँ, अलर्ट तथा समय सुरक्षित रखें।'),
+      bi('On the disconnected phone, uninstall the suspicious app in Settings. Turn off Install unknown apps, unknown Accessibility services, and any VPN it added.', 'इंटरनेट से कटे फ़ोन पर Settings में संदिग्ध ऐप हटाएँ। Install unknown apps, अनजान Accessibility सेवा और उसके जोड़े VPN को बंद करें।'),
+      bi('Run Google Play Protect or a trusted mobile security scan, install Android security updates, and check bank statements for unauthorised activity.', 'Google Play Protect या भरोसेमंद मोबाइल सुरक्षा स्कैन चलाएँ, Android सुरक्षा अपडेट लगाएँ, और बैंक स्टेटमेंट में अनजान गतिविधि देखें।'),
+      bi('From the clean device, change affected passwords and UPI PINs. Report at cybercrime.gov.in and do not resume mobile banking until the phone is clean.', 'सुरक्षित फ़ोन से प्रभावित पासवर्ड और UPI PIN बदलें। cybercrime.gov.in पर शिकायत करें और फ़ोन सुरक्षित होने तक मोबाइल बैंकिंग दोबारा शुरू न करें।'),
     ];
   }
   if (input.paid || input.sharedCredentials) {
@@ -352,11 +380,18 @@ export function responseSteps(input: ScamInput): Bilingual[] {
       bi('Complete the complaint at cybercrime.gov.in. Do not negotiate with or warn the sender.', 'cybercrime.gov.in पर शिकायत पूरी करें। भेजने वाले से बातचीत या उसे सचेत न करें।'),
     ];
   }
+  if (input.downloaded) {
+    return [
+      bi('Do not open the downloaded file or approve an installation. Note the filename and sender, then remove the file from Downloads.', 'डाउनलोड की गई फ़ाइल न खोलें और इंस्टॉल की अनुमति न दें। फ़ाइल नाम और भेजने वाला लिख लें, फिर Downloads से फ़ाइल हटा दें।'),
+      bi('Keep Install unknown apps disabled and run Google Play Protect or a trusted mobile security scan.', 'Install unknown apps बंद रखें और Google Play Protect या भरोसेमंद मोबाइल सुरक्षा स्कैन चलाएँ।'),
+      bi('Independently check the official eChallan service and report the suspicious communication through Chakshu or I4C.', 'आधिकारिक ई-चालान सेवा पर अलग से जाँचें और संदिग्ध संदेश की शिकायत Chakshu या I4C पर करें।'),
+    ];
+  }
   if (input.clicked) {
     return [
       bi('Close the page. Do not enter credentials, approve a notification, install a file, or make a payment.', 'पेज बंद करें। कोई जानकारी न भरें, कोई सूचना स्वीकार न करें, कोई फ़ाइल इंस्टॉल न करें, भुगतान न करें।'),
       bi('Independently type the official eChallan address and search for the challan there.', 'आधिकारिक ई-चालान पता ख़ुद टाइप करें और वहीं चालान खोजें।'),
-      bi('Preserve the original message and report the suspicious destination to I4C if it was impersonating eChallan.', 'मूल संदेश सुरक्षित रखें और अगर वह ई-चालान की नकल कर रहा था तो संदिग्ध पते की शिकायत I4C को करें।'),
+      bi('Preserve the original message and report the suspicious destination through Chakshu or I4C if it was impersonating eChallan.', 'मूल संदेश सुरक्षित रखें और अगर वह ई-चालान की नकल कर रहा था तो संदिग्ध पते की शिकायत Chakshu या I4C को करें।'),
     ];
   }
   return [

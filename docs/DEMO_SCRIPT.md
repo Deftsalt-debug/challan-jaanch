@@ -38,7 +38,7 @@ Target length: **1:52–1:58**. The first minute is the citizen experience. The 
 
 **Action:** Open **Scam check**, then choose **Fake APK lure**.
 
-**Say:** “Scam Shield inspects suspicious wording and destinations as inert text, never opening the APK or payment route.”
+**Say:** “Scam Shield keeps the lure inert, distinguishes a download from an installation, and routes the citizen to Chakshu, I4C or urgent 1930 containment.”
 
 ## Minute two — build and rationale
 

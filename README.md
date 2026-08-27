@@ -16,10 +16,11 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
 - **Share-safe briefing:** after attestation, a redacted or official-handoff case brief can be copied in the active language with the same source anchors and non-government boundary.
 - **Complete Hindi and English:** the language toggle switches the entire journey — workbench, findings, refusals, packet and Scam Shield — and tests fail if any rule-layer string lacks Hindi.
-- **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened.
+- **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened. Its exposure ladder distinguishes a link opened, a file downloaded, an APK installed, dangerous permissions granted, credentials shared, and money sent.
 - **Hinglish and Devanagari triage:** scam patterns match the way these messages actually arrive in India, not only their English translations.
 - **Names the route out:** after a finding, the app names the three official destinations a challan can actually be taken to — the MoRTH grievance form, the Virtual Court and a Lok Adalat — without claiming to know where a given challan currently sits.
-- **Incident-aware routing:** attempted impersonation routes to I4C Report Suspect, while payments, credential exposure, or APK installation route to 1930 and the National Cyber Crime Reporting Portal.
+- **Incident-aware routing:** suspicious calls, SMS, and WhatsApp can go to DoT Chakshu; suspect identifiers can go to I4C; payments, credential exposure, APK installation, or dangerous permissions route to a clean-device containment plan, 1930, and the National Cyber Crime Reporting Portal.
+- **Report-ready safety brief:** Scam Shield produces a privacy-safe local summary of the selected exposure, detected signals, inert hostnames, ordered recovery steps, and verified official destinations without copying the original lure.
 - **No government impersonation:** the app never asks for portal credentials, submits a grievance, or claims a government decision.
 
 ## Guided experience
@@ -44,12 +45,14 @@ The synthetic evidence demo and Scam Shield are complete without an API key. Liv
 | App framework | Vinext, Vite 8, Next-compatible routing | Fast development and Cloudflare Worker output |
 | Extraction | OpenAI Responses API (`gpt-5.6-terra`), optional | Structured multimodal field extraction with `store: false` |
 | Decision layer | Deterministic TypeScript | Plate, vehicle-family, duplicate-event, and deadline rules |
-| Scam triage | Deterministic TypeScript | Exact-host allowlisting, inert URL parsing, advisory-pattern detection, and exposure routing |
+| Scam triage | Deterministic TypeScript | Exact-host allowlisting, inert URL parsing, advisory-pattern detection, exposure-specific containment, and a local safety brief |
 | Exports | jsPDF and browser Web APIs | Client-side PDF, JSON manifest, bilingual share brief, SHA-256 hashes, audio guidance |
 | Hosting | OpenAI Sites | Versioned deployment; public access is a separate release decision |
 | Persistence | None by design | No application database, analytics, or persistent document store |
 
 The production artifact also carries restrictive framing, referrer, MIME-sniffing, browser-permission, resource-isolation, and opener-isolation headers. It includes install metadata, a branded browser icon, bilingual keyboard skip navigation, and controlled error/404 recovery.
+
+GitHub also runs the complete `npm run verify` gate on every push to `main` and every pull request, so the public repository cannot silently drift from the tested release standard.
 
 ## Run locally
 
@@ -102,6 +105,7 @@ lib/i18n.ts                        Bilingual primitives shared by rules and inte
 lib/routes.ts                      Official next-step destinations and their ordering
 lib/use-language.ts                Persisted, tab-synchronised language selection
 tests/rules.test.mjs               Deterministic rule, API-boundary, and bilingual-completeness tests
+.github/workflows/verify.yml       GitHub lint, type, test, and production-build gate
 docs/ARCHITECTURE.md               Trust boundaries and data flow
 docs/HOW_WE_BUILT_IT.md            Where the OpenAI model runs and how the build was produced
 docs/LOCALISATION.md               Bilingual design and the tests that protect it

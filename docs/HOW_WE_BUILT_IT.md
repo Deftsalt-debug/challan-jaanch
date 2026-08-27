@@ -93,21 +93,34 @@ repository:
 
 ### Builder's note on Codex
 
-> *This section is for the builder to complete in their own words before
-> submitting — it is the one part of this document that cannot be derived from
-> the repository. Describe concretely which parts of the build used Codex: for
-> example which files or rules were drafted with it, how it was used for the
-> test suite or the refactors, and what you rejected or rewrote by hand. Keep it
-> specific and truthful; the brief asks for Codex to be a real part of the
-> build, and a vague claim reads worse than a modest, concrete one.*
+Codex was the primary implementation partner for this project. I used it to turn
+the initial problem choice into the evidence workbench, deterministic rule
+layer, refusal path, packet builder, Scam Shield, bilingual interface, tests,
+documentation and deployment. The work happened as an iterative repository
+conversation: inspect the current code, research the relevant public-service
+flow, propose a narrow change, implement it, then make the same agent challenge
+the result and run the release gate.
+
+The most useful Codex contributions were not visual generation. They were the
+adversarial passes that found places where a polished interface could still
+mislead a citizen: an ambiguous `Z`/`2` plate read, a model output with an
+impossible date, a message with no obvious scam signal, a downloaded APK being
+mistaken for an installed one, an outdated NALSA route, and wording that implied
+government endorsement or automatic submission. Each became either a refusal,
+a clearer boundary, or an automated test.
+
+I retained the product decision and release authority: Challan Jaanch would be
+an independent preflight, not a challan-validity oracle or unofficial filing
+service. Public deployment and every external write were made only after that
+boundary was visible and the complete local gate passed.
 
 ## 5. What was deliberately not automated
 
 - The product boundary — what the tool refuses to claim — is a human judgement,
   written out in [ARCHITECTURE.md](ARCHITECTURE.md) and enforced in code.
-- The legal source pack (CMVR Rule 167, G.S.R. 48(E), the Rajya Sabha figures,
-  the MoRTH and I4C advisories) was chosen, dated and linked by hand, and the
-  interface states when it was last rechecked.
+- The legal and cyber source pack (CMVR Rule 167, G.S.R. 48(E), the Rajya Sabha
+  figures, MoRTH, CERT-In, DoT Chakshu and I4C) was chosen, dated and linked in
+  source, and the interface states when it was last rechecked.
 - Every Hindi string is written and reviewed as source, not machine-translated at
   runtime, so a language switch cannot degrade into an approximate rendering of
   safety advice.

@@ -90,7 +90,9 @@ Canonical values compared by the rules — vehicle family, colour — stay in En
 
 ### Scam-navigation boundary
 
-`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled government URLs are clickable. The checker can label a known exact host, a lookalike, or an unverified destination; it never labels a sender or message safe.
+`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled official destinations are clickable. The checker can label a known exact host, a lookalike, or an unverified destination; it never labels a sender or message safe.
+
+Exposure is modelled separately from message risk. Opening a link, downloading a file, installing an APK, granting SMS/Accessibility/VPN permissions, sharing credentials, and sending money are distinct states. That prevents a download from being described as an installation while still escalating an installed app or dangerous permission to an offline-device/clean-device containment plan. A local report-ready brief carries only selected exposure facts, signal names, inert hostnames, ordered recovery steps, and official routes; it deliberately omits the pasted lure.
 
 ## UI state machine
 
@@ -113,7 +115,7 @@ Parallel lane: `home → scam → verify | report-attempt | emergency`
 - Tailwind CSS 4 plus a small global motion layer.
 - OpenAI Responses API (`gpt-5.6-terra`) for optional multimodal extraction.
 - Hand-written English and Hindi source strings, with `useSyncExternalStore` for a persisted, tab-synchronised language choice.
-- Pure TypeScript scam rules for advisory patterns, URL classification, and exposure routing.
+- Pure TypeScript scam rules for advisory patterns, URL classification, exposure-specific containment, and a privacy-safe safety brief.
 - jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
 - OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
 - Next-compatible response headers, install metadata, bilingual skip navigation, and controlled error/404 recovery for production resilience.

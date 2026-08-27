@@ -12,13 +12,13 @@ Challan Jaanch is an independent, privacy-first trust preflight for Indian eChal
 
 For disputed records, citizens compare the challan, enforcement photo and vehicle record in a source-linked workbench. It highlights plate and vehicle-class conflicts, requires confirmation of consequential fields, applies deterministic rules, exposes counter-explanations, and refuses to decide when evidence is ambiguous. Supported conflicts become a redacted or official-handoff PDF, JSON manifest or share-safe brief; nothing is submitted automatically.
 
-Scam Shield analyses pasted messages and URLs as inert text, identifies APK lures, credential requests, urgency and lookalike domains, then routes citizens to independent verification, I4C reporting, or urgent 1930 and bank containment based on actual exposure. Its patterns match Hinglish and Devanagari, not only English.
+Scam Shield analyses pasted messages and URLs as inert text, identifies APK lures, credential requests, urgency and lookalike domains, then distinguishes a link opened, file downloaded, app installed, dangerous permission granted, credentials shared and money sent. It produces an ordered response and privacy-safe safety brief without retaining the lure.
 
-Finding a contradiction is only half the journey, so the app names the three official places a challan can be taken — the ministry's grievance form, the Virtual Court and a Lok Adalat — while stating plainly that it cannot read a challan's live status.
+The app names the official grievance, Virtual Court and Lok Adalat routes without pretending to read live status. For scams, it separates verification, Chakshu communication reporting, I4C suspect reporting and urgent 1930/NCRP containment.
 
-Current portals mainly show status, accept payment or receive grievances. Challan Jaanch adds the missing reasoning layer before those steps. It is better because every finding is traceable, uncertainty is visible, ambiguous evidence produces a refusal rather than an allegation, suspicious links are never opened, every screen works in Hindi, and the demo runs without login or personal data.
+Current portals remain the system of record. Challan Jaanch adds the missing reasoning and safety layer before them: every finding is traceable, uncertainty is visible, ambiguous evidence produces a refusal rather than an allegation, suspicious links are never opened, every screen works in Hindi, and the demo runs without login or personal data.
 
-**Word count:** 244
+**Word count:** 229
 
 ## Video
 
@@ -47,7 +47,7 @@ The brief lists eight things not to do. How this build stands against each:
 | Do not submit an old project with only small changes | The public commit history shows the build and its rewrites. |
 | Do not include code, assets or data without permission | Dependencies are open-source and listed in `package.json`; the project is MIT-licensed. Images are original to the project. |
 
-Every outbound link in the app was re-checked on 28 August 2026 and resolves without a login: the eChallan check and grievance pages, the grievance ticket-status page, mParivahan, the Virtual Court, NALSA Lok Adalat, the cybercrime portal and suspect-report form, the controlling Gazette PDF, and the Rajya Sabha answer PDF.
+Every outbound link in the app was re-checked on 28 August 2026: the eChallan check and grievance pages, grievance ticket status, Virtual Court, NALSA Regular Lok Adalat, DoT Chakshu, I4C/NCRP, CERT-In’s current RTO/eChallan advisory, the controlling Gazette PDF, and the Rajya Sabha answer PDF.
 
 ## Submission boundary
 

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import {
+  CERT_IN_ECHALLAN_ADVISORY_URL,
+  CHAKSHU_URL,
   CYBERCRIME_REPORT_URL,
   CYBERCRIME_SUSPECT_URL,
   OFFICIAL_ECHALLAN_URL,
@@ -10,7 +12,7 @@ import {
   inspectChallanMessage,
   responseSteps,
 } from '../lib/scam-shield';
-import { Language, pick, t } from '../lib/i18n';
+import { Language, localeTag, pick, t } from '../lib/i18n';
 
 type SampleKey = 'apk' | 'link' | 'secret' | 'official';
 
@@ -69,15 +71,17 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
   const [message, setMessage] = useState('');
   const [channel, setChannel] = useState<ScamChannel>('whatsapp');
   const [clicked, setClicked] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const [grantedPermissions, setGrantedPermissions] = useState(false);
   const [paid, setPaid] = useState(false);
   const [sharedCredentials, setSharedCredentials] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const samples = useMemo(() => samplesFor(language), [language]);
-  const input = useMemo<ScamInput>(() => ({ message, channel, clicked, installed, paid, sharedCredentials }), [message, channel, clicked, installed, paid, sharedCredentials]);
+  const input = useMemo<ScamInput>(() => ({ message, channel, clicked, downloaded, installed, grantedPermissions, paid, sharedCredentials }), [message, channel, clicked, downloaded, installed, grantedPermissions, paid, sharedCredentials]);
   const assessment = useMemo(() => inspectChallanMessage(input), [input]);
-  const started = Boolean(message.trim() || clicked || installed || paid || sharedCredentials);
+  const started = Boolean(message.trim() || clicked || downloaded || installed || grantedPermissions || paid || sharedCredentials);
   const steps = responseSteps(input).map((step) => pick(language, step));
 
   const channelLabels: Array<[ScamChannel, string]> = [
@@ -93,7 +97,9 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
     setMessage(sample.message);
     setChannel(sample.channel);
     setClicked(false);
+    setDownloaded(false);
     setInstalled(false);
+    setGrantedPermissions(false);
     setPaid(false);
     setSharedCredentials(false);
     setCopied(false);
@@ -102,18 +108,41 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
   const clear = () => {
     setMessage('');
     setClicked(false);
+    setDownloaded(false);
     setInstalled(false);
+    setGrantedPermissions(false);
     setPaid(false);
     setSharedCredentials(false);
     setCopied(false);
   };
 
   const copyPlan = async () => {
+    const exposure = [
+      clicked && t(language, 'Opened the link', 'लिंक खोला'),
+      downloaded && t(language, 'Downloaded a file/APK', 'फ़ाइल/APK डाउनलोड किया'),
+      installed && t(language, 'Installed an app/APK', 'ऐप/APK इंस्टॉल किया'),
+      grantedPermissions && t(language, 'Granted SMS/Accessibility/VPN permission', 'SMS/Accessibility/VPN अनुमति दी'),
+      paid && t(language, 'Sent money', 'पैसे भेजे'),
+      sharedCredentials && t(language, 'Shared OTP/PIN/password', 'OTP/पिन/पासवर्ड बताया'),
+    ].filter(Boolean) as string[];
+    const selectedChannel = channelLabels.find(([value]) => value === channel)?.[1] ?? channel;
     const text = [
-      t(language, 'CHALLAN JAANCH — SCAM SAFETY PLAN', 'चालान जाँच — ठगी सुरक्षा योजना'),
+      t(language, 'CHALLAN JAANCH — REPORT-READY SAFETY BRIEF', 'चालान जाँच — शिकायत के लिए सुरक्षा सार'),
+      `${t(language, 'Prepared locally', 'स्थानीय रूप से तैयार')}: ${new Date().toLocaleString(localeTag[language])}`,
+      `${t(language, 'Channel', 'माध्यम')}: ${selectedChannel}`,
       `${t(language, 'Assessment', 'आकलन')}: ${pick(language, assessment.headline)}`,
+      `${t(language, 'Exposure reported', 'बताई गई घटना')}: ${exposure.length ? exposure.join('; ') : t(language, 'None selected', 'कुछ नहीं चुना')}`,
+      '',
+      t(language, 'DETECTED SIGNALS', 'मिले संकेत'),
+      ...(assessment.signals.length ? assessment.signals.map((signal) => `- ${pick(language, signal.title)}`) : [`- ${t(language, 'No obvious red flag found; sender still not authenticated.', 'कोई स्पष्ट संकेत नहीं मिला; भेजने वाले की पहचान फिर भी अपुष्ट है।')}`]),
+      ...(assessment.destinations.length ? ['', t(language, 'DESTINATIONS SEEN (INERT TEXT ONLY)', 'दिखे पते (सिर्फ़ निष्क्रिय पाठ)'), ...assessment.destinations.map((destination) => `- ${destination.hostname} — ${destination.classification === 'official' ? t(language, 'exact official host', 'असली आधिकारिक पता') : destination.classification === 'lookalike' ? t(language, 'lookalike wording', 'नकली जैसी भाषा') : t(language, 'unverified', 'अपुष्ट')}`)] : []),
+      '',
+      t(language, 'ORDERED RESPONSE', 'क्रमवार कार्रवाई'),
       ...steps.map((step, index) => `${index + 1}. ${step}`),
+      '',
       `${t(language, 'Verify independently', 'ख़ुद जाँचें')}: ${OFFICIAL_ECHALLAN_URL}`,
+      `${t(language, 'Report a suspicious call/SMS/WhatsApp', 'संदिग्ध कॉल/SMS/WhatsApp की शिकायत')}: ${CHAKSHU_URL}`,
+      `${t(language, 'Report a suspect identifier', 'संदिग्ध पहचान की शिकायत')}: ${CYBERCRIME_SUSPECT_URL}`,
       `${t(language, 'Report cybercrime', 'साइबर अपराध शिकायत')}: ${CYBERCRIME_REPORT_URL}`,
       t(language, 'Financial cyber-fraud helpline: 1930', 'साइबर वित्तीय धोखाधड़ी हेल्पलाइन: 1930'),
       t(language, 'This is safety triage, not authentication or a police finding.', 'यह सुरक्षा छँटाई है, न पहचान की पुष्टि और न पुलिस का निष्कर्ष।'),
@@ -129,10 +158,27 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
 
   const exposureOptions: Array<[string, string, boolean, (value: boolean) => void]> = [
     ['clicked', t(language, 'Opened the link', 'लिंक खोला'), clicked, setClicked],
+    ['downloaded', t(language, 'Downloaded a file/APK', 'फ़ाइल/APK डाउनलोड किया'), downloaded, setDownloaded],
     ['installed', t(language, 'Installed an app/APK', 'ऐप/APK इंस्टॉल किया'), installed, setInstalled],
+    ['grantedPermissions', t(language, 'Allowed SMS/Accessibility/VPN access', 'SMS/Accessibility/VPN अनुमति दी'), grantedPermissions, setGrantedPermissions],
     ['paid', t(language, 'Sent money', 'पैसे भेजे'), paid, setPaid],
     ['sharedCredentials', t(language, 'Shared OTP/PIN/password', 'OTP/पिन/पासवर्ड बताया'), sharedCredentials, setSharedCredentials],
   ];
+
+  const updateExposure = (key: string, value: boolean, setter: (next: boolean) => void) => {
+    setter(value);
+    setCopied(false);
+    if (value && key === 'installed') setDownloaded(true);
+    if (value && key === 'grantedPermissions') {
+      setDownloaded(true);
+      setInstalled(true);
+    }
+    if (!value && key === 'downloaded') {
+      setInstalled(false);
+      setGrantedPermissions(false);
+    }
+    if (!value && key === 'installed') setGrantedPermissions(false);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1180px] px-5 py-10 sm:px-8 sm:py-14">
@@ -166,7 +212,7 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
 
           <div className="rounded-xl border border-[#d2ccc1] bg-[#fbfaf7] p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6b7774]">{t(language, '3 · Has anything already happened?', '3 · क्या पहले ही कुछ हो चुका है?')}</p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">{exposureOptions.map(([key, label, checked, setter]) => <label key={key} className={classes('flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-xs font-black transition', checked ? 'border-[#b65b48] bg-[#fbefec] text-[#812f21]' : 'border-[#d7d1c6] bg-white text-[#586763] hover:border-[#315f78]')}><input type="checkbox" checked={checked} onChange={(event) => setter(event.target.checked)} className="h-4 w-4 accent-[#a13d2a]" />{label}</label>)}</div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">{exposureOptions.map(([key, label, checked, setter]) => <label key={key} className={classes('flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-xs font-black transition', checked ? 'border-[#b65b48] bg-[#fbefec] text-[#812f21]' : 'border-[#d7d1c6] bg-white text-[#586763] hover:border-[#315f78]')}><input type="checkbox" checked={checked} onChange={(event) => updateExposure(key, event.target.checked, setter)} className="h-4 w-4 accent-[#a13d2a]" />{label}</label>)}</div>
           </div>
 
           <div className="flex items-start gap-3 rounded-lg border border-[#d7c590] bg-[#faf5e8] p-4 text-xs leading-5 text-[#665321]"><span className="mt-1 block h-2 w-2 shrink-0 rounded-full bg-[#9b7520]" /><p><strong>{t(language, 'Do not upload an APK here.', 'यहाँ कोई APK अपलोड न करें।')}</strong> {t(language, 'Preserve the original message and filename, but never install or forward the file to test it.', 'मूल संदेश और फ़ाइल का नाम सुरक्षित रखें, पर जाँचने के लिए फ़ाइल कभी इंस्टॉल या आगे न भेजें।')}</p></div>
@@ -193,19 +239,21 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
 
               <div className="rounded-xl bg-[#172a33] p-6 text-white sm:p-7">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b8d4e1]">{t(language, 'Your safest next route', 'आपका सबसे सुरक्षित अगला रास्ता')}</p><h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{assessment.track === 'emergency' ? t(language, 'Contain, call, preserve, report.', 'रोकें, कॉल करें, सबूत रखें, शिकायत करें।') : assessment.track === 'report-attempt' ? t(language, 'Verify elsewhere, then report the attempt.', 'कहीं और जाँचें, फिर कोशिश की शिकायत करें।') : t(language, 'Verify independently on the official service.', 'आधिकारिक सेवा पर ख़ुद जाँच करें।')}</h3></div>{assessment.track === 'emergency' && <a href="tel:1930" className="shrink-0 rounded-md bg-white px-4 py-3 text-center text-sm font-black text-[#172a33]">{t(language, 'Call 1930 now', 'अभी 1930 पर कॉल करें')}</a>}</div>
+                {(installed || grantedPermissions) && <p role="alert" className="mt-5 rounded-lg border border-white/20 bg-white/10 p-4 text-xs font-bold leading-5 text-white/90">{t(language, 'Use a different, trusted device for banking, password changes, and reporting. Keep the affected phone offline while you follow the containment steps.', 'बैंकिंग, पासवर्ड बदलने और शिकायत के लिए किसी दूसरे भरोसेमंद फ़ोन का इस्तेमाल करें। नीचे के कदम पूरे करते समय प्रभावित फ़ोन को इंटरनेट से अलग रखें।')}</p>}
                 <ol className="mt-6 space-y-3">{steps.map((step, index) => <li key={step} className="grid grid-cols-[28px_1fr] gap-3 text-xs leading-5 text-white/75"><span className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-[9px] font-black text-white">{index + 1}</span><span>{step}</span></li>)}</ol>
-                <button onClick={copyPlan} className="mt-6 rounded-md border border-white/20 px-4 py-3 text-xs font-black transition hover:bg-white/10">{copied ? t(language, 'Action plan copied', 'योजना कॉपी हो गई') : t(language, 'Copy action plan', 'योजना कॉपी करें')}</button>
+                <button onClick={copyPlan} className="mt-6 rounded-md border border-white/20 px-4 py-3 text-xs font-black transition hover:bg-white/10">{copied ? t(language, 'Safety brief copied', 'सुरक्षा सार कॉपी हो गया') : t(language, 'Copy report-ready safety brief', 'शिकायत के लिए सुरक्षा सार कॉपी करें')}</button>
               </div>
             </>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <a href={OFFICIAL_ECHALLAN_URL} target="_blank" rel="noreferrer" className="rounded-lg border border-[#b7cdd7] bg-[#eef4f7] p-4 transition hover:border-[#315f78]"><p className="text-[9px] font-black uppercase tracking-wide text-[#315f78]">{t(language, 'Verify', 'जाँचें')}</p><p className="mt-2 text-xs font-black">{t(language, 'Official eChallan portal ↗', 'आधिकारिक ई-चालान पोर्टल ↗')}</p></a>
+            <a href={CHAKSHU_URL} target="_blank" rel="noreferrer" className="rounded-lg border border-[#b8d1c4] bg-[#edf5f0] p-4 transition hover:border-[#246344]"><p className="text-[9px] font-black uppercase tracking-wide text-[#246344]">{t(language, 'Call · SMS · WhatsApp', 'कॉल · SMS · WhatsApp')}</p><p className="mt-2 text-xs font-black">{t(language, 'Report communication to Chakshu ↗', 'Chakshu पर संदेश की शिकायत ↗')}</p></a>
             <a href={CYBERCRIME_SUSPECT_URL} target="_blank" rel="noreferrer" className="rounded-lg border border-[#d5c998] bg-[#faf5e7] p-4 transition hover:border-[#96741f]"><p className="text-[9px] font-black uppercase tracking-wide text-[#765a19]">{t(language, 'Attempt', 'कोशिश')}</p><p className="mt-2 text-xs font-black">{t(language, 'Report suspect to I4C ↗', 'I4C को संदिग्ध की शिकायत ↗')}</p></a>
             <a href={CYBERCRIME_REPORT_URL} target="_blank" rel="noreferrer" className="rounded-lg border border-[#d6a69b] bg-[#fbefec] p-4 transition hover:border-[#a13d2a]"><p className="text-[9px] font-black uppercase tracking-wide text-[#973928]">{t(language, 'Victim', 'पीड़ित')}</p><p className="mt-2 text-xs font-black">{t(language, 'Report cybercrime ↗', 'साइबर अपराध शिकायत ↗')}</p></a>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-[#d7d1c6] bg-[#f7f4ee] p-4 text-[10px] leading-5 text-[#65726f] sm:flex-row sm:items-center sm:justify-between"><p>{t(language, 'Sources checked 24 Aug 2026: MoRTH eChallan warning, I4C reporting portal, and CRPF Cyber Byte.', 'स्रोत 24 अगस्त 2026 को जाँचे गए: MoRTH ई-चालान चेतावनी, I4C शिकायत पोर्टल, और CRPF साइबर बाइट।')}</p><button onClick={clear} className="w-fit font-black text-[#315f78] underline decoration-[#315f78]/30 underline-offset-4">{t(language, 'Clear this local check', 'यह जाँच साफ़ करें')}</button></div>
+          <div className="flex flex-col gap-3 rounded-lg border border-[#d7d1c6] bg-[#f7f4ee] p-4 text-[10px] leading-5 text-[#65726f] sm:flex-row sm:items-center sm:justify-between"><p>{t(language, 'Sources rechecked 28 Aug 2026: MoRTH eChallan warning, CERT-In’s current RTO/eChallan malware advisory, I4C, and DoT Chakshu.', 'स्रोत 28 अगस्त 2026 को दोबारा जाँचे गए: MoRTH ई-चालान चेतावनी, CERT-In की मौजूदा RTO/ई-चालान मालवेयर सलाह, I4C और DoT Chakshu।')} <a href={CERT_IN_ECHALLAN_ADVISORY_URL} target="_blank" rel="noreferrer" className="font-black text-[#315f78] underline underline-offset-2">{t(language, 'Read CERT-In advisory ↗', 'CERT-In सलाह पढ़ें ↗')}</a></p><button onClick={clear} className="w-fit shrink-0 font-black text-[#315f78] underline decoration-[#315f78]/30 underline-offset-4">{t(language, 'Clear this local check', 'यह जाँच साफ़ करें')}</button></div>
         </section>
       </div>
     </div>

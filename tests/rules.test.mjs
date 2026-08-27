@@ -11,7 +11,7 @@ import {
   formatDate,
   isValidIsoDate,
 } from '../lib/cases.ts';
-import { inspectChallanMessage, responseSteps } from '../lib/scam-shield.ts';
+import { inspectChallanMessage, officialSafetyUrls, responseSteps } from '../lib/scam-shield.ts';
 import { nextRoutes, officialRouteUrls } from '../lib/routes.ts';
 
 function confirmDecisive(caseFile) {
@@ -206,6 +206,52 @@ test('recovery plan is ordered containment first and is written in both language
   for (const step of [...installed, ...paid]) {
     assert.ok(step.hi.trim().length > 0, 'every recovery step needs Hindi');
     assert.notEqual(step.hi, step.en);
+  }
+});
+
+test('Scam Shield distinguishes a downloaded APK from an installed one', () => {
+  const downloaded = inspectChallanMessage({
+    message: '',
+    channel: 'sms',
+    clicked: true,
+    downloaded: true,
+    installed: false,
+    grantedPermissions: false,
+    paid: false,
+    sharedCredentials: false,
+  });
+  assert.equal(downloaded.outcome, 'suspicious');
+  assert.equal(downloaded.track, 'report-attempt');
+  assert.ok(downloaded.signals.some((signal) => signal.id === 'downloaded'));
+  assert.match(responseSteps({ message: '', channel: 'sms', clicked: true, downloaded: true, installed: false, grantedPermissions: false, paid: false, sharedCredentials: false })[0].en, /Do not open/i);
+
+  const permissions = inspectChallanMessage({
+    message: '',
+    channel: 'whatsapp',
+    clicked: true,
+    downloaded: true,
+    installed: true,
+    grantedPermissions: true,
+    paid: false,
+    sharedCredentials: false,
+  });
+  assert.equal(permissions.outcome, 'danger');
+  assert.equal(permissions.track, 'emergency');
+  assert.ok(permissions.signals.some((signal) => signal.id === 'permissions'));
+  assert.match(responseSteps({ message: '', channel: 'whatsapp', clicked: true, downloaded: true, installed: true, grantedPermissions: true, paid: false, sharedCredentials: false })[2].en, /uninstall/i);
+  assert.match(responseSteps({ message: '', channel: 'whatsapp', clicked: true, downloaded: true, installed: true, grantedPermissions: true, paid: false, sharedCredentials: false })[3].en, /Play Protect/i);
+  for (const signal of [...downloaded.signals, ...permissions.signals]) {
+    assertBilingual(signal.title, `${signal.id}.title`);
+    assertBilingual(signal.detail, `${signal.id}.detail`);
+  }
+});
+
+test('every Scam Shield escape route is a fixed HTTPS official destination', () => {
+  const allowedHosts = new Set(['echallan.parivahan.gov.in', 'www.cybercrime.gov.in', 'sancharsaathi.gov.in', 'www.cert-in.org.in']);
+  for (const route of officialSafetyUrls) {
+    const parsed = new URL(route);
+    assert.equal(parsed.protocol, 'https:');
+    assert.ok(allowedHosts.has(parsed.hostname), `unexpected safety host: ${parsed.hostname}`);
   }
 });
 
