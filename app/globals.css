@@ -49,6 +49,21 @@ button:focus-visible, a:focus-visible { outline: 3px solid #315f78; outline-offs
 input:focus-visible, textarea:focus-visible { outline: 2px solid #172a33; outline-offset: 2px; }
 ::selection { background: #dce9ef; color: #172a33; }
 
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-180%);
+  border-radius: 0.5rem;
+  background: #172a33;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+.skip-link:focus { transform: translateY(0); }
+
 @keyframes evidence-in {
   from { opacity: 0; transform: translateY(7px); }
   to { opacity: 1; transform: translateY(0); }

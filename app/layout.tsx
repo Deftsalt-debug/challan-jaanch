@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   title: 'Challan Jaanch — See the mismatch. Show the proof.',
   description: 'A private trust preflight for incorrect Indian eChallans and suspicious challan messages.',
   applicationName: 'Challan Jaanch',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/favicon.png', type: 'image/png', sizes: '128x128' }],
+    shortcut: '/favicon.png',
+  },
+  robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
     title: 'Challan Jaanch — See the mismatch. Show the proof.',
@@ -31,10 +37,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#172a33',
+  colorScheme: 'light',
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <a href="#main-content" className="skip-link">Skip to main content · मुख्य सामग्री पर जाएँ</a>
+        {children}
+      </body>
     </html>
   );
 }

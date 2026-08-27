@@ -497,7 +497,7 @@ These tests verify:
 
 - `package.json` declares scripts and dependencies.
 - `vite.config.ts` configures the Vinext/Sites build.
-- `next.config.ts` holds Next-compatible settings.
+- `next.config.ts` enforces portable production security headers and the legacy favicon redirect.
 - `.openai/hosting.json` binds this source tree to its Sites project.
 - `dist/` is generated production output and should not be edited manually.
 
@@ -527,7 +527,7 @@ User selects local files
   → structured fields returned to browser
   → user edits and confirms fields
   → deterministic assessment
-  → optional PDF / manifest download
+  → optional PDF / manifest download or bilingual share-safe brief copy
 ```
 
 The prototype does not save the original File objects, extracted fields, hashes, findings, or packets in an application-owned database.
@@ -795,8 +795,11 @@ in [docs/LOCALISATION.md](docs/LOCALISATION.md).
 challan-jaanch/
 ├── app/
 │   ├── api/analyze/route.ts     Optional extraction endpoint
+│   ├── error.tsx                Bilingual controlled recovery
 │   ├── globals.css              Visual system and motion
 │   ├── layout.tsx               Metadata, fonts, document shell
+│   ├── manifest.ts              Install and browser presentation metadata
+│   ├── not-found.tsx            Privacy-aware unknown-route recovery
 │   └── page.tsx                 Complete citizen journey
 ├── components/
 │   ├── EvidenceWorkbench.tsx    Source inspector, plate diff, rule clock
@@ -817,6 +820,7 @@ challan-jaanch/
 │   └── rules.test.mjs           Rule, boundary, and bilingual-completeness tests
 ├── public/
 │   ├── _headers                 Security and immutable-asset cache headers
+│   ├── favicon.png              Branded browser and install icon
 │   ├── og-release.png           Active release social preview
 │   └── og.png                   Preserved legacy social preview
 ├── .env.example                 Optional environment template
@@ -847,7 +851,7 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - `@openai/sites-vite-plugin`: Sites integration.
 - Cloudflare packages: Worker-compatible output and deployment tooling.
 
-`public/_headers` adds deployment-level defaults that deny framing, disable MIME sniffing, restrict referrer leakage and sensitive browser permissions, and isolate the opener context.
+`next.config.ts` enforces response headers on the rendered application and API route: framing is denied, MIME sniffing is disabled, referrer leakage and sensitive browser permissions are restricted, resources remain same-origin, and the opener context is isolated. `public/_headers` retains equivalent static-host defaults for portability.
 
 ## 17. What works today
 
@@ -864,6 +868,9 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - Rule-based date calculation.
 - PDF generation.
 - JSON manifest generation.
+- Copyable bilingual redacted or official-handoff case brief.
+- Branded install metadata and favicon routing.
+- Bilingual keyboard skip navigation and controlled error/404 recovery.
 - Redacted and official-handoff packet views.
 - Responsive mobile and desktop layouts.
 - Keyboard focus and reduced-motion handling.

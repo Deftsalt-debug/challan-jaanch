@@ -95,7 +95,7 @@ Parallel lane: `home → scam → verify | report-attempt | emergency`
 - **Processing:** transparent extraction steps; no simulated official progress.
 - **Review:** source inspector, character-level diff, rule clock, editing, and confirmation.
 - **Result:** finding trace, adversarial counter-checks, deadline context, and refusal path.
-- **Packet:** redacted/official-handoff views, attestation, PDF/JSON exports, and a separate official link.
+- **Packet:** redacted/official-handoff views, attestation, PDF/JSON exports, a bilingual share-safe brief, and a separate official link.
 - **Scam:** local message triage, inert URL inspection, exposure-aware response plan, and hard-coded official escape routes.
 
 ## Main technology choices
@@ -108,6 +108,7 @@ Parallel lane: `home → scam → verify | report-attempt | emergency`
 - Pure TypeScript scam rules for advisory patterns, URL classification, and exposure routing.
 - jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
 - OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
+- Next-compatible response headers, install metadata, bilingual skip navigation, and controlled error/404 recovery for production resilience.
 
 ## Production-hardening backlog
 
