@@ -74,6 +74,14 @@ The MVP has no database, R2 bucket, analytics, account system, or application-ow
 
 The API route necessarily transmits selected files to OpenAI only when the user chooses live extraction and a server-side key is configured. Production deployments should add an explicit consent receipt, retention verification, rate limits, and abuse controls before accepting real documents.
 
+### Onward-navigation boundary
+
+`lib/routes.ts` names where a disputed challan can be taken: the MoRTH grievance form, the Virtual Court, and a Lok Adalat. Every destination is a hard-coded `.gov.in` host over HTTPS, opened by the citizen in a new tab; the app submits nothing and transfers nothing.
+
+The module deliberately does not claim to know which forum currently holds a given challan or how long a transfer takes. Those differ by state and by the age of the record, and the prototype has no authorised way to read a real challan's live status, so it says so instead of guessing. Routes are shown whatever the outcome — somebody with no supported finding may still have grounds the rules cannot see — and only the framing changes.
+
+Tests assert that every destination is an official HTTPS `.gov.in` host and that the prose never predicts an outcome or implies a submission.
+
 ### Language boundary
 
 Both languages are written as source. Interface copy uses `t(language, english, hindi)`; the rule layer returns `Bilingual` `{ en, hi }` values that components resolve with `pick()`. No translation happens at runtime, so a language switch cannot degrade safety advice into an approximate rendering, and four tests fail the build if any rule-layer string loses its Hindi.

@@ -762,6 +762,33 @@ npm test
 npm run build
 ```
 
+## 14b. Where a citizen goes next
+
+Finding a contradiction is only half the journey. A disputed challan can sit
+with the issuing authority, be listed before a virtual court, or be taken up in
+a settlement forum, and each is a different destination with a different action.
+A citizen is normally expected to already know this.
+
+`lib/routes.ts` names all three: the ministry's grievance form on the eChallan
+service (with its separate ticket-status page), the Virtual Court, and a Lok
+Adalat. Each carries what it is, when it applies, and which authority runs it,
+in both languages.
+
+Three deliberate limits:
+
+- **Only official destinations.** Every URL is a hard-coded `.gov.in` host over
+  HTTPS, opened by the citizen in a new tab. A test fails the build if any other
+  destination appears.
+- **No invented timeline.** Which forum holds a challan, and for how long,
+  varies by state and by the age of the record. The prototype has no authorised
+  way to read a challan's live status, so it says that rather than guessing.
+- **Routes are not withheld.** Somebody with no supported finding may still have
+  grounds the rules cannot see — an alibi, a sold vehicle. The destinations stay
+  the same for every outcome; only the framing changes, and a test pins that.
+
+A further test asserts the prose never predicts an outcome or implies the app
+has filed anything.
+
 ## 14a. Language coverage
 
 The product runs completely in English and Hindi. The toggle switches every
@@ -803,6 +830,7 @@ challan-jaanch/
 │   └── page.tsx                 Complete citizen journey
 ├── components/
 │   ├── EvidenceWorkbench.tsx    Source inspector, plate diff, rule clock
+│   ├── NextSteps.tsx            Official next-step routes after a finding
 │   ├── ProductGuide.tsx         Help drawer and audio guidance
 │   └── ScamShield.tsx           Local scam triage and official safety routing
 ├── docs/
@@ -814,6 +842,7 @@ challan-jaanch/
 ├── lib/
 │   ├── cases.ts                 Types, fixtures, deterministic evidence rules
 │   ├── i18n.ts                  Bilingual primitives shared by rules and interface
+│   ├── routes.ts                Official next-step destinations and their ordering
 │   ├── scam-shield.ts           Scam patterns, URL classification, response tracks
 │   └── use-language.ts          Persisted, tab-synchronised language selection
 ├── tests/

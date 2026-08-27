@@ -10,13 +10,15 @@ The app has no consumer login. Reviewers can open it directly and run the comple
 
 Challan Jaanch is an independent, privacy-first trust preflight for Indian eChallans. It handles two failures citizens face: a real challan whose evidence may be inconsistent, and a fake challan message designed to steal money or install malware.
 
-For disputed records, citizens compare the challan, enforcement photo and vehicle record in a source-linked workbench. The app highlights plate and vehicle-class conflicts, requires confirmation of consequential fields, applies deterministic rules, exposes counter-explanations, and refuses to decide when evidence is ambiguous. Supported conflicts become a redacted or official-handoff PDF, JSON manifest or bilingual share-safe brief; nothing is automatically submitted.
+For disputed records, citizens compare the challan, enforcement photo and vehicle record in a source-linked workbench. It highlights plate and vehicle-class conflicts, requires confirmation of consequential fields, applies deterministic rules, exposes counter-explanations, and refuses to decide when evidence is ambiguous. Supported conflicts become a redacted or official-handoff PDF, JSON manifest or share-safe brief; nothing is submitted automatically.
 
-Scam Shield analyses pasted messages and URLs as inert text, identifies APK lures, credential requests, urgency, lookalike domains and WhatsApp context, then routes citizens to independent verification, I4C reporting, or urgent 1930 and bank containment based on actual exposure. Its patterns match Hinglish and Devanagari messages, not only English ones.
+Scam Shield analyses pasted messages and URLs as inert text, identifies APK lures, credential requests, urgency and lookalike domains, then routes citizens to independent verification, I4C reporting, or urgent 1930 and bank containment based on actual exposure. Its patterns match Hinglish and Devanagari, not only English.
 
-Current portals mainly show status, accept payment or receive grievances. Challan Jaanch adds the missing reasoning layer before those steps. It is better because every finding is traceable, uncertainty is visible, ambiguous evidence produces a refusal rather than an allegation, suspicious links are never opened, every screen works fully in Hindi, and the complete demo runs without login or personal data.
+Finding a contradiction is only half the journey, so the app names the three official places a challan can be taken — the ministry's grievance form, the Virtual Court and a Lok Adalat — while stating plainly that it cannot read a challan's live status.
 
-**Word count:** 207
+Current portals mainly show status, accept payment or receive grievances. Challan Jaanch adds the missing reasoning layer before those steps. It is better because every finding is traceable, uncertainty is visible, ambiguous evidence produces a refusal rather than an allegation, suspicious links are never opened, every screen works in Hindi, and the demo runs without login or personal data.
+
+**Word count:** 244
 
 ## Video
 

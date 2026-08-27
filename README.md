@@ -18,6 +18,7 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Complete Hindi and English:** the language toggle switches the entire journey — workbench, findings, refusals, packet and Scam Shield — and tests fail if any rule-layer string lacks Hindi.
 - **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened.
 - **Hinglish and Devanagari triage:** scam patterns match the way these messages actually arrive in India, not only their English translations.
+- **Names the route out:** after a finding, the app names the three official destinations a challan can actually be taken to — the MoRTH grievance form, the Virtual Court and a Lok Adalat — without claiming to know where a given challan currently sits.
 - **Incident-aware routing:** attempted impersonation routes to I4C Report Suspect, while payments, credential exposure, or APK installation route to 1930 and the National Cyber Crime Reporting Portal.
 - **No government impersonation:** the app never asks for portal credentials, submits a grievance, or claims a government decision.
 
@@ -93,10 +94,12 @@ app/not-found.tsx                  Privacy-aware unknown-route recovery
 app/manifest.ts                    Install and browser presentation metadata
 components/EvidenceWorkbench.tsx  Source inspector, character diff, rule clock
 components/ProductGuide.tsx       Audio guide and in-product architecture drawer
+components/NextSteps.tsx          Official next-step routes after a finding
 components/ScamShield.tsx         Local scam triage, recovery plan, and official routing
 lib/cases.ts                       Typed fixtures, comparison rules, date logic
 lib/scam-shield.ts                 Pure scam signals, URL classification, and response tracks
 lib/i18n.ts                        Bilingual primitives shared by rules and interface
+lib/routes.ts                      Official next-step destinations and their ordering
 lib/use-language.ts                Persisted, tab-synchronised language selection
 tests/rules.test.mjs               Deterministic rule, API-boundary, and bilingual-completeness tests
 docs/ARCHITECTURE.md               Trust boundaries and data flow

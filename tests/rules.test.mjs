@@ -12,6 +12,7 @@ import {
   isValidIsoDate,
 } from '../lib/cases.ts';
 import { inspectChallanMessage, responseSteps } from '../lib/scam-shield.ts';
+import { nextRoutes, officialRouteUrls } from '../lib/routes.ts';
 
 function confirmDecisive(caseFile) {
   return new Set(caseFile.facts.filter((fact) => fact.decisive).map((fact) => fact.key));
@@ -284,3 +285,65 @@ test('dates render in the reader’s own language', () => {
   assert.ok(/[ऀ-ॿ]/u.test(hindiDate), `expected Devanagari date, received ${hindiDate}`);
   assert.notEqual(hindiDate, formatDate('2026-08-12', 'en'));
 });
+
+test('every next-step destination is an official government host over HTTPS', () => {
+  for (const url of officialRouteUrls) {
+    const parsed = new URL(url);
+    assert.equal(parsed.protocol, 'https:', `${url} must be HTTPS`);
+    assert.ok(parsed.hostname.endsWith('.gov.in'), `${url} must be a .gov.in host`);
+  }
+
+  // The rendered plan must never introduce a destination outside that set.
+  const allowed = new Set(officialRouteUrls);
+  for (const outcome of ['supported', 'unable', 'none', 'review']) {
+    const plan = nextRoutes(outcome, { status: 'open', daysLeft: 30 });
+    for (const route of plan.routes) {
+      assert.ok(allowed.has(route.url), `unexpected destination ${route.url}`);
+      if (route.secondary) assert.ok(allowed.has(route.secondary.url), `unexpected secondary ${route.secondary.url}`);
+    }
+  }
+});
+
+test('next steps stay available when no contradiction was supported', () => {
+  const supported = nextRoutes('supported', { status: 'open', daysLeft: 30 });
+  const none = nextRoutes('none', { status: 'open', daysLeft: 30 });
+
+  // Routes are identical; only the framing changes. Hiding official routes from
+  // somebody whose grounds this tool cannot see would be the wrong call.
+  assert.deepEqual(none.routes.map((route) => route.id), supported.routes.map((route) => route.id));
+  assert.notEqual(pickEn(none.lead), pickEn(supported.lead));
+  assert.match(pickEn(none.lead), /not the same as the challan being correct/i);
+});
+
+test('an uncalculable or expired deadline is treated as urgent', () => {
+  assert.equal(nextRoutes('supported', null).routes[0].status, 'act-now');
+  assert.equal(nextRoutes('supported', { status: 'passed', daysLeft: -3 }).routes[0].status, 'act-now');
+  assert.equal(nextRoutes('supported', { status: 'open', daysLeft: 4 }).routes[0].status, 'act-now');
+  assert.equal(nextRoutes('supported', { status: 'open', daysLeft: 30 }).routes[0].status, 'closing');
+});
+
+test('the route plan never predicts an outcome or claims a submission', () => {
+  const plan = nextRoutes('supported', { status: 'open', daysLeft: 30 });
+  const prose = [plan.lead, plan.caution, ...plan.routes.flatMap((r) => [r.title, r.what, r.when])]
+    .map(pickEn)
+    .join(' ');
+  assert.doesNotMatch(prose, /\b(will be (cancelled|dismissed|waived)|guaranteed|we (will )?(file|submit)|on your behalf)\b/i);
+  assert.match(pickEn(plan.lead), /Nothing has been submitted|open each of them yourself/i);
+});
+
+test('every next-step string is presentable in Hindi', () => {
+  const plan = nextRoutes('supported', { status: 'open', daysLeft: 30 });
+  assertBilingual(plan.lead, 'routes.lead');
+  assertBilingual(plan.caution, 'routes.caution');
+  for (const route of plan.routes) {
+    assertBilingual(route.authority, `${route.id}.authority`);
+    assertBilingual(route.title, `${route.id}.title`);
+    assertBilingual(route.what, `${route.id}.what`);
+    assertBilingual(route.when, `${route.id}.when`);
+    if (route.secondary) assertBilingual(route.secondary.label, `${route.id}.secondary`);
+  }
+});
+
+function pickEn(value) {
+  return value.en;
+}
