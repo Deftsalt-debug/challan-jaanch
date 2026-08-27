@@ -4,6 +4,9 @@
 
 An evidence-first preflight for potentially incorrect or fraudulent Indian eChallans. It combines a source-linked contradiction checker with a local Scam Shield for suspicious messages, APK lures, credential requests, and lookalike payment destinations.
 
+- **Live public demo:** https://challan-jaanch.deftsalt.chatgpt.site
+- **Hackathon submission pack:** [SUBMISSION.md](SUBMISSION.md)
+
 ## What makes it different
 
 - **Source-linked findings:** every claim points back to the exact confirmed fields that produced it.
@@ -89,7 +92,8 @@ lib/scam-shield.ts                 Pure scam signals, URL classification, and re
 tests/rules.test.mjs               Deterministic rule and API-boundary tests
 docs/ARCHITECTURE.md               Trust boundaries and data flow
 docs/LOCAL_DEVELOPMENT.md          Setup and troubleshooting
-docs/DEMO_SCRIPT.md                A judge-ready 90-second walkthrough
+docs/DEMO_SCRIPT.md                Timed two-minute submission walkthrough
+docs/VIDEO_NARRATION.txt           Clean voice-over copy for the submission video
 ```
 
 ## Product boundary

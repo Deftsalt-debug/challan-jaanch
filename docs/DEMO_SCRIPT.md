@@ -1,59 +1,82 @@
-# 90-second judge demo
+# Two-minute submission video
 
-## Clear contradiction path
+Target length: **1:52–1:58**. The first minute is the citizen experience. The second minute explains the build and product decisions.
 
-**0–12 seconds — Set the stakes**
+## Minute one — citizen demo
 
-“The official portal accepts a grievance, but a citizen first has to understand whether the supplied evidence supports one. Challan Jaanch is that evidence preflight.”
+### 0:00–0:08 — The missing step
 
-On the home page, switch between **Clear mismatch**, **Honest refusal**, and **Duplicate event** to show that the product has more than one outcome.
+**Screen:** Home page.
 
-**12–25 seconds — Open the evidence**
+**Say:** “A confusing eChallan leaves a citizen with two questions: does the evidence actually match my vehicle, and is the message itself even genuine? Challan Jaanch answers both before the citizen pays or files a grievance.”
 
-Choose **Run the 90-second demo**. In the evidence workbench, open the enforcement photo source. Explain that highlights are overlays and the source is never rewritten.
+### 0:08–0:21 — Bring the records together
 
-**25–40 seconds — Show the unique interaction**
+**Action:** Choose **Run the 90-second demo**.
 
-Open **Character diff**. Click the last plate position. The photo shows `7`; the challan and vehicle record show `1`. Then open **Rule clock** to show the dated Rule 167 safety calculation.
+**Say:** “I’ll use a clearly labelled synthetic case. The workbench places the challan, enforcement photo and vehicle record side by side. Originals stay unchanged, and every extracted fact remains linked to its source.”
 
-**40–53 seconds — Prove the human gate**
+### 0:21–0:34 — Show the contradiction
 
-The comparison is locked. Choose **Confirm all visible values**, then run the comparison. Explain that editing any decisive value removes its confirmation.
+**Action:** Open **Character diff** and select the final plate position.
 
-**53–68 seconds — Inspect, do not celebrate**
+**Say:** “Here the photograph shows seven, while the challan and vehicle record show one. The vehicle family also conflicts: a two-wheeler in the photo versus a passenger car on record.”
 
-The result reports two narrow contradictions. Open **Sceptic mode** and expand the unresolved cause check: the product reports the conflict but will not infer fraud, cloning, or authority error.
+### 0:34–0:46 — Keep the human in control
 
-**68–82 seconds — Build the portable artifact**
+**Action:** Choose **Confirm all visible values**, then **Run objective comparison**.
 
-Choose **Build citizen packet**. Toggle between **Redacted share** and **Official handoff**. Complete the attestation; show the PDF and JSON manifest actions.
+**Say:** “The comparison stays locked until I confirm every decisive value. If I edit one, that confirmation and any earlier result are invalidated.”
 
-**82–90 seconds — Land the boundary**
+### 0:46–0:54 — Show the narrow result
 
-“No credentials were collected and nothing was submitted. The citizen carries a transparent, source-linked packet into the official process.”
+**Screen:** Supported result.
 
-## Trust test: refusal path
+**Say:** “The result reports two source-linked contradictions. It does not declare the challan invalid, accuse an authority, or predict whether a grievance will succeed.”
 
-From the result screen, choose **Try the refusal case**, confirm the synthetic values, and compare. The result must say **Unable to assess safely** because `Z` and `2` remain plausible. No packet action should appear.
+### 0:54–1:00 — Switch to scam protection
 
-This second path is the strongest answer to “What happens when the AI is wrong?”
+**Action:** Open **Scam check**, then choose **Fake APK lure**.
 
-## 45-second extension: fake challan protection
+**Say:** “Scam Shield inspects suspicious wording and destinations as inert text, never opening the APK or payment route.”
 
-**0–10 seconds — Change the threat model**
+## Minute two — build and rationale
 
-Return home and open **Scam check**. Say: “Sometimes the record is not wrong—the entire challan message is fake. That requires a different safety route.”
+### 1:00–1:13 — Architecture
 
-**10–22 seconds — Inspect without clicking**
+**Screen:** **How it works → Technology**.
 
-Choose **Fake APK lure**. Point out that the app parses the address as inert text, flags the `.apk`, and identifies the lookalike hostname without visiting either destination.
+**Say:** “The interface is React 19 and TypeScript, built with Vinext, Vite and Tailwind for a Cloudflare-compatible deployment. Optional multimodal extraction returns structured observable fields with storage disabled.”
 
-**22–32 seconds — Show calibrated language**
+### 1:13–1:27 — Separate observation from judgment
 
-Choose **Known official hostname**. The result says **No obvious red flag**, not “safe.” Explain that software cannot authenticate the sender and the citizen must still independently open the official service.
+**Screen:** Technology architecture principle.
 
-**32–45 seconds — Trigger emergency mode**
+**Say:** “AI is limited to reading. Deterministic TypeScript rules decide whether confirmed sources conflict. That separation makes every result reproducible, testable and explainable.”
 
-Return to the APK fixture and check **Installed an app/APK** or **Sent money**. The route changes immediately to an ordered containment plan with **Call 1930**, bank/provider contact, evidence preservation, and the National Cyber Crime Reporting Portal.
+### 1:27–1:39 — Design for uncertainty
 
-Land with: “Wrong evidence goes to the grievance preflight. A fake route goes to Scam Shield. The product does not confuse the two.”
+**Screen:** **Honest refusal** outcome.
+
+**Say:** “The strongest feature is refusal. When a decisive character could be Z or 2, the system produces no allegation. A safety product should expose uncertainty instead of hiding it behind a confidence score.”
+
+### 1:39–1:50 — Privacy and portability
+
+**Screen:** Finding or packet view.
+
+**Say:** “There is no application database, analytics or persistent document store. The synthetic demo is keyless; PDFs, manifests, hashes and Scam Shield processing happen in the browser.”
+
+### 1:50–1:58 — Close
+
+**Screen:** Scam Shield verdict, then project title.
+
+**Say:** “Current portals remain the system of record. Challan Jaanch is the missing trust preflight: verify the evidence, avoid the scam, and carry a transparent packet into the official process.”
+
+## Recording checklist
+
+- Record at 1280×720 or 1920×1080 in a Chromium browser.
+- Keep browser zoom at 100% and notifications hidden.
+- Do not exceed two minutes; aim for 1:55.
+- Show only synthetic fixtures—never a real registration, phone number or challan.
+- Keep the public URL visible briefly at the beginning or end.
+- Export as H.264 MP4, 1080p or 720p, with clearly audible narration.

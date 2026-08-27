@@ -1,0 +1,19 @@
+A confusing eChallan leaves a citizen with two questions: does the evidence actually match my vehicle, and is the message itself even genuine? Challan Jaanch answers both before the citizen pays or files a grievance. [[slnc 350]]
+
+I’ll use a clearly labelled synthetic case. The workbench places the challan, enforcement photo, and vehicle record side by side. Originals stay unchanged, and every extracted fact remains linked to its source. [[slnc 300]]
+
+Here the photograph shows seven, while the challan and vehicle record show one. The vehicle family also conflicts: a two-wheeler in the photo versus a passenger car on record. [[slnc 300]]
+
+The comparison stays locked until I confirm every decisive value. If I edit one, that confirmation and any earlier result are invalidated. The result reports two source-linked contradictions. It does not declare the challan invalid, accuse an authority, or predict whether a grievance will succeed. [[slnc 350]]
+
+Scam Shield inspects suspicious wording and destinations as inert text, never opening the APK or payment route. [[slnc 700]]
+
+The interface is React 19 and TypeScript, built with Vinext, Vite, and Tailwind for a Cloudflare-compatible deployment. Optional multimodal extraction returns structured observable fields with storage disabled. [[slnc 300]]
+
+AI is limited to reading. Deterministic TypeScript rules decide whether confirmed sources conflict. That separation makes every result reproducible, testable, and explainable. [[slnc 300]]
+
+The strongest feature is refusal. When a decisive character could be Z or 2, the system produces no allegation. A safety product should expose uncertainty instead of hiding it behind a confidence score. [[slnc 300]]
+
+There is no application database, analytics, or persistent document store. The synthetic demo is keyless; PDFs, manifests, hashes, and Scam Shield processing happen in the browser. [[slnc 300]]
+
+Current portals remain the system of record. Challan Jaanch is the missing trust preflight: verify the evidence, avoid the scam, and carry a transparent packet into the official process.
