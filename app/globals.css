@@ -120,6 +120,22 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid #172a33; outlin
   }
 }
 
+/*
+ * Inline text actions sit inside dense footer and attribution rows, where their
+ * natural hit area is only 13-20px tall. That is below the WCAG 2.5.8 minimum
+ * and well below comfortable thumb reach, which matters because this product is
+ * aimed at people using it on a phone. Grow the touch area vertically without
+ * moving the text: the negative margin absorbs the padding so surrounding
+ * layout is unchanged.
+ */
+.touch-target {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 0.5rem;
+  margin-block: -0.5rem;
+}
+
 @media print {
   header, footer, button { display: none !important; }
   body { background: white; }

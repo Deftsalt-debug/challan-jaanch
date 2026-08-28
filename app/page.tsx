@@ -169,7 +169,7 @@ function Shell({ children, stage, language, onLanguage, onHome, onScam, onDelete
       {stage !== 'home' && (
         <footer className="mx-auto flex w-full max-w-[1180px] flex-col gap-3 border-t border-[#d8d2c7] px-5 py-7 text-xs text-[#65726f] sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>{stage === 'scam' ? t(language, 'Safety triage only. It cannot authenticate a sender or declare a message safe.', 'सिर्फ़ सुरक्षा छँटाई। यह भेजने वाले की पहचान नहीं कर सकता और न संदेश को सुरक्षित घोषित कर सकता है।') : t(language, 'Not a government service or legal adviser. No official submission occurs here.', 'यह सरकारी सेवा या क़ानूनी सलाहकार नहीं है। यहाँ कोई आधिकारिक आवेदन नहीं होता।')}</p>
-          <button onClick={onDelete} className="w-fit font-extrabold text-[#a13d2a] underline decoration-[#a13d2a]/30 underline-offset-4">{stage === 'scam' ? t(language, 'Clear and leave Scam Shield', 'साफ़ करके ठगी ढाल से बाहर जाएँ') : t(language, 'Delete this case from this browser', 'इस ब्राउज़र से यह केस मिटाएँ')}</button>
+          <button onClick={onDelete} className="touch-target w-fit font-extrabold text-[#a13d2a] underline decoration-[#a13d2a]/30 underline-offset-4">{stage === 'scam' ? t(language, 'Clear and leave Scam Shield', 'साफ़ करके ठगी ढाल से बाहर जाएँ') : t(language, 'Delete this case from this browser', 'इस ब्राउज़र से यह केस मिटाएँ')}</button>
         </footer>
       )}
     </main>
