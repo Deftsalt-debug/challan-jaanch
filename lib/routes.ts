@@ -86,8 +86,8 @@ export function nextRoutes(outcome: Outcome, deadline: { status: ClockStatus; da
       authority: bi('Ministry of Road Transport and Highways', 'सड़क परिवहन और राजमार्ग मंत्रालय'),
       title: bi('Open eChallan and choose Grievance', 'ई-चालान खोलें और Grievance चुनें'),
       what: bi(
-        'The national eChallan service exposes its grievance flow from the official portal. Open the service independently, choose Grievance, and follow the current instructions shown there.',
-        'राष्ट्रीय ई-चालान सेवा अपने आधिकारिक पोर्टल से शिकायत का रास्ता देती है। सेवा अलग से खोलें, Grievance चुनें और वहाँ दिख रहे मौजूदा निर्देश मानें।',
+        'The national eChallan service exposes its grievance flow from the official portal. It may direct you to Delhi Traffic Police or the NextGen eChallan portal based on the challan state; follow only the destination the official page shows.',
+        'राष्ट्रीय ई-चालान सेवा अपने आधिकारिक पोर्टल से शिकायत का रास्ता देती है। चालान के राज्य के अनुसार वह आपको Delhi Traffic Police या NextGen eChallan पोर्टल पर भेज सकती है; सिर्फ़ उसी पते पर जाएँ जो आधिकारिक पेज दिखाए।',
       ),
       when: bi(
         'The earliest route, and the one your evidence packet is written for. Raise it while the record is still with the issuing authority rather than after it moves on.',
@@ -120,12 +120,12 @@ export function nextRoutes(outcome: Outcome, deadline: { status: ClockStatus; da
       authority: bi('National Legal Services Authority', 'राष्ट्रीय विधिक सेवा प्राधिकरण'),
       title: bi('Consider a Lok Adalat settlement', 'लोक अदालत में समझौते पर विचार करें'),
       what: bi(
-        'Lok Adalats are settlement forums held periodically, and pending traffic matters are commonly taken up in them. A settlement there ends the matter by agreement rather than by a contested hearing.',
-        'लोक अदालतें समय-समय पर लगने वाले समझौता मंच हैं, और लंबित यातायात मामले अक्सर वहाँ लिए जाते हैं। वहाँ समझौता होने पर मामला सुनवाई के बजाय आपसी सहमति से ख़त्म होता है।',
+        'Lok Adalats are periodic settlement forums. A traffic matter is available there only when the relevant court or legal-services authority includes it; the announced eligibility and listing control.',
+        'लोक अदालतें समय-समय पर लगने वाले समझौता मंच हैं। यातायात मामला तभी वहाँ उपलब्ध होता है जब संबंधित अदालत या विधिक सेवा प्राधिकरण उसे शामिल करे; घोषित पात्रता और सूची ही लागू होती है।',
       ),
       when: bi(
-        'An alternative to contesting, not a replacement for checking whether the challan is correct in the first place. Dates and which matters are listed are announced by the legal services authority.',
-        'यह सुनवाई का विकल्प है, पहले यह जाँचने का नहीं कि चालान सही है या नहीं। तारीख़ें और कौन से मामले सूचीबद्ध होंगे, यह विधिक सेवा प्राधिकरण बताता है।',
+        'Check an announced session and your matter’s eligibility first. It is an optional settlement route, not an automatic destination and not a replacement for checking the record.',
+        'पहले घोषित सत्र और अपने मामले की पात्रता जाँचें। यह वैकल्पिक समझौता रास्ता है, कोई पक्का गंतव्य नहीं, और रिकॉर्ड जाँचने का विकल्प भी नहीं।',
       ),
     },
   ];

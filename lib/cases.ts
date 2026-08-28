@@ -148,6 +148,22 @@ export function cloneCase(source: DemoCase): DemoCase {
   return JSON.parse(JSON.stringify(source)) as DemoCase;
 }
 
+export function maskIdentifier(value: string): string {
+  if (value.length < 6) return '••••';
+  return `${value.slice(0, 2)}••••${value.slice(-4)}`;
+}
+
+/** Masks every challan and registration identifier that can appear in prose. */
+export function redactCaseText(value: string, caseFile: DemoCase): string {
+  const identifiers = [
+    caseFile.challanNumber,
+    ...caseFile.facts.filter((fact) => fact.key.toLowerCase().includes('plate')).map((fact) => fact.value),
+  ].filter(Boolean);
+  return [...new Set(identifiers)]
+    .sort((left, right) => right.length - left.length)
+    .reduce((text, identifier) => text.replaceAll(identifier, maskIdentifier(identifier)), value);
+}
+
 export function normaliseRegistration(value: string): string {
   return value.normalize('NFKC').toUpperCase().replace(/[\s-]/g, '');
 }
@@ -245,8 +261,44 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
   const recordPlate = normaliseRegistration(byKey.recordPlate.value);
   const visiblePlate = normaliseRegistration(photoPlate.value);
   const rcPlate = normaliseRegistration(byKey.rcPlate.value);
-  const plateConflict = recordPlate === rcPlate && visiblePlate !== rcPlate && Math.min(byKey.recordPlate.reliability, photoPlate.reliability, byKey.rcPlate.reliability) >= 0.92;
-  const familyConflict = byKey.photoFamily.value !== 'Unknown' && byKey.photoFamily.value !== byKey.rcFamily.value && Math.min(byKey.photoFamily.reliability, byKey.rcFamily.reliability) >= 0.92;
+  const plateSourcesClear = Math.min(byKey.recordPlate.reliability, photoPlate.reliability, byKey.rcPlate.reliability) >= 0.92;
+  const plateConflict = plateSourcesClear && recordPlate === rcPlate && visiblePlate !== rcPlate;
+  const familySourcesClear = byKey.photoFamily.value !== 'Unknown'
+    && byKey.rcFamily.value !== 'Unknown'
+    && Math.min(byKey.photoFamily.reliability, byKey.rcFamily.reliability) >= 0.92;
+  const familyConflict = familySourcesClear && byKey.photoFamily.value !== byKey.rcFamily.value;
+
+  // A clear plate contradiction is independently sufficient. Without one, an
+  // unreadable vehicle family must produce an abstention rather than the much
+  // stronger (and misleading) "No objective ground found" outcome.
+  if (!plateConflict && !familySourcesClear) {
+    return {
+      outcome: 'unable',
+      eyebrow: bi('Unable to assess safely', 'सुरक्षित रूप से आकलन संभव नहीं'),
+      headline: bi('The vehicle family is not clear enough.', 'वाहन का प्रकार पर्याप्त साफ़ नहीं है।'),
+      explanation: bi(
+        'The supplied photograph or vehicle record does not support a dependable broad-class comparison. Challan Jaanch will not treat missing clarity as agreement.',
+        'दी गई फोटो या वाहन रिकॉर्ड से वाहन के मोटे प्रकार की भरोसेमंद तुलना नहीं हो सकती। चालान जाँच अस्पष्टता को मेल मानकर नहीं चलेगा।',
+      ),
+      findings: [],
+      counterChecks: [
+        {
+          label: bi('Broad vehicle family visible', 'वाहन का मोटा प्रकार साफ़ दिखता है'),
+          result: 'unresolved',
+          explanation: bi('Mark the source as clear only when the broad family is visible in the original.', 'स्रोत को तभी साफ़ मानें जब मूल में वाहन का मोटा प्रकार साफ़ दिखे।'),
+        },
+        {
+          label: bi('Plate contradiction independently supported', 'नंबर का विरोधाभास अलग से प्रमाणित'),
+          result: 'unresolved',
+          explanation: bi('The confirmed plate fields do not independently support a contradiction.', 'पुष्ट नंबर फ़ील्ड अलग से कोई विरोधाभास प्रमाणित नहीं करते।'),
+        },
+      ],
+      nextBestEvidence: bi(
+        'Use the original full-frame enforcement photograph or a clearer vehicle record.',
+        'मूल पूरे फ़्रेम वाली कार्रवाई-फोटो या ज़्यादा साफ़ वाहन रिकॉर्ड इस्तेमाल करें।',
+      ),
+    };
+  }
 
   const findings: Finding[] = [];
   if (plateConflict) {
@@ -291,8 +343,12 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
     ),
     findings,
     counterChecks: [
-      { label: bi('Confusable character ruled out', 'भ्रम पैदा करने वाला अक्षर ख़ारिज'), result: 'resolved', explanation: bi('The decisive digit is visible in the synthetic full-resolution crop and was confirmed by the user.', 'निर्णायक अंक पूरे रिज़ॉल्यूशन वाले नकली हिस्से में दिखता है और उपयोगकर्ता ने उसे पुष्ट किया।') },
-      { label: bi('Vehicle classes are comparable', 'वाहन श्रेणियाँ तुलना योग्य हैं'), result: 'resolved', explanation: bi('A two-wheeler and passenger car are different broad families.', 'दोपहिया और कार अलग-अलग मोटे प्रकार हैं।') },
+      plateConflict
+        ? { label: bi('Confusable character ruled out', 'भ्रम पैदा करने वाला अक्षर ख़ारिज'), result: 'resolved', explanation: bi('The visible plate was treated as clear only after the citizen confirmed it against the supplied source.', 'दिख रहे नंबर को तभी साफ़ माना गया जब नागरिक ने उसे दिए गए स्रोत से मिलाकर पुष्ट किया।') }
+        : { label: bi('Plate contradiction used', 'नंबर का विरोधाभास इस्तेमाल हुआ'), result: 'not-applicable', explanation: bi('No registration-mark finding is included in this result.', 'इस नतीजे में पंजीकरण नंबर का कोई निष्कर्ष शामिल नहीं है।') },
+      familyConflict
+        ? { label: bi('Vehicle classes are comparable', 'वाहन श्रेणियाँ तुलना योग्य हैं'), result: 'resolved', explanation: bi(`The confirmed broad families — ${byKey.photoFamily.value} and ${byKey.rcFamily.value} — are different.`, `पुष्ट मोटे प्रकार — ${vehicleFamilyHindi(byKey.photoFamily.value)} और ${vehicleFamilyHindi(byKey.rcFamily.value)} — अलग हैं।`) }
+        : { label: bi('Vehicle-family contradiction used', 'वाहन प्रकार का विरोधाभास इस्तेमाल हुआ'), result: familySourcesClear ? 'not-applicable' : 'unresolved', explanation: familySourcesClear ? bi('No broad vehicle-family finding is included in this result.', 'इस नतीजे में वाहन के मोटे प्रकार का कोई निष्कर्ष शामिल नहीं है।') : bi('The vehicle-family sources were not clear enough for a class finding, so none was included.', 'वाहन प्रकार वाले स्रोत निष्कर्ष के लिए पर्याप्त साफ़ नहीं थे, इसलिए ऐसा कोई निष्कर्ष शामिल नहीं है।') },
       { label: bi('Record could be stale', 'रिकॉर्ड पुराना हो सकता है'), result: 'not-applicable', explanation: bi('Plate and class findings do not rely on colour or specific model data.', 'नंबर और श्रेणी के निष्कर्ष रंग या मॉडल की जानकारी पर निर्भर नहीं हैं।') },
       { label: bi('Cause of the mismatch known', 'बेमेल का कारण ज्ञात'), result: 'unresolved', explanation: bi('The product reports the contradiction but does not infer cloning, fraud or authority error.', 'उत्पाद विरोधाभास बताता है, पर क्लोनिंग, धोखाधड़ी या विभागीय ग़लती का अनुमान नहीं लगाता।') },
     ],
@@ -398,7 +454,17 @@ export function deadlineFor(caseFile: DemoCase, today = new Date()): { date: str
   const date = addCalendarDays(caseFile.issueDate, 45);
   const [year, month, day] = date.split('-').map(Number);
   const deadline = Date.UTC(year, month - 1, day);
-  const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  // The rule is a calendar-day clock for an Indian public service. Using the
+  // UTC date makes the status one day late between midnight and 05:30 IST.
+  const indiaParts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(today).filter((part) => part.type !== 'literal').map((part) => [part.type, Number(part.value)]),
+  ) as Record<'year' | 'month' | 'day', number>;
+  const now = Date.UTC(indiaParts.year, indiaParts.month - 1, indiaParts.day);
   const daysLeft = Math.ceil((deadline - now) / 86_400_000);
   return { date, daysLeft, status: daysLeft > 0 ? 'open' : daysLeft === 0 ? 'today' : 'passed' };
 }

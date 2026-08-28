@@ -13,8 +13,10 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **A real refusal path:** ambiguous plate characters or unreadable vehicle classes stop the finding instead of becoming an allegation.
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
 - **Human verification gates:** editing a decisive field invalidates its confirmation and the prior result.
+- **A complete no-key path:** manual entry includes explicit source-clarity controls, closed vehicle-family choices, and an abstention when the original is unclear; a blank field cannot be confirmed.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
-- **Share-safe briefing:** after attestation, a redacted or official-handoff case brief can be copied in the active language with the same source anchors and non-government boundary.
+- **Truthful integrity metadata:** citizen files are hashed locally by source role; synthetic references carry a null hash instead of a fabricated checksum.
+- **Share-safe briefing:** after attestation, a redacted or official-handoff case brief can be copied in the active language with the same source anchors and non-government boundary. Redacted mode masks every challan/registration identifier and citizen filename across the screen, PDF, manifest, and copied brief.
 - **Complete Hindi and English:** the language toggle switches the entire journey — workbench, findings, refusals, packet and Scam Shield — and tests fail if any rule-layer string lacks Hindi.
 - **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened. Its exposure ladder distinguishes a link opened, a file downloaded, an APK installed, dangerous permissions granted, credentials shared, and money sent.
 - **Hinglish and Devanagari triage:** scam patterns match the way these messages actually arrive in India, not only their English translations.
@@ -28,13 +30,13 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 1. Run one of three visibly synthetic cases or select your own records.
 2. Inspect the sources in the evidence workbench.
 3. Compare plate characters and review the Rule 167 clock.
-4. Confirm each decisive fact against the source.
+4. Confirm each decisive fact and, for citizen files, mark whether the original source is actually clear.
 5. Run the deterministic comparison.
 6. Inspect the finding map and adversarial counter-checks.
 7. Build a redacted or official-handoff packet.
 8. Continue separately on the official eChallan portal.
 
-The synthetic evidence demo and Scam Shield are complete without an API key. Live file extraction is optional and fails safely into manual verification when it is not configured.
+The synthetic evidence demo and Scam Shield are complete without an API key. Live file extraction is optional and fails safely into a fully usable manual-verification path when it is not configured.
 
 ## Technology
 
@@ -77,7 +79,7 @@ Add `OPENAI_API_KEY` to `.env.local`. Never commit that file. The demo does not 
 npm run verify
 ```
 
-This runs linting, TypeScript checks, deterministic-rule tests, and the production build.
+This runs linting, TypeScript checks, deterministic-rule tests, submission-limit checks, and the production build. The release suite also guards the India-local Rule 167 day boundary, official-route wording, security-header parity, and truthful packet-integrity metadata.
 
 For the full release gate, including the npm production-dependency advisory check:
 

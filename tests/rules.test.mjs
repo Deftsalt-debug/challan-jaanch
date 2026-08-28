@@ -10,6 +10,8 @@ import {
   normaliseRegistration,
   formatDate,
   isValidIsoDate,
+  maskIdentifier,
+  redactCaseText,
 } from '../lib/cases.ts';
 import { inspectChallanMessage, officialSafetyUrls, responseSteps } from '../lib/scam-shield.ts';
 import { nextRoutes, officialRouteUrls } from '../lib/routes.ts';
@@ -61,6 +63,18 @@ test('registration normalization does not guess visually confusable characters',
   assert.notEqual(normaliseRegistration('ZZ00CJ000O'), normaliseRegistration('ZZ00CJ0000'));
 });
 
+test('redacted packet prose masks every challan and registration identifier', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  const finding = assessCase(caseFile, confirmDecisive(caseFile)).findings[0];
+  const redacted = redactCaseText(`${caseFile.challanNumber} · ${finding.neutralClaim.en}`, caseFile);
+  assert.doesNotMatch(redacted, new RegExp(caseFile.challanNumber, 'u'));
+  for (const fact of caseFile.facts.filter((entry) => entry.key.toLowerCase().includes('plate'))) {
+    assert.doesNotMatch(redacted, new RegExp(fact.value, 'u'));
+  }
+  assert.match(redacted, new RegExp(maskIdentifier(caseFile.challanNumber), 'u'));
+  assert.match(redacted, /••••/u);
+});
+
 test('Rule 167 clock adds calendar days without local-time drift', () => {
   assert.equal(addCalendarDays('2026-01-20', 45), '2026-03-06');
   const deadline = deadlineFor(cases['wrong-vehicle'], new Date('2026-08-23T12:00:00Z'));
@@ -69,11 +83,41 @@ test('Rule 167 clock adds calendar days without local-time drift', () => {
   assert.equal(deadline.status, 'open');
 });
 
+test('Rule 167 clock changes day at midnight in India, not midnight UTC', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  caseFile.issueDate = '2026-07-14'; // 45-day safety date: 28 August 2026
+  const deadline = deadlineFor(caseFile, new Date('2026-08-27T20:00:00Z')); // 01:30 IST on 28 August
+  assert.equal(deadline.date, '2026-08-28');
+  assert.equal(deadline.daysLeft, 0);
+  assert.equal(deadline.status, 'today');
+});
+
 test('calendar validation rejects impossible extracted dates before rendering', () => {
   assert.equal(isValidIsoDate('2026-02-28'), true);
   assert.equal(isValidIsoDate('2026-02-30'), false);
   assert.equal(formatDate('2026-02-30'), 'Date not confirmed');
   assert.throws(() => addCalendarDays('not-a-date', 45), /valid YYYY-MM-DD/);
+});
+
+test('unclear vehicle-family sources abstain instead of claiming no ground', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  const byKey = Object.fromEntries(caseFile.facts.map((fact) => [fact.key, fact]));
+  byKey.photoPlate.value = byKey.rcPlate.value;
+  byKey.photoFamily.reliability = 0.5;
+  const assessment = assessCase(caseFile, confirmDecisive(caseFile));
+  assert.equal(assessment.outcome, 'unable');
+  assert.match(assessment.headline.en, /vehicle family/i);
+  assert.equal(assessment.findings.length, 0);
+});
+
+test('citizen-supplied findings use source-neutral counter-checks', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  caseFile.synthetic = false;
+  const assessment = assessCase(caseFile, confirmDecisive(caseFile));
+  assert.equal(assessment.outcome, 'supported');
+  const prose = assessment.counterChecks.flatMap((item) => [item.explanation.en, item.explanation.hi]).join(' ');
+  assert.doesNotMatch(prose, /synthetic|नकली/i);
+  assert.match(prose, /citizen confirmed|नागरिक ने/iu);
 });
 
 test('live extraction endpoint fails honestly when no API key is configured', async () => {
@@ -428,4 +472,38 @@ test('security headers are identical in next.config.ts and public/_headers', asy
   assert.match(headersFile, /\/_next\/static\/\*/);
   assert.match(headersFile, /max-age=31536000, immutable/);
   assert.match(config, /max-age=31536000, immutable/);
+});
+
+test('submission pack stays inside the hackathon summary and video limits', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const [submission, video] = await Promise.all([
+    readFile(new URL('../SUBMISSION.md', import.meta.url), 'utf8'),
+    readFile(new URL('../submission/challan-jaanch-submission.mp4', import.meta.url)),
+  ]);
+
+  const summary = submission.match(/## Project summary\s+([\s\S]*?)\s+\*\*Word count:/u)?.[1]?.trim();
+  const declared = Number(submission.match(/\*\*Word count:\*\*\s+(\d+)/u)?.[1]);
+  assert.ok(summary, 'project summary block is missing');
+  const words = summary.split(/\s+/u).filter(Boolean).length;
+  assert.equal(words, declared, 'declared project-summary word count is stale');
+  assert.ok(words <= 250, `project summary is ${words} words; the limit is 250`);
+
+  const mvhd = video.indexOf(Buffer.from('mvhd'));
+  assert.ok(mvhd > 0, 'submission video has no readable MP4 movie header');
+  const version = video[mvhd + 4];
+  const timescale = version === 1 ? video.readUInt32BE(mvhd + 24) : video.readUInt32BE(mvhd + 16);
+  const duration = version === 1 ? Number(video.readBigUInt64BE(mvhd + 28)) : video.readUInt32BE(mvhd + 20);
+  const seconds = duration / timescale;
+  assert.ok(seconds > 60, `submission video is unexpectedly short (${seconds.toFixed(1)}s)`);
+  assert.ok(seconds <= 120, `submission video is ${seconds.toFixed(1)}s; the limit is 120s`);
+});
+
+test('packet integrity metadata never invents hashes for synthetic files', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const page = await readFile(new URL('../app/page.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(page, /sha256:\s*fileHashes\[[^\]]+\]\s*\|\|\s*`SYNTHETIC-/u);
+  assert.doesNotMatch(page, /official_submission/u);
+  assert.match(page, /mode:\s*packetMode === 'redacted' \? 'redacted_share' : 'official_handoff'/u);
+  assert.match(page, /sha256:\s*null,\s*integrity:\s*'not_computed_no_source_bytes'/u);
+  assert.match(page, /sourceRole:\s*'synthetic_fixture'/u);
 });

@@ -225,7 +225,10 @@ export function EvidenceWorkbench({ caseFile, language, selectedKey, files, onSe
   const [inspecting, setInspecting] = useState<SourceKey>();
   const challanUrl = useObjectUrl(files?.challan);
   const vehicleUrl = useObjectUrl(files?.vehicle);
-  const imageFor = (source: SourceKey) => source === 'vehicle' ? vehicleUrl : challanUrl;
+  const supportingUrl = useObjectUrl(files?.supporting);
+  // When a citizen supplies the enforcement photograph separately, the photo
+  // source must show that file rather than silently reusing the challan preview.
+  const imageFor = (source: SourceKey) => source === 'vehicle' ? vehicleUrl : source === 'photo' ? supportingUrl ?? challanUrl : challanUrl;
   const meta = sourceMeta(language);
   const selectedSource = useMemo<SourceKey>(() => {
     const factSource = caseFile.facts.find((fact) => fact.key === selectedKey)?.source;

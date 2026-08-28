@@ -119,7 +119,7 @@ The citizen selects:
 
 1. a challan and its evidence bundle;
 2. the corresponding vehicle record;
-3. an optional supporting record for duplicate checks.
+3. an optional enforcement image, second challan, or other supporting record.
 
 Accepted formats are JPG, PNG, and PDF, up to 10 MB per file.
 
@@ -132,7 +132,7 @@ For a synthetic fixture, the app loads the fixture and builds the evidence map e
 For citizen-supplied files, the app:
 
 1. validates required files and the client-side size limit;
-2. computes a SHA-256 hash for each selected file;
+2. computes a SHA-256 hash for each selected file and keeps it under the source role, so identical filenames cannot overwrite one another;
 3. converts selected files into data URLs;
 4. calls the optional `/api/analyze` route;
 5. receives structured observable fields or a safe fallback response;
@@ -150,7 +150,7 @@ The evidence workbench has three views:
 - **Character diff:** aligns three normalized registration reads character by character.
 - **Rule clock:** explains the issue date and calculated safety date on a timeline.
 
-Every consequential field is editable. Any edit removes the field's confirmation. The comparison remains locked until all decisive fields are confirmed.
+Every consequential field is editable. Any edit removes the field's confirmation. Blank values cannot be confirmed. In a citizen-supplied case, each decisive field also exposes a source-clarity choice; marking a source unclear forces a safe abstention where that fact would be required. Broad vehicle families use a closed list so spelling variants cannot manufacture a mismatch. The comparison remains locked until all decisive fields are confirmed.
 
 This prevents an OCR guess from silently becoming an allegation.
 
@@ -178,7 +178,7 @@ The result screen contains:
 
 For a supported outcome, the citizen can preview:
 
-- **Redacted share:** masks the registration identifier in displayed claims.
+- **Redacted share:** masks every challan and registration identifier in displayed claims and replaces citizen filenames with source-role names. The same transformation is used by the screen, PDF, JSON manifest, and copied brief.
 - **Official handoff:** shows confirmed identifiers for the citizen's own use.
 
 The packet contains:
@@ -197,10 +197,10 @@ A final attestation is required before downloads are enabled.
 The system generates:
 
 - a citizen-prepared PDF;
-- a JSON manifest containing claims, anchor IDs, hashes, privacy declarations, and limitations;
+- a JSON manifest containing claims, anchor IDs, source-role hashes, privacy declarations, and limitations;
 - a bilingual share-safe brief for a redacted or official handoff.
 
-Original uploaded files are not embedded in either export.
+Original uploaded files are not embedded in either export. Citizen-selected files carry their locally computed SHA-256; synthetic fixture filenames carry a null hash because the browser has no source bytes to hash.
 
 ### Parallel lane: Scam Shield
 
@@ -370,11 +370,12 @@ This is the citizen-journey controller. It owns:
 - selected files;
 - the active case;
 - field confirmations;
+- citizen-supplied source-clarity choices;
 - the selected evidence field;
 - processing status;
 - the current assessment;
 - packet mode and attestation;
-- PDF and manifest download functions.
+- PDF and manifest download functions, including source-role integrity metadata and a visible PDF fallback error.
 
 It calls `assessCase` whenever the case or confirmation set changes.
 
@@ -423,7 +424,8 @@ This is the typed domain and rule layer. It contains:
 - three synthetic fixtures;
 - registration normalization;
 - deterministic comparison rules;
-- date formatting and calendar-day calculation.
+- conservative abstention when a required plate or vehicle-family source is unclear;
+- date formatting and India-local calendar-day calculation.
 
 This module contains no React code, network calls, or persistence.
 
@@ -763,17 +765,21 @@ npm test
 npm run build
 ```
 
-## 14b. Where a citizen goes next
+## 15. Where a citizen goes next
 
 Finding a contradiction is only half the journey. A disputed challan can sit
 with the issuing authority, be listed before a virtual court, or be taken up in
 a settlement forum, and each is a different destination with a different action.
 A citizen is normally expected to already know this.
 
-`lib/routes.ts` names all three: the ministry's grievance form on the eChallan
+`lib/routes.ts` names all three: the ministry's grievance entry on the eChallan
 service (with its separate ticket-status page), the Virtual Court, and a Lok
-Adalat. Each carries what it is, when it applies, and which authority runs it,
-in both languages.
+Adalat. The current grievance page may direct a citizen to Delhi Traffic Police
+or the NextGen eChallan portal based on the challan state, so the product tells
+the citizen to follow only the destination shown by that official page. Lok
+Adalat is described as eligibility-dependent, not as an automatic destination.
+Each route carries what it is, when it applies, and which authority runs it, in
+both languages.
 
 Three deliberate limits:
 
@@ -790,7 +796,7 @@ Three deliberate limits:
 A further test asserts the prose never predicts an outcome or implies the app
 has filed anything.
 
-## 14a. Language coverage
+## 16. Language coverage
 
 The product runs completely in English and Hindi. The toggle switches every
 screen — the evidence workbench, the verification checklist, the finding, the
@@ -817,7 +823,7 @@ Four tests walk the rule layer and fail the build if any string is missing Hindi
 is identical to its English form, or is not written in Devanagari. Full detail is
 in [docs/LOCALISATION.md](docs/LOCALISATION.md).
 
-## 15. Repository structure
+## 17. Repository structure
 
 ```text
 challan-jaanch/
@@ -861,7 +867,7 @@ challan-jaanch/
 └── SYSTEM_GUIDE.md              This complete explanation
 ```
 
-## 16. Dependencies and their purpose
+## 18. Dependencies and their purpose
 
 ### Runtime
 
@@ -883,21 +889,22 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 
 `next.config.ts` enforces response headers on the rendered application and API route: framing is denied, MIME sniffing is disabled, referrer leakage and sensitive browser permissions are restricted, resources remain same-origin, and the opener context is isolated. `public/_headers` retains equivalent static-host defaults for portability.
 
-## 17. What works today
+## 19. What works today
 
 - Complete synthetic citizen journey.
 - Three testable case outcomes.
 - File selection and image preview.
 - Optional extraction endpoint.
-- Safe manual fallback.
+- Safe manual fallback with source-clarity controls and closed vehicle-family choices.
 - Field editing and confirmation invalidation.
+- Blank-value confirmation prevention.
 - Source inspection.
 - Character comparison.
 - Deterministic rules.
 - Counter-checks.
 - Rule-based date calculation.
 - PDF generation.
-- JSON manifest generation.
+- JSON manifest generation with truthful source-role hashes and null hashes for synthetic references.
 - Copyable bilingual redacted or official-handoff case brief.
 - Branded install metadata and favicon routing.
 - Bilingual keyboard skip navigation and controlled error/404 recovery.
@@ -912,8 +919,9 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - Separate verify, report-attempt, and emergency routes.
 - Copyable report-ready safety brief that omits the original lure.
 - Direct links to the official eChallan service, DoT Chakshu, I4C Report Suspect, NCRP, CERT-In guidance, and `tel:1930` for exposed users.
+- Automated checks that the project summary stays under 250 words and the submission video stays under two minutes.
 
-## 18. What is mocked or limited
+## 20. What is mocked or limited
 
 - Synthetic cases are not government records.
 - No government API is called.
@@ -930,7 +938,7 @@ Scam Shield uses only browser and language primitives. It adds no reputation SDK
 - The recognised official-host list is deliberately narrow and is not a complete directory of state traffic portals.
 - The current Sites deployment is public and opens without a consumer login; availability still depends on the hosting provider.
 
-## 19. Cyber-advisory basis for Scam Shield
+## 21. Cyber-advisory basis for Scam Shield
 
 The anti-scam rules were rechecked on 28 August 2026 against primary government sources:
 
@@ -942,7 +950,7 @@ The anti-scam rules were rechecked on 28 August 2026 against primary government 
 
 These sources justify the product split between independent challan verification, communication/identifier reporting, downloaded-but-not-installed guidance, and urgent post-installation or post-loss response. They do not justify declaring every unfamiliar URL fraudulent, so the system retains an explicit `unverified` state.
 
-## 20. Deployment and the hackathon public-link requirement
+## 22. Deployment and the hackathon public-link requirement
 
 The project is connected to OpenAI Sites and can produce Cloudflare-compatible output.
 
@@ -958,7 +966,7 @@ Changing a site from private to public is an external access change. It should b
 - all links work in a signed-out browser;
 - the disclaimer and mocked dependencies remain visible.
 
-## 21. How to push to your own Git repository
+## 23. How to push to your own Git repository
 
 Inspect existing remotes:
 
@@ -987,7 +995,7 @@ npm run verify
 git status
 ```
 
-## 22. Recommended production evolution
+## 24. Recommended production evolution
 
 ### Phase 1: Public synthetic pilot
 
@@ -1021,7 +1029,7 @@ git status
 - Source citations and review ownership.
 - Automated regression fixtures for every rule revision.
 
-## 23. Troubleshooting
+## 25. Troubleshooting
 
 ### The comparison button is disabled
 
@@ -1055,7 +1063,7 @@ That is not an authentication result. Independently type the official eChallan a
 
 Disconnect the affected device from the internet. Use a different trusted device to call 1930 and contact the bank or payment provider. Preserve the original message, filename, permissions, and transaction alerts before arranging secure device cleanup.
 
-## 24. Final mental model
+## 26. Final mental model
 
 The easiest way to understand the product is:
 

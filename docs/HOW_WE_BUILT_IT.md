@@ -49,7 +49,9 @@ Three layers enforce that boundary, and they are independent of the model:
    *live extraction endpoint rejects structurally invalid model output*.
 3. **The human confirmation gate.** Nothing the model returns can produce a
    finding until the citizen has confirmed each decisive field by hand, and
-   editing a field immediately withdraws its confirmation.
+   editing a field immediately withdraws its confirmation. In the manual path,
+   the citizen must also mark whether the original source is clear; uncertainty
+   creates an abstention rather than a hidden confidence upgrade.
 
 The decision itself is made by ordinary, versioned TypeScript in
 [`lib/cases.ts`](../lib/cases.ts) — never by the model.
@@ -105,9 +107,11 @@ The most useful Codex contributions were not visual generation. They were the
 adversarial passes that found places where a polished interface could still
 mislead a citizen: an ambiguous `Z`/`2` plate read, a model output with an
 impossible date, a message with no obvious scam signal, a downloaded APK being
-mistaken for an installed one, an outdated NALSA route, and wording that implied
-government endorsement or automatic submission. Each became either a refusal,
-a clearer boundary, or an automated test.
+mistaken for an installed one, an outdated NALSA route, a Rule 167 clock that
+crossed the day at UTC rather than midnight in India, invented-looking hashes
+for synthetic filenames, and wording that implied government endorsement or
+automatic submission. Each became either a refusal, a clearer boundary, or an
+automated test.
 
 I retained the product decision and release authority: Challan Jaanch would be
 an independent preflight, not a challan-validity oracle or unofficial filing

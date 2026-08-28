@@ -54,7 +54,7 @@ If the API key is absent, the endpoint returns an honest `503 LIVE_EXTRACTION_NO
 
 ### Human boundary
 
-Every decisive value must be confirmed. Editing a value removes its confirmation immediately. Until all decisive values are confirmed, `assessCase` returns a `review` state and produces no finding.
+Every decisive value must be confirmed. Blank values cannot be confirmed. For citizen-supplied records, the reviewer also marks whether each decisive source is clear in the original; changing that clarity removes confirmation. Closed vehicle-family choices prevent spelling variants from creating a false class mismatch. Until all decisive values are confirmed, `assessCase` returns a `review` state and produces no finding.
 
 ### Decision boundary
 
@@ -63,20 +63,22 @@ Every decisive value must be confirmed. Editing a value removes its confirmation
 - registration-mark conflict across challan, photo, and vehicle record;
 - broad vehicle-family conflict;
 - exact duplicate-event matching across distinct challan numbers;
-- safe refusal for low-confidence or materially ambiguous plate characters;
+- safe refusal for low-confidence or materially ambiguous plate characters and unreadable vehicle-family sources;
 - a 45-calendar-day Rule 167 safety-date calculation for the current rule pack.
+
+The deadline status changes at midnight in `Asia/Kolkata`. Using the UTC calendar date would make the status one day late between 00:00 and 05:30 IST, so an explicit regression test covers that boundary.
 
 Rules emit neutral claims, evidence anchor IDs, limitations, and packet eligibility. They never call a challan invalid.
 
 ### Persistence boundary
 
-The MVP has no database, R2 bucket, analytics, account system, or application-owned document store. Selected files live in the current browser session. The generated packet excludes original uploads. A reset drops all application state; normal browser garbage collection releases object URLs.
+The MVP has no database, R2 bucket, analytics, account system, or application-owned document store. Selected files live in the current browser session. The generated packet excludes original uploads. Citizen-selected files receive a locally computed SHA-256 keyed by source role; synthetic filenames carry `sha256: null` because no source bytes exist to hash. Redacted mode applies one shared identifier-masking function to the screen, PDF, manifest, and copied brief, and replaces citizen filenames with source-role names. A reset drops all application state; normal browser garbage collection releases object URLs.
 
 The API route necessarily transmits selected files to OpenAI only when the user chooses live extraction and a server-side key is configured. Production deployments should add an explicit consent receipt, retention verification, rate limits, and abuse controls before accepting real documents.
 
 ### Onward-navigation boundary
 
-`lib/routes.ts` names where a disputed challan can be taken: the MoRTH grievance form, the Virtual Court, and a Lok Adalat. Every destination is a hard-coded `.gov.in` host over HTTPS, opened by the citizen in a new tab; the app submits nothing and transfers nothing.
+`lib/routes.ts` names where a disputed challan can be taken: the MoRTH grievance entry, the Virtual Court, and a Lok Adalat. The current grievance page may redirect by challan state, so the interface instructs the citizen to follow only the destination shown there. Lok Adalat is framed as eligibility-dependent rather than automatic. Every clickable destination in the product is a hard-coded `.gov.in` host over HTTPS, opened by the citizen in a new tab; the app submits nothing and transfers nothing.
 
 The module deliberately does not claim to know which forum currently holds a given challan or how long a transfer takes. Those differ by state and by the age of the record, and the prototype has no authorised way to read a real challan's live status, so it says so instead of guessing. Routes are shown whatever the outcome — somebody with no supported finding may still have grounds the rules cannot see — and only the framing changes.
 

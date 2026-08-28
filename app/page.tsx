@@ -15,6 +15,9 @@ import {
   deadlineFor,
   formatDate,
   isValidIsoDate,
+  maskIdentifier,
+  redactCaseText,
+  vehicleFamilyLabel,
 } from '../lib/cases';
 import { OFFICIAL_ECHALLAN_URL } from '../lib/scam-shield';
 import { Language, bi, localeTag, pick, t } from '../lib/i18n';
@@ -55,6 +58,7 @@ const stageLabels: Record<string, [string, string]> = {
 
 const sleep = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const acceptedFileTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+const vehicleFamilyOptions = ['Two-wheeler', 'Passenger car', 'Goods vehicle', 'Bus', 'Three-wheeler', 'Other', 'Unknown'] as const;
 
 function joinClasses(...values: Array<string | false | undefined>) {
   return values.filter(Boolean).join(' ');
@@ -64,11 +68,6 @@ function reliabilityLabel(value: number, language: Language) {
   if (value >= 0.92) return t(language, 'Clear source', 'स्पष्ट स्रोत');
   if (value >= 0.7) return t(language, 'Needs review', 'जाँच ज़रूरी');
   return t(language, 'Unclear source', 'अस्पष्ट स्रोत');
-}
-
-function maskIdentifier(value: string) {
-  if (value.length < 6) return '••••';
-  return `${value.slice(0, 2)}••••${value.slice(-4)}`;
 }
 
 async function fileToDataUrl(file: File): Promise<string> {
@@ -115,6 +114,11 @@ function manualCase(extraction: LiveExtraction, files: UploadedFiles): DemoCase 
       { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: value(extraction.rcFamily) || 'Unknown', source: 'vehicle', sourceLabel: bi('Uploaded vehicle record · class field', 'अपलोड किया वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), reliability: extracted(extraction.rcFamily), decisive: true, help: bi('Use a broad family rather than a specific model.', 'किसी ख़ास मॉडल के बजाय मोटा प्रकार अंग्रेज़ी में लिखें, जैसे Passenger car या Two-wheeler।') },
     ],
   };
+}
+
+function redactedFileName(file: File, sourceRole: UploadKey): string {
+  const extension = /\.([a-z0-9]{1,8})$/iu.exec(file.name)?.[1]?.toLowerCase();
+  return extension ? `${sourceRole}.${extension}` : sourceRole;
 }
 
 function Brand({ language, onLanguage, onHome, onScam, onHelp, guideText }: { language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onHelp: () => void; guideText: string }) {
@@ -312,6 +316,7 @@ function UploadScreen({ language, files, setFile, error, onAnalyse, onStartCase 
             <ul className="mt-3 space-y-2 text-xs leading-5 text-[#4e6874]">
               <li>• {t(language, 'For a public demo, use the included synthetic records.', 'सार्वजनिक डेमो के लिए साथ दिए नकली रिकॉर्ड इस्तेमाल करें।')}</li>
               <li>• {t(language, 'Optional live extraction sends selected files to OpenAI with storage disabled.', 'वैकल्पिक लाइव निष्कर्षण चुनी गई फ़ाइलें OpenAI को भेजता है, भंडारण बंद रखते हुए।')}</li>
+              <li>• {t(language, 'If extraction is unavailable, enter fields manually and mark only sources that are clear in the original.', 'निष्कर्षण उपलब्ध न हो तो फ़ील्ड ख़ुद भरें और सिर्फ़ उन्हीं स्रोतों को साफ़ मानें जो मूल में साफ़ दिखते हैं।')}</li>
               <li>• {t(language, 'The app never requests government credentials or performs a submission.', 'ऐप कभी सरकारी लॉगिन नहीं माँगता और न कोई आवेदन जमा करता है।')}</li>
             </ul>
           </div>
@@ -320,7 +325,7 @@ function UploadScreen({ language, files, setFile, error, onAnalyse, onStartCase 
         <section className="space-y-4">
           <Dropzone language={language} label={t(language, 'Challan and evidence', 'चालान और साक्ष्य')} description={t(language, 'JPG, PNG or PDF · up to 10 MB', 'JPG, PNG या PDF · 10 MB तक')} file={files.challan} onFile={(file) => setFile('challan', file)} />
           <Dropzone language={language} label={t(language, 'Vehicle record', 'वाहन रिकॉर्ड')} description={t(language, 'A redacted record is enough for plate and broad vehicle class', 'नंबर और मोटे प्रकार के लिए छिपाया हुआ रिकॉर्ड भी काफ़ी है')} file={files.vehicle} onFile={(file) => setFile('vehicle', file)} />
-          <Dropzone language={language} optional label={t(language, 'Supporting record', 'सहायक रिकॉर्ड')} description={t(language, 'A second challan or other relevant record for duplicate checks', 'दोहराव जाँचने के लिए दूसरा चालान या अन्य संबंधित रिकॉर्ड')} file={files.supporting} onFile={(file) => setFile('supporting', file)} />
+          <Dropzone language={language} optional label={t(language, 'Supporting record', 'सहायक रिकॉर्ड')} description={t(language, 'Enforcement image, second challan, or another relevant record', 'कार्रवाई-फोटो, दूसरा चालान या कोई अन्य संबंधित रिकॉर्ड')} file={files.supporting} onFile={(file) => setFile('supporting', file)} />
           {error && <div role="alert" className="rounded-lg border border-[#d4a69d] bg-[#faf0ed] px-4 py-3 text-sm font-bold text-[#8d3b27]">{error}</div>}
           <button onClick={onAnalyse} className="w-full rounded-lg bg-[#172a33] px-6 py-4 font-extrabold text-white shadow-[0_8px_22px_rgba(23,42,51,.12)] transition hover:bg-[#24495d] disabled:cursor-not-allowed disabled:opacity-45" disabled={!files.challan || !files.vehicle}>{t(language, 'Extract observable fields →', 'दिखने वाले फ़ील्ड निकालें →')}</button>
           <p className="text-center text-[11px] leading-5 text-[#7a8582]">{t(language, 'Originals remain unchanged. Findings cannot run until you confirm the extracted values.', 'मूल दस्तावेज़ नहीं बदलते। जब तक आप निकाले गए मान पुष्ट नहीं करते, कोई निष्कर्ष नहीं बनता।')}</p>
@@ -353,18 +358,40 @@ function DuplicateEvidencePreview({ caseFile, language }: { caseFile: DemoCase; 
   );
 }
 
-function FactRow({ fact, language, confirmed, selected, onSelect, onChange, onConfirm }: { fact: CaseFact; language: Language; confirmed: boolean; selected: boolean; onSelect: () => void; onChange: (value: string) => void; onConfirm: () => void }) {
+function FactRow({ fact, language, confirmed, selected, manual, onSelect, onChange, onClarity, onConfirm }: { fact: CaseFact; language: Language; confirmed: boolean; selected: boolean; manual: boolean; onSelect: () => void; onChange: (value: string) => void; onClarity: (clear: boolean) => void; onConfirm: () => void }) {
+  const isFamily = fact.key === 'photoFamily' || fact.key === 'rcFamily';
+  const sourceClear = fact.reliability >= 0.92;
+  const fieldClasses = 'mt-3 w-full rounded-md border border-[#cbc5ba] bg-[#fbfaf7] px-3 py-2.5 font-mono text-sm font-black tracking-wide outline-none transition focus:border-[#315f78] focus:ring-2 focus:ring-[#315f78]/10';
   return (
     <div onClick={onSelect} className={joinClasses('rounded-lg border p-4 transition', selected ? 'border-[#315f78] bg-[#f3f7f8] shadow-[0_0_0_3px_rgba(49,95,120,0.06)]' : 'border-[#ddd7cc] bg-white/65')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><label htmlFor={`fact-${fact.key}`} className="text-xs font-black">{pick(language, fact.label)}</label>{fact.decisive && <span className="rounded-md border border-[#d6c28d] bg-[#faf5e7] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-[#735814]">{t(language, 'Decisive', 'निर्णायक')}</span>}<span className={joinClasses('rounded-md border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide', fact.reliability >= 0.92 ? 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]' : fact.reliability >= 0.7 ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#d8b0a6] bg-[#faf0ed] text-[#93402c]')}>{reliabilityLabel(fact.reliability, language)}</span></div><p className="mt-1 text-[10px] font-semibold text-[#74807d]">{pick(language, fact.sourceLabel)}</p><input id={`fact-${fact.key}`} value={fact.value} onChange={(event) => onChange(event.target.value)} onFocus={onSelect} className="mt-3 w-full rounded-md border border-[#cbc5ba] bg-[#fbfaf7] px-3 py-2.5 font-mono text-sm font-black tracking-wide outline-none transition focus:border-[#315f78] focus:ring-2 focus:ring-[#315f78]/10" aria-describedby={`help-${fact.key}`} /><p id={`help-${fact.key}`} className="mt-2 text-[10px] leading-4 text-[#77827f]">{pick(language, fact.help)}</p>{fact.alternatives?.[0] && <p className="mt-2 text-[10px] font-bold text-[#8a5749]">{t(language, 'Alternative reading', 'दूसरा संभावित पाठ')}: {fact.alternatives[0].value}</p>}</div>
-        <button onClick={(event) => { event.stopPropagation(); onConfirm(); }} className={joinClasses('shrink-0 rounded-md px-3 py-2 text-xs font-black transition', confirmed ? 'bg-[#315f78] text-white' : 'border border-[#bdb7ac] bg-white text-[#43514f] hover:border-[#315f78]')}>{confirmed ? t(language, 'Confirmed', 'पुष्ट') : t(language, 'Confirm value', 'मान पुष्ट करें')}</button>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2"><label htmlFor={`fact-${fact.key}`} className="text-xs font-black">{pick(language, fact.label)}</label>{fact.decisive && <span className="rounded-md border border-[#d6c28d] bg-[#faf5e7] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-[#735814]">{t(language, 'Decisive', 'निर्णायक')}</span>}<span className={joinClasses('rounded-md border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide', sourceClear ? 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]' : fact.reliability >= 0.7 ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#d8b0a6] bg-[#faf0ed] text-[#93402c]')}>{reliabilityLabel(fact.reliability, language)}</span></div>
+          <p className="mt-1 text-[10px] font-semibold text-[#74807d]">{pick(language, fact.sourceLabel)}</p>
+          {isFamily ? (
+            <select id={`fact-${fact.key}`} value={fact.value} onChange={(event) => onChange(event.target.value)} onFocus={onSelect} className={fieldClasses} aria-describedby={`help-${fact.key}`}>
+              {vehicleFamilyOptions.map((option) => <option key={option} value={option}>{vehicleFamilyLabel(option, language)}</option>)}
+            </select>
+          ) : (
+            <input id={`fact-${fact.key}`} value={fact.value} onChange={(event) => onChange(event.target.value)} onFocus={onSelect} className={fieldClasses} aria-describedby={`help-${fact.key}`} />
+          )}
+          <p id={`help-${fact.key}`} className="mt-2 text-[10px] leading-4 text-[#77827f]">{pick(language, fact.help)}</p>
+          {manual && fact.decisive && (
+            <fieldset className="mt-3 flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
+              <legend className="mr-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#74807d]">{t(language, 'Source clarity', 'स्रोत की स्पष्टता')}</legend>
+              <button type="button" aria-pressed={sourceClear} onClick={() => onClarity(true)} className={joinClasses('rounded-md border px-2.5 py-1.5 text-[9px] font-black', sourceClear ? 'border-[#669079] bg-[#edf5f0] text-[#246344]' : 'border-[#d5cfc4] bg-white text-[#65726f]')}>{t(language, 'Clear in original', 'मूल में साफ़')}</button>
+              <button type="button" aria-pressed={!sourceClear} onClick={() => onClarity(false)} className={joinClasses('rounded-md border px-2.5 py-1.5 text-[9px] font-black', !sourceClear ? 'border-[#c08a7c] bg-[#fbefec] text-[#8f3827]' : 'border-[#d5cfc4] bg-white text-[#65726f]')}>{t(language, 'Unclear / uncertain', 'अस्पष्ट / अनिश्चित')}</button>
+            </fieldset>
+          )}
+          {fact.alternatives?.[0] && <p className="mt-2 text-[10px] font-bold text-[#8a5749]">{t(language, 'Alternative reading', 'दूसरा संभावित पाठ')}: {fact.alternatives[0].value}</p>}
+        </div>
+        <button disabled={!fact.value.trim()} onClick={(event) => { event.stopPropagation(); onConfirm(); }} className={joinClasses('shrink-0 rounded-md px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-40', confirmed ? 'bg-[#315f78] text-white' : 'border border-[#bdb7ac] bg-white text-[#43514f] hover:border-[#315f78]')}>{confirmed ? t(language, 'Confirmed', 'पुष्ट') : t(language, 'Confirm value', 'मान पुष्ट करें')}</button>
       </div>
     </div>
   );
 }
 
-function ReviewScreen({ caseFile, language, confirmed, selectedKey, notice, files, onSelect, onChange, onConfirm, onConfirmAll, onCompare }: { caseFile: DemoCase; language: Language; confirmed: Set<string>; selectedKey?: string; notice: string; files: UploadedFiles; onSelect: (key: string) => void; onChange: (key: string, value: string) => void; onConfirm: (key: string) => void; onConfirmAll: () => void; onCompare: () => void }) {
+function ReviewScreen({ caseFile, language, confirmed, selectedKey, notice, files, onSelect, onChange, onClarity, onConfirm, onConfirmAll, onCompare }: { caseFile: DemoCase; language: Language; confirmed: Set<string>; selectedKey?: string; notice: string; files: UploadedFiles; onSelect: (key: string) => void; onChange: (key: string, value: string) => void; onClarity: (key: string, clear: boolean) => void; onConfirm: (key: string) => void; onConfirmAll: () => void; onCompare: () => void }) {
   const decisive = caseFile.facts.filter((fact) => fact.decisive);
   const confirmedCount = decisive.filter((fact) => confirmed.has(fact.key)).length;
   return (
@@ -373,7 +400,7 @@ function ReviewScreen({ caseFile, language, confirmed, selectedKey, notice, file
       {notice && <div role="status" className="mt-6 rounded-lg border border-[#b9ced8] bg-[#eef4f7] px-5 py-4 text-sm font-semibold leading-6 text-[#4e6874]">{notice}</div>}
       <div className="mt-7">{caseFile.kind === 'duplicate-event' ? <DuplicateEvidencePreview caseFile={caseFile} language={language} /> : <EvidenceWorkbench caseFile={caseFile} language={language} selectedKey={selectedKey} files={files} onSelect={onSelect} />}</div>
       <div className="mt-7 grid gap-7 lg:grid-cols-[1fr_320px]">
-        <section className="space-y-3">{caseFile.facts.map((fact) => <FactRow key={fact.key} fact={fact} language={language} confirmed={confirmed.has(fact.key)} selected={selectedKey === fact.key} onSelect={() => onSelect(fact.key)} onChange={(value) => onChange(fact.key, value)} onConfirm={() => onConfirm(fact.key)} />)}</section>
+        <section className="space-y-3">{caseFile.facts.map((fact) => <FactRow key={fact.key} fact={fact} language={language} confirmed={confirmed.has(fact.key)} selected={selectedKey === fact.key} manual={!caseFile.synthetic} onSelect={() => onSelect(fact.key)} onChange={(value) => onChange(fact.key, value)} onClarity={(clear) => onClarity(fact.key, clear)} onConfirm={() => onConfirm(fact.key)} />)}</section>
         <aside className="lg:sticky lg:top-[175px] lg:self-start"><div className="rounded-xl bg-[#172a33] p-6 text-white"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#b8d4e1]">{t(language, 'Human confirmation gate', 'मानव पुष्टि द्वार')}</p><h2 className="mt-3 text-2xl font-black tracking-[-0.04em]">{t(language, 'Comparison locked', 'तुलना बंद है')}</h2><p className="mt-3 text-sm leading-6 text-white/65">{t(language, 'A finding cannot be generated from unconfirmed decisive fields. This prevents an OCR guess from becoming an allegation.', 'बिना पुष्ट निर्णायक फ़ील्ड से कोई निष्कर्ष नहीं बन सकता। इससे कोई अनुमान आरोप नहीं बन पाता।')}</p><button onClick={onConfirmAll} className="mt-6 w-full rounded-md bg-white px-4 py-3 text-sm font-black text-[#172a33] transition hover:bg-[#eef4f7]">{t(language, 'Confirm all visible values', 'सभी दिख रहे मान पुष्ट करें')}</button><button onClick={onCompare} disabled={confirmedCount < decisive.length} className="mt-3 w-full rounded-md border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{t(language, 'Run objective comparison →', 'वस्तुनिष्ठ तुलना चलाएँ →')}</button></div><div className="mt-4 rounded-lg border border-[#d5cfc4] bg-[#fbfaf7] p-5"><p className="text-xs font-black">{t(language, 'What the model cannot decide', 'मॉडल क्या तय नहीं कर सकता')}</p><ul className="mt-3 space-y-2 text-xs leading-5 text-[#687571]"><li>• {t(language, 'Whether the challan is legally valid', 'चालान क़ानूनी रूप से वैध है या नहीं')}</li><li>• {t(language, 'Why a mismatch occurred', 'बेमेल क्यों हुआ')}</li><li>• {t(language, 'Whether a grievance will succeed', 'शिकायत सफल होगी या नहीं')}</li></ul></div></aside>
       </div>
     </div>
@@ -439,10 +466,11 @@ function ResultScreen({ caseFile, language, assessment, onPacket, onReview, onSt
   );
 }
 
-function PacketScreen({ caseFile, language, assessment, packetMode, setPacketMode, attested, setAttested, exporting, onDownload, onManifest, onReview }: { caseFile: DemoCase; language: Language; assessment: Assessment; packetMode: PacketMode; setPacketMode: (mode: PacketMode) => void; attested: boolean; setAttested: (value: boolean) => void; exporting: boolean; onDownload: () => void; onManifest: () => void; onReview: () => void }) {
+function PacketScreen({ caseFile, language, assessment, packetMode, setPacketMode, attested, setAttested, exporting, exportError, onDownload, onManifest, onReview }: { caseFile: DemoCase; language: Language; assessment: Assessment; packetMode: PacketMode; setPacketMode: (mode: PacketMode) => void; attested: boolean; setAttested: (value: boolean) => void; exporting: boolean; exportError: string; onDownload: () => void; onManifest: () => void; onReview: () => void }) {
   const [copiedBrief, setCopiedBrief] = useState(false);
   const plate = caseFile.facts.find((fact) => fact.key === 'rcPlate')?.value ?? '';
   const shownPlate = packetMode === 'redacted' ? maskIdentifier(plate) : plate;
+  const shownChallan = packetMode === 'redacted' ? maskIdentifier(caseFile.challanNumber) : caseFile.challanNumber;
   const validDate = isValidIsoDate(caseFile.issueDate) && caseFile.issueDate >= '2026-01-20';
   const deadline = validDate ? deadlineFor(caseFile) : null;
   const readiness = [
@@ -451,12 +479,12 @@ function PacketScreen({ caseFile, language, assessment, packetMode, setPacketMod
     t(language, 'Official boundary visible', 'आधिकारिक सीमा साफ़ दिख रही है'),
   ];
   const copyBrief = async () => {
-    const safeClaim = (claim: string) => packetMode === 'redacted' && plate ? claim.replaceAll(plate, maskIdentifier(plate)) : claim;
+    const safeClaim = (claim: string) => packetMode === 'redacted' ? redactCaseText(claim, caseFile) : claim;
     const brief = [
       t(language, 'CHALLAN JAANCH — CITIZEN-PREPARED CASE BRIEF', 'चालान जाँच — नागरिक द्वारा बनाया केस सार'),
       t(language, 'Not government-issued · Not legal advice · No official submission performed', 'सरकार द्वारा जारी नहीं · क़ानूनी सलाह नहीं · कोई आधिकारिक आवेदन नहीं'),
       `${t(language, 'Packet', 'पैकेट')}: ${caseFile.id}`,
-      `${t(language, 'Challan', 'चालान')}: ${caseFile.challanNumber}`,
+      `${t(language, 'Challan', 'चालान')}: ${shownChallan}`,
       `${t(language, 'Vehicle identifier', 'वाहन पहचान')}: ${shownPlate || t(language, 'Not confirmed', 'पुष्ट नहीं')}`,
       `${t(language, 'Issue date', 'जारी तारीख़')}: ${isValidIsoDate(caseFile.issueDate) ? formatDate(caseFile.issueDate, language) : t(language, 'Not confirmed', 'पुष्ट नहीं')}`,
       '',
@@ -479,8 +507,8 @@ function PacketScreen({ caseFile, language, assessment, packetMode, setPacketMod
     <div className="mx-auto w-full max-w-[1120px] px-5 py-9 sm:px-8 sm:py-12">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#315f78]">{t(language, 'Citizen-prepared evidence summary', 'नागरिक द्वारा बनाया साक्ष्य सारांश')}</p><h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">{t(language, 'A packet with a complete audit trail.', 'पूरा हिसाब रखने वाला पैकेट।')}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[#62706d]">{t(language, 'This document is independently prepared, visibly non-official, and limited to claims supported by confirmed evidence.', 'यह दस्तावेज़ स्वतंत्र रूप से बना है, स्पष्ट रूप से ग़ैर-सरकारी है, और सिर्फ़ पुष्ट सबूत वाले दावों तक सीमित है।')}</p></div><div className="flex rounded-lg border border-[#d2ccc1] bg-[#fbfaf7] p-1"><button onClick={() => setPacketMode('redacted')} className={joinClasses('rounded-md px-4 py-2 text-xs font-black', packetMode === 'redacted' ? 'bg-[#172a33] text-white' : 'text-[#60706c]')}>{t(language, 'Redacted share', 'छिपाकर साझा')}</button><button onClick={() => setPacketMode('official')} className={joinClasses('rounded-md px-4 py-2 text-xs font-black', packetMode === 'official' ? 'bg-[#172a33] text-white' : 'text-[#60706c]')}>{t(language, 'Official handoff', 'आधिकारिक सौंपना')}</button></div></div>
       <div className="mt-7 grid gap-7 lg:grid-cols-[1fr_330px]">
-        <article className="relative overflow-hidden rounded-xl border border-[#cbc5ba] bg-white p-6 shadow-[0_14px_34px_rgba(23,42,51,0.07)] sm:p-9"><header className="border-b-2 border-[#172a33] pb-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#315f78]">{t(language, 'Not government-issued', 'सरकार द्वारा जारी नहीं')} · {caseFile.synthetic ? t(language, 'synthetic fixture', 'नकली नमूना') : t(language, 'citizen prepared', 'नागरिक द्वारा बनाया')}</p><h2 className="mt-2 text-3xl font-black tracking-[-0.045em]">{t(language, 'Citizen-prepared evidence summary', 'नागरिक द्वारा बनाया साक्ष्य सारांश')}</h2></div><div className="text-left text-[10px] leading-5 text-[#64716e] sm:text-right"><p>{t(language, 'Packet', 'पैकेट')} {caseFile.id}</p><p>{t(language, 'Schema CJ-1.0', 'स्कीमा CJ-1.0')}</p><p>{caseFile.synthetic ? t(language, 'Synthetic case', 'नकली केस') : t(language, 'Citizen-supplied case', 'नागरिक द्वारा दिया केस')}</p></div></div></header><section className="grid gap-4 border-b border-[#d8d2c7] py-6 sm:grid-cols-3"><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Challan', 'चालान')}</p><p className="mt-1 text-sm font-black">{caseFile.challanNumber}</p></div><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Vehicle identifier', 'वाहन पहचान')}</p><p className="mt-1 font-mono text-sm font-black">{shownPlate || t(language, 'Not confirmed', 'पुष्ट नहीं')}</p></div><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Issue date', 'जारी तारीख़')}</p><p className="mt-1 text-sm font-black">{isValidIsoDate(caseFile.issueDate) ? formatDate(caseFile.issueDate, language) : t(language, 'Not confirmed', 'पुष्ट नहीं')}</p></div></section><section className="py-6"><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Supported claim map', 'प्रमाणित दावा नक़्शा')}</h3><div className="mt-4 space-y-4">{assessment.findings.map((finding, index) => <div key={finding.id} className="grid gap-3 rounded-lg border border-[#e0ddd6] bg-[#f5f3ee] p-4 sm:grid-cols-[32px_1fr]"><span className="grid h-8 w-8 place-items-center rounded-md bg-[#315f78] text-xs font-black text-white">{index + 1}</span><div><p className="font-black">{pick(language, finding.title)}</p><p className="mt-1 text-xs leading-5 text-[#5f6d69]">{packetMode === 'redacted' ? pick(language, finding.neutralClaim).replaceAll(plate, maskIdentifier(plate)) : pick(language, finding.neutralClaim)}</p><p className="mt-3 text-[9px] font-bold uppercase tracking-wide text-[#788481]">{t(language, 'Evidence anchors', 'साक्ष्य लंगर')} · {finding.anchors.join(' · ')}</p></div></div>)}</div></section><section className="grid gap-4 border-t border-[#d8d2c7] py-6 sm:grid-cols-2"><div><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Rule clock', 'नियम घड़ी')}</h3><p className="mt-2 text-sm font-black">{deadline ? `${t(language, 'Safety date', 'सुरक्षित तारीख़')}: ${formatDate(deadline.date, language)}` : t(language, 'Not safely calculated', 'सुरक्षित गणना नहीं हुई')}</p><p className="mt-1 text-[10px] leading-4 text-[#697572]">{t(language, 'CMVR Rule 167 · G.S.R. 48(E) · state procedure must be verified.', 'CMVR नियम 167 · G.S.R. 48(E) · राज्य की प्रक्रिया जाँचना ज़रूरी।')}</p></div><div><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Processing record', 'प्रसंस्करण विवरण')}</h3><p className="mt-2 text-[10px] leading-5 text-[#697572]">{t(language, 'Original uploads excluded from this packet. No official submission performed. Findings generated from user-confirmed facts and deterministic comparison rules.', 'मूल अपलोड इस पैकेट में शामिल नहीं। कोई आधिकारिक आवेदन नहीं किया गया। निष्कर्ष उपयोगकर्ता द्वारा पुष्ट तथ्यों और निश्चित तुलना नियमों से बने हैं।')}</p></div></section><footer className="border-t border-[#d8d2c7] pt-5 text-[9px] leading-4 text-[#77827f]">{t(language, 'This summary reports observable conflicts in supplied records. It does not determine legality, guilt, fraud, cloning, or the likely outcome of any grievance.', 'यह सारांश दिए गए रिकॉर्ड में दिखने वाले अंतर बताता है। यह वैधता, दोष, धोखाधड़ी, क्लोनिंग या किसी शिकायत के संभावित नतीजे का निर्धारण नहीं करता।')}</footer></article>
-        <aside className="space-y-4 lg:sticky lg:top-[175px] lg:self-start"><div className="rounded-lg border border-[#c9d9cd] bg-[#eef5f0] p-5"><div className="flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#246344]">{t(language, 'Packet readiness', 'पैकेट की तैयारी')}</p><span className="rounded-md bg-[#315f78] px-2.5 py-1 text-[9px] font-black text-white">3/3</span></div><div className="mt-4 divide-y divide-[#d5e1d9]">{readiness.map((item) => <div key={item} className="flex items-center gap-2 py-2 text-[10px] font-black text-[#426052]"><span className="status-dot" />{item}</div>)}</div></div><div className="rounded-xl bg-[#172a33] p-5 text-white"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b8d4e1]">{t(language, 'Final human gate', 'अंतिम मानव द्वार')}</p><label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-white/15 bg-white/[0.05] p-4"><input type="checkbox" checked={attested} onChange={(event) => setAttested(event.target.checked)} className="mt-1 h-4 w-4 accent-[#315f78]" /><span className="text-xs leading-5 text-white/75">{t(language, 'I checked the displayed facts against the source records and understand this is not an official or legal conclusion.', 'मैंने दिखाए गए तथ्य स्रोत रिकॉर्ड से मिला लिए हैं और समझता/समझती हूँ कि यह कोई आधिकारिक या क़ानूनी निष्कर्ष नहीं है।')}</span></label><button onClick={onDownload} disabled={!attested || exporting} className="mt-4 w-full rounded-md bg-white px-4 py-3 text-sm font-black text-[#172a33] disabled:cursor-not-allowed disabled:opacity-40">{exporting ? t(language, 'Building PDF…', 'PDF बन रही है…') : t(language, 'Download evidence PDF ↓', 'साक्ष्य PDF डाउनलोड करें ↓')}</button><button onClick={onManifest} disabled={!attested} className="mt-3 w-full rounded-md border border-white/20 px-4 py-3 text-xs font-black text-white disabled:opacity-40">{t(language, 'Download manifest.json', 'manifest.json डाउनलोड करें')}</button><button onClick={copyBrief} disabled={!attested} aria-live="polite" className="mt-3 w-full rounded-md border border-white/20 px-4 py-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{copiedBrief ? t(language, 'Share-safe brief copied', 'साझा करने योग्य सार कॉपी हुआ') : t(language, 'Copy share-safe brief', 'साझा करने योग्य सार कॉपी करें')}</button></div><div className="rounded-lg border border-[#d0cabf] bg-[#fbfaf7] p-5"><p className="text-xs font-black">{t(language, 'Continue on the official service', 'आधिकारिक सेवा पर आगे बढ़ें')}</p><p className="mt-2 text-xs leading-5 text-[#6a7774]">{t(language, 'Challan Jaanch does not transfer files or credentials. Open the official portal separately and review its current instructions.', 'चालान जाँच कोई फ़ाइल या गोपनीय जानकारी नहीं भेजता। आधिकारिक पोर्टल अलग से खोलें और उसके मौजूदा निर्देश पढ़ें।')}</p><a href={OFFICIAL_ECHALLAN_URL} target="_blank" rel="noreferrer" className="mt-4 block rounded-md border border-[#172a33] px-4 py-3 text-center text-xs font-black">{t(language, 'Open official eChallan portal ↗', 'आधिकारिक ई-चालान पोर्टल खोलें ↗')}</a></div><button onClick={onReview} className="w-full rounded-md border border-[#d0cabf] bg-white/60 px-4 py-3 text-xs font-black">{t(language, 'Back to evidence review', 'साक्ष्य जाँच पर लौटें')}</button></aside>
+        <article className="relative overflow-hidden rounded-xl border border-[#cbc5ba] bg-white p-6 shadow-[0_14px_34px_rgba(23,42,51,0.07)] sm:p-9"><header className="border-b-2 border-[#172a33] pb-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#315f78]">{t(language, 'Not government-issued', 'सरकार द्वारा जारी नहीं')} · {caseFile.synthetic ? t(language, 'synthetic fixture', 'नकली नमूना') : t(language, 'citizen prepared', 'नागरिक द्वारा बनाया')}</p><h2 className="mt-2 text-3xl font-black tracking-[-0.045em]">{t(language, 'Citizen-prepared evidence summary', 'नागरिक द्वारा बनाया साक्ष्य सारांश')}</h2></div><div className="text-left text-[10px] leading-5 text-[#64716e] sm:text-right"><p>{t(language, 'Packet', 'पैकेट')} {caseFile.id}</p><p>{t(language, 'Schema CJ-1.0', 'स्कीमा CJ-1.0')}</p><p>{caseFile.synthetic ? t(language, 'Synthetic case', 'नकली केस') : t(language, 'Citizen-supplied case', 'नागरिक द्वारा दिया केस')}</p></div></div></header><section className="grid gap-4 border-b border-[#d8d2c7] py-6 sm:grid-cols-3"><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Challan', 'चालान')}</p><p className="mt-1 text-sm font-black">{shownChallan}</p></div><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Vehicle identifier', 'वाहन पहचान')}</p><p className="mt-1 font-mono text-sm font-black">{shownPlate || t(language, 'Not confirmed', 'पुष्ट नहीं')}</p></div><div><p className="text-[9px] font-black uppercase tracking-wide text-[#7d8885]">{t(language, 'Issue date', 'जारी तारीख़')}</p><p className="mt-1 text-sm font-black">{isValidIsoDate(caseFile.issueDate) ? formatDate(caseFile.issueDate, language) : t(language, 'Not confirmed', 'पुष्ट नहीं')}</p></div></section><section className="py-6"><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Supported claim map', 'प्रमाणित दावा नक़्शा')}</h3><div className="mt-4 space-y-4">{assessment.findings.map((finding, index) => <div key={finding.id} className="grid gap-3 rounded-lg border border-[#e0ddd6] bg-[#f5f3ee] p-4 sm:grid-cols-[32px_1fr]"><span className="grid h-8 w-8 place-items-center rounded-md bg-[#315f78] text-xs font-black text-white">{index + 1}</span><div><p className="font-black">{pick(language, finding.title)}</p><p className="mt-1 text-xs leading-5 text-[#5f6d69]">{packetMode === 'redacted' ? redactCaseText(pick(language, finding.neutralClaim), caseFile) : pick(language, finding.neutralClaim)}</p><p className="mt-3 text-[9px] font-bold uppercase tracking-wide text-[#788481]">{t(language, 'Evidence anchors', 'साक्ष्य लंगर')} · {finding.anchors.join(' · ')}</p></div></div>)}</div></section><section className="grid gap-4 border-t border-[#d8d2c7] py-6 sm:grid-cols-2"><div><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Rule clock', 'नियम घड़ी')}</h3><p className="mt-2 text-sm font-black">{deadline ? `${t(language, 'Safety date', 'सुरक्षित तारीख़')}: ${formatDate(deadline.date, language)}` : t(language, 'Not safely calculated', 'सुरक्षित गणना नहीं हुई')}</p><p className="mt-1 text-[10px] leading-4 text-[#697572]">{t(language, 'CMVR Rule 167 · G.S.R. 48(E) · state procedure must be verified.', 'CMVR नियम 167 · G.S.R. 48(E) · राज्य की प्रक्रिया जाँचना ज़रूरी।')}</p></div><div><h3 className="text-xs font-black uppercase tracking-[0.14em]">{t(language, 'Processing record', 'प्रसंस्करण विवरण')}</h3><p className="mt-2 text-[10px] leading-5 text-[#697572]">{t(language, 'Original uploads excluded from this packet. No official submission performed. Findings generated from user-confirmed facts and deterministic comparison rules.', 'मूल अपलोड इस पैकेट में शामिल नहीं। कोई आधिकारिक आवेदन नहीं किया गया। निष्कर्ष उपयोगकर्ता द्वारा पुष्ट तथ्यों और निश्चित तुलना नियमों से बने हैं।')}</p></div></section><footer className="border-t border-[#d8d2c7] pt-5 text-[9px] leading-4 text-[#77827f]">{t(language, 'This summary reports observable conflicts in supplied records. It does not determine legality, guilt, fraud, cloning, or the likely outcome of any grievance.', 'यह सारांश दिए गए रिकॉर्ड में दिखने वाले अंतर बताता है। यह वैधता, दोष, धोखाधड़ी, क्लोनिंग या किसी शिकायत के संभावित नतीजे का निर्धारण नहीं करता।')}</footer></article>
+        <aside className="space-y-4 lg:sticky lg:top-[175px] lg:self-start"><div className="rounded-lg border border-[#c9d9cd] bg-[#eef5f0] p-5"><div className="flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#246344]">{t(language, 'Packet readiness', 'पैकेट की तैयारी')}</p><span className="rounded-md bg-[#315f78] px-2.5 py-1 text-[9px] font-black text-white">3/3</span></div><div className="mt-4 divide-y divide-[#d5e1d9]">{readiness.map((item) => <div key={item} className="flex items-center gap-2 py-2 text-[10px] font-black text-[#426052]"><span className="status-dot" />{item}</div>)}</div></div><div className="rounded-xl bg-[#172a33] p-5 text-white"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b8d4e1]">{t(language, 'Final human gate', 'अंतिम मानव द्वार')}</p><label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-white/15 bg-white/[0.05] p-4"><input type="checkbox" checked={attested} onChange={(event) => setAttested(event.target.checked)} className="mt-1 h-4 w-4 accent-[#315f78]" /><span className="text-xs leading-5 text-white/75">{t(language, 'I checked the displayed facts against the source records and understand this is not an official or legal conclusion.', 'मैंने दिखाए गए तथ्य स्रोत रिकॉर्ड से मिला लिए हैं और समझता/समझती हूँ कि यह कोई आधिकारिक या क़ानूनी निष्कर्ष नहीं है।')}</span></label><button onClick={onDownload} disabled={!attested || exporting} className="mt-4 w-full rounded-md bg-white px-4 py-3 text-sm font-black text-[#172a33] disabled:cursor-not-allowed disabled:opacity-40">{exporting ? t(language, 'Building PDF…', 'PDF बन रही है…') : t(language, 'Download evidence PDF ↓', 'साक्ष्य PDF डाउनलोड करें ↓')}</button><p className="mt-2 text-[9px] leading-4 text-white/50">{t(language, 'The authority-handoff PDF uses English; the JSON manifest and copied brief preserve both languages.', 'विभाग को देने वाली PDF अंग्रेज़ी में बनती है; JSON manifest और कॉपी किया सार दोनों भाषाएँ रखते हैं।')}</p>{exportError && <p role="alert" className="mt-3 rounded-md border border-[#d8a99d] bg-[#47261f] px-3 py-2 text-[10px] leading-4 text-[#ffe7df]">{exportError}</p>}<button onClick={onManifest} disabled={!attested} className="mt-3 w-full rounded-md border border-white/20 px-4 py-3 text-xs font-black text-white disabled:opacity-40">{t(language, 'Download manifest.json', 'manifest.json डाउनलोड करें')}</button><button onClick={copyBrief} disabled={!attested} aria-live="polite" className="mt-3 w-full rounded-md border border-white/20 px-4 py-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{copiedBrief ? t(language, 'Share-safe brief copied', 'साझा करने योग्य सार कॉपी हुआ') : t(language, 'Copy share-safe brief', 'साझा करने योग्य सार कॉपी करें')}</button></div><div className="rounded-lg border border-[#d0cabf] bg-[#fbfaf7] p-5"><p className="text-xs font-black">{t(language, 'Continue on the official service', 'आधिकारिक सेवा पर आगे बढ़ें')}</p><p className="mt-2 text-xs leading-5 text-[#6a7774]">{t(language, 'Challan Jaanch does not transfer files or credentials. Open the official portal separately and review its current instructions.', 'चालान जाँच कोई फ़ाइल या गोपनीय जानकारी नहीं भेजता। आधिकारिक पोर्टल अलग से खोलें और उसके मौजूदा निर्देश पढ़ें।')}</p><a href={OFFICIAL_ECHALLAN_URL} target="_blank" rel="noreferrer" className="mt-4 block rounded-md border border-[#172a33] px-4 py-3 text-center text-xs font-black">{t(language, 'Open official eChallan portal ↗', 'आधिकारिक ई-चालान पोर्टल खोलें ↗')}</a></div><button onClick={onReview} className="w-full rounded-md border border-[#d0cabf] bg-white/60 px-4 py-3 text-xs font-black">{t(language, 'Back to evidence review', 'साक्ष्य जाँच पर लौटें')}</button></aside>
       </div>
       <div className="mt-7">
         <NextSteps language={language} outcome={assessment.outcome} deadline={deadline} />
@@ -496,7 +524,7 @@ export default function HomePage() {
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
   const [selectedKey, setSelectedKey] = useState<string>();
   const [files, setFiles] = useState<UploadedFiles>({});
-  const [fileHashes, setFileHashes] = useState<Record<string, string>>({});
+  const [fileHashes, setFileHashes] = useState<Partial<Record<UploadKey, string>>>({});
   const [uploadError, setUploadError] = useState('');
   const [notice, setNotice] = useState('');
   const [processingStep, setProcessingStep] = useState(0);
@@ -504,6 +532,7 @@ export default function HomePage() {
   const [packetMode, setPacketMode] = useState<PacketMode>('redacted');
   const [attested, setAttested] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   const [guideOpen, setGuideOpen] = useState(false);
 
   // Keep the document language in step with the interface so screen readers and
@@ -555,6 +584,11 @@ export default function HomePage() {
     }
     setUploadError('');
     setFiles((current) => ({ ...current, [key]: file }));
+    setFileHashes((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
   };
 
   const analyseUploads = async () => {
@@ -567,10 +601,14 @@ export default function HomePage() {
     setProcessingStep(0);
     setStage('processing');
     try {
-      const selected = [files.challan, files.vehicle, files.supporting].filter(Boolean) as File[];
+      const selected = ([
+        ['challan', files.challan],
+        ['vehicle', files.vehicle],
+        ['supporting', files.supporting],
+      ] as const).filter((entry): entry is readonly [UploadKey, File] => Boolean(entry[1]));
       const [documents, hashes] = await Promise.all([
-        Promise.all(selected.map(async (file) => ({ name: file.name, type: file.type || 'application/octet-stream', data: await fileToDataUrl(file) }))),
-        Promise.all(selected.map(async (file) => [file.name, await fileHash(file)] as const)),
+        Promise.all(selected.map(async ([, file]) => ({ name: file.name, type: file.type || 'application/octet-stream', data: await fileToDataUrl(file) }))),
+        Promise.all(selected.map(async ([key, file]) => [key, await fileHash(file)] as const)),
       ]);
       setProcessingStep(1);
       setFileHashes(Object.fromEntries(hashes));
@@ -601,7 +639,18 @@ export default function HomePage() {
     setAttested(false);
   };
 
+  const updateClarity = (key: string, clear: boolean) => {
+    setCaseFile((current) => ({
+      ...current,
+      facts: current.facts.map((fact) => fact.key === key ? { ...fact, reliability: clear ? 0.99 : 0.5 } : fact),
+    }));
+    setConfirmed((current) => { const next = new Set(current); next.delete(key); return next; });
+    setAttested(false);
+  };
+
   const toggleConfirmation = (key: string) => setConfirmed((current) => {
+    const fact = caseFile.facts.find((entry) => entry.key === key);
+    if (!fact?.value.trim()) return current;
     const next = new Set(current);
     if (next.has(key)) next.delete(key); else next.add(key);
     return next;
@@ -617,32 +666,42 @@ export default function HomePage() {
     setNotice('');
     setUploadError('');
     setAttested(false);
+    setExportError('');
     setPacketMode('redacted');
     setCaseFile(cloneCase(cases['wrong-vehicle']));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const manifest = () => ({
-    schemaVersion: '1.0',
-    packetId: `${caseFile.id}-${Date.now()}`,
-    caseId: caseFile.id,
-    mode: packetMode === 'redacted' ? 'redacted_share' : 'official_submission',
-    synthetic: caseFile.synthetic,
-    generatedAt: new Date().toISOString(),
-    language,
-    processing: caseFile.synthetic ? 'deterministic_fixture_in_browser' : 'user_confirmed_browser_workflow',
-    claims: assessment.findings.map((finding) => ({
-      id: finding.id,
-      findingRule: finding.rule,
-      neutralStatement: finding.neutralClaim.en,
-      neutralStatementHindi: finding.neutralClaim.hi,
-      evidenceAnchorIds: finding.anchors,
-      limitations: finding.limitations.map((limitation) => limitation.en),
-    })),
-    files: caseFile.documentNames.map((name) => ({ path: name, sha256: fileHashes[name] || `SYNTHETIC-${caseFile.id}-${name}`, included: false, purpose: 'Source reference only' })),
-    privacy: { originalUploadsIncluded: false, omittedFields: ['owner name', 'address', 'phone', 'email', 'engine number', 'chassis number', 'QR payload', 'EXIF'], retention: 'memory_until_reset', telemetry: false },
-    legal: { legalConclusionMade: false, officialSubmissionPerformed: false, disclaimer: 'Reports observable conflicts only; not legal advice or a government record.' },
-  });
+  const manifest = () => {
+    const citizenFiles = ([
+      ['challan', files.challan],
+      ['vehicle', files.vehicle],
+      ['supporting', files.supporting],
+    ] as const).filter((entry): entry is readonly [UploadKey, File] => Boolean(entry[1]));
+    return {
+      schemaVersion: '1.0',
+      packetId: `${caseFile.id}-${Date.now()}`,
+      caseId: caseFile.id,
+      mode: packetMode === 'redacted' ? 'redacted_share' : 'official_handoff',
+      synthetic: caseFile.synthetic,
+      generatedAt: new Date().toISOString(),
+      language,
+      processing: caseFile.synthetic ? 'deterministic_fixture_in_browser' : 'user_confirmed_browser_workflow',
+      claims: assessment.findings.map((finding) => ({
+        id: finding.id,
+        findingRule: finding.rule,
+        neutralStatement: packetMode === 'redacted' ? redactCaseText(finding.neutralClaim.en, caseFile) : finding.neutralClaim.en,
+        neutralStatementHindi: packetMode === 'redacted' ? redactCaseText(finding.neutralClaim.hi, caseFile) : finding.neutralClaim.hi,
+        evidenceAnchorIds: finding.anchors,
+        limitations: finding.limitations.map((limitation) => limitation.en),
+      })),
+      files: caseFile.synthetic
+        ? caseFile.documentNames.map((name) => ({ path: name, sourceRole: 'synthetic_fixture', sha256: null, integrity: 'not_computed_no_source_bytes', included: false, purpose: 'Synthetic source reference only' }))
+        : citizenFiles.map(([sourceRole, file]) => ({ path: packetMode === 'redacted' ? redactedFileName(file, sourceRole) : file.name, sourceRole, sha256: fileHashes[sourceRole] ?? null, integrity: fileHashes[sourceRole] ? 'locally_computed_sha256' : 'not_computed', included: false, purpose: 'Citizen-supplied source reference only' })),
+      privacy: { originalUploadsIncluded: false, omittedFields: ['owner name', 'address', 'phone', 'email', 'engine number', 'chassis number', 'QR payload', 'EXIF'], retention: 'memory_until_reset', telemetry: false },
+      legal: { legalConclusionMade: false, officialSubmissionPerformed: false, disclaimer: 'Reports observable conflicts only; not legal advice or a government record.' },
+    };
+  };
 
   const downloadManifest = () => {
     const blob = new Blob([JSON.stringify(manifest(), null, 2)], { type: 'application/json' });
@@ -663,11 +722,13 @@ export default function HomePage() {
 
   const downloadPdf = async () => {
     setExporting(true);
+    setExportError('');
     try {
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
       const plate = caseFile.facts.find((fact) => fact.key === 'rcPlate')?.value ?? '';
       const shownPlate = packetMode === 'redacted' ? maskIdentifier(plate) : plate;
+      const shownChallan = packetMode === 'redacted' ? maskIdentifier(caseFile.challanNumber) : caseFile.challanNumber;
       const validDate = isValidIsoDate(caseFile.issueDate) && caseFile.issueDate >= '2026-01-20';
       pdf.setProperties({ title: `Citizen-prepared evidence summary — ${caseFile.id}`, subject: 'Observable eChallan evidence comparison', author: 'Challan Jaanch' });
       pdf.setFillColor(23, 42, 51); pdf.rect(0, 0, 210, 34, 'F');
@@ -677,14 +738,14 @@ export default function HomePage() {
       pdf.text('NOT GOVERNMENT-ISSUED  |  NOT LEGAL ADVICE  |  NO SUBMISSION PERFORMED', 16, 43);
       pdf.setDrawColor(210, 204, 193); pdf.line(16, 48, 194, 48);
       pdf.setFont('helvetica', 'bold'); pdf.setTextColor(23, 42, 51); pdf.setFontSize(10); pdf.text('CASE', 16, 58);
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.text(`Packet: ${caseFile.id}`, 16, 66); pdf.text(`Challan: ${caseFile.challanNumber}`, 16, 73); pdf.text(`Vehicle identifier: ${shownPlate || 'Not confirmed'}`, 16, 80); pdf.text(`Issue date: ${caseFile.issueDate ? formatDate(caseFile.issueDate) : 'Not confirmed'}`, 16, 87);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.text(`Packet: ${caseFile.id}`, 16, 66); pdf.text(`Challan: ${shownChallan}`, 16, 73); pdf.text(`Vehicle identifier: ${shownPlate || 'Not confirmed'}`, 16, 80); pdf.text(`Issue date: ${caseFile.issueDate ? formatDate(caseFile.issueDate) : 'Not confirmed'}`, 16, 87);
       let y = 101;
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.text('SUPPORTED CLAIM MAP', 16, y); y += 8;
       assessment.findings.forEach((finding, index) => {
         pdf.setFillColor(243, 241, 236); pdf.roundedRect(16, y - 5, 178, 31, 3, 3, 'F');
         pdf.setTextColor(23, 42, 51); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.text(`${index + 1}. ${finding.title.en}`, 21, y + 2);
         pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5);
-        const neutral = packetMode === 'redacted' ? finding.neutralClaim.en.replaceAll(plate, maskIdentifier(plate)) : finding.neutralClaim.en;
+        const neutral = packetMode === 'redacted' ? redactCaseText(finding.neutralClaim.en, caseFile) : finding.neutralClaim.en;
         pdf.text(pdf.splitTextToSize(neutral, 165), 21, y + 8);
         pdf.setFontSize(7); pdf.setTextColor(104, 116, 113); pdf.text(`Evidence anchors: ${finding.anchors.join(' · ')}`, 21, y + 22);
         y += 37;
@@ -700,6 +761,8 @@ export default function HomePage() {
       pdf.text(pdf.splitTextToSize(privacyText, 178), 16, y);
       pdf.setFontSize(7); pdf.setTextColor(112, 123, 120); pdf.text(`Generated ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} · Schema CJ-1.0 · ${caseFile.synthetic ? 'SYNTHETIC DEMO' : 'CITIZEN-SUPPLIED RECORDS'}`, 16, 286);
       pdf.save(`challan-jaanch-${caseFile.id.toLowerCase()}-evidence-summary.pdf`);
+    } catch {
+      setExportError(t(language, 'The PDF could not be created in this browser. Download the JSON manifest or copy the share-safe brief instead.', 'इस ब्राउज़र में PDF नहीं बन सकी। इसके बजाय JSON manifest डाउनलोड करें या साझा करने योग्य सार कॉपी करें।'));
     } finally {
       setExporting(false);
     }
@@ -713,9 +776,9 @@ export default function HomePage() {
         {stage === 'scam' && <ScamShield language={language} onBack={reset} />}
         {stage === 'upload' && <UploadScreen language={language} files={files} setFile={setFile} error={uploadError} onAnalyse={analyseUploads} onStartCase={startCase} />}
         {stage === 'processing' && <ProcessingScreen progress={processingStep} live={liveProcessing} language={language} />}
-        {stage === 'review' && <ReviewScreen caseFile={caseFile} language={language} confirmed={confirmed} selectedKey={selectedKey} notice={notice} files={files} onSelect={setSelectedKey} onChange={updateFact} onConfirm={toggleConfirmation} onConfirmAll={confirmAll} onCompare={() => { setStage('result'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+        {stage === 'review' && <ReviewScreen caseFile={caseFile} language={language} confirmed={confirmed} selectedKey={selectedKey} notice={notice} files={files} onSelect={setSelectedKey} onChange={updateFact} onClarity={updateClarity} onConfirm={toggleConfirmation} onConfirmAll={confirmAll} onCompare={() => { setStage('result'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
         {stage === 'result' && <ResultScreen caseFile={caseFile} language={language} assessment={assessment} onPacket={() => { setStage('packet'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} onReview={() => setStage('review')} onStartCase={startCase} />}
-        {stage === 'packet' && <PacketScreen caseFile={caseFile} language={language} assessment={assessment} packetMode={packetMode} setPacketMode={setPacketMode} attested={attested} setAttested={setAttested} exporting={exporting} onDownload={downloadPdf} onManifest={downloadManifest} onReview={() => setStage('review')} />}
+        {stage === 'packet' && <PacketScreen caseFile={caseFile} language={language} assessment={assessment} packetMode={packetMode} setPacketMode={setPacketMode} attested={attested} setAttested={setAttested} exporting={exporting} exportError={exportError} onDownload={downloadPdf} onManifest={downloadManifest} onReview={() => setStage('review')} />}
       </Shell>
       <HowItWorksDrawer open={guideOpen} language={language} onClose={() => setGuideOpen(false)} />
     </>

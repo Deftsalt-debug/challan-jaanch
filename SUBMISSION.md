@@ -20,9 +20,13 @@ Current portals remain the system of record. Challan Jaanch adds the missing rea
 
 **Word count:** 229
 
+The release test derives this count from the summary block and fails above 250 words or when the declared count is stale.
+
 ## Video
 
 The ready-to-submit cut is [submission/challan-jaanch-submission.mp4](submission/challan-jaanch-submission.mp4): 1 minute 54 seconds, 1280×720, with synthetic English narration. Use [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for the timed first-minute citizen demo and second-minute build explanation. [docs/VIDEO_NARRATION.txt](docs/VIDEO_NARRATION.txt) contains the clean narration track.
+
+The release test reads the MP4 movie header and fails if the cut exceeds the two-minute limit.
 
 ## How the OpenAI model is used
 
@@ -46,6 +50,8 @@ The brief lists eight things not to do. How this build stands against each:
 | Do not use government logos to suggest approval or partnership | No emblem, seal, tricolour or departmental logo appears anywhere. The mark is an abstract shield and road. |
 | Do not submit an old project with only small changes | The public commit history shows the build and its rewrites. |
 | Do not include code, assets or data without permission | Dependencies are open-source and listed in `package.json`; the project is MIT-licensed. Images are original to the project. |
+
+The final release gate also checks the India-local Rule 167 day boundary, safe abstention for unclear vehicle sources, official-route hostnames and non-predictive wording, security-header parity, truthful synthetic-file hash metadata, the summary word limit, and the video duration.
 
 Every outbound link in the app was re-checked on 28 August 2026: the eChallan check and grievance pages, grievance ticket status, Virtual Court, NALSA Regular Lok Adalat, DoT Chakshu, I4C/NCRP, CERT-In’s current RTO/eChallan advisory, the controlling Gazette PDF, and the Rajya Sabha answer PDF.
 
