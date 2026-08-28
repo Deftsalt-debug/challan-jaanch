@@ -1,4 +1,6 @@
-A confusing eChallan leaves a citizen with two questions: does the evidence actually match my vehicle, and is the message itself even genuine? Challan Jaanch answers both before the citizen pays or files a grievance. [[slnc 350]]
+This submission cut is intentionally silent. The complete story is burned into the MP4 as captions over real product captures and a system-boundary diagram; no voice track is required.
+
+The caption sequence is maintained in `submission/video-production/compose_silent_demo.swift`. [[slnc 350]]
 
 I’ll use a clearly labelled synthetic case. The workbench places the challan, enforcement photo, and vehicle record side by side. Originals stay unchanged, and every extracted fact remains linked to its source. [[slnc 300]]
 

@@ -26,11 +26,11 @@ The release test derives this count from the summary block and fails above 250 w
 
 ## Video
 
-The ready-to-submit cut is [submission/challan-jaanch-submission.mp4](submission/challan-jaanch-submission.mp4): 1 minute 54 seconds, 1280×720, with synthetic English narration. Use [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for the timed first-minute citizen demo and second-minute build explanation. [docs/VIDEO_NARRATION.txt](docs/VIDEO_NARRATION.txt) contains the clean narration track.
+The ready-to-submit cut is [submission/challan-jaanch-submission.mp4](submission/challan-jaanch-submission.mp4): 1 minute 47.5 seconds, 1920×1080 H.264, silent and caption-led. It uses real captures from the public synthetic demo, an animated system-boundary diagram, technical callouts and the complete Scam Shield path. [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) remains the timed editorial companion for the citizen journey and build explanation.
 
 The release test reads the MP4 movie header and fails if the cut exceeds the two-minute limit.
 
-In the narration, “storage disabled” is shorthand for `store: false`: retrievable response storage is disabled. It is not a zero-retention claim; OpenAI API data controls, including possible abuse-monitoring retention, may still apply. The public submission deployment has no API key, so the reviewer journey sends no document to OpenAI.
+The video’s privacy caption uses “storage disabled” as shorthand for `store: false`: retrievable response storage is disabled. It is not a zero-retention claim; OpenAI API data controls, including possible abuse-monitoring retention, may still apply. The public submission deployment has no API key, so the reviewer journey sends no document to OpenAI.
 
 ## How the OpenAI model is used
 

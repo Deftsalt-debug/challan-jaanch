@@ -111,7 +111,7 @@ docs/HOW_WE_BUILT_IT.md            Where the OpenAI model runs and how the build
 docs/LOCALISATION.md               Bilingual design and the tests that protect it
 docs/LOCAL_DEVELOPMENT.md          Setup and troubleshooting
 docs/DEMO_SCRIPT.md                Timed two-minute submission walkthrough
-docs/VIDEO_NARRATION.txt           Clean voice-over copy for the submission video
+docs/VIDEO_NARRATION.txt           Caption-track note for the silent submission video
 ```
 
 ## Product boundary

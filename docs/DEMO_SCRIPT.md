@@ -1,6 +1,6 @@
 # Two-minute submission video
 
-Target length: **1:52–1:58**. The first minute is the citizen experience. The second minute explains the build and product decisions.
+Target length: **1:47–1:55**. The shipped submission is silent and caption-led: the first minute is the citizen experience, and the second minute explains the build and product decisions. This document is the editorial timing reference; the final captions are rendered by `submission/video-production/compose_silent_demo.swift`.
 
 ## Minute one — citizen demo
 
@@ -79,7 +79,7 @@ Target length: **1:52–1:58**. The first minute is the citizen experience. The 
 - Do not exceed two minutes; aim for 1:55.
 - Show only synthetic fixtures—never a real registration, phone number or challan.
 - Keep the public URL visible briefly at the beginning or end.
-- Export as H.264 MP4, 1080p or 720p, with clearly audible narration.
+- Export as H.264 MP4, 1080p or 720p. The shipped cut has no audio track; captions carry the explanation.
 
 ## If you re-record for the mentorship round
 
