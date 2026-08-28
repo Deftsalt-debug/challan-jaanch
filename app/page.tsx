@@ -26,6 +26,8 @@ import { useLanguage } from '../lib/use-language';
 type Stage = 'home' | 'scam' | 'upload' | 'processing' | 'review' | 'result' | 'packet';
 type PacketMode = 'official' | 'redacted';
 type UploadKey = 'challan' | 'vehicle' | 'supporting';
+type ProcessingMode = 'synthetic' | 'local' | 'ai';
+type TransmissionState = 'none' | 'application_route_only' | 'openai_completed' | 'openai_attempted_unconfirmed';
 
 interface UploadedFiles {
   challan?: File;
@@ -84,7 +86,7 @@ async function fileHash(file: File): Promise<string> {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function manualCase(extraction: LiveExtraction, files: UploadedFiles): DemoCase {
+function manualCase(extraction: LiveExtraction, files: UploadedFiles, source: 'manual' | 'ai' = 'manual'): DemoCase {
   const value = (entry: string | null | undefined) => entry?.trim() ?? '';
   const extracted = (entry: string | null | undefined) => entry ? 0.94 : 0.5;
   const notExtracted = bi('Not extracted', 'नहीं निकला');
@@ -93,10 +95,15 @@ function manualCase(extraction: LiveExtraction, files: UploadedFiles): DemoCase 
     kind: 'manual',
     title: bi('Citizen-supplied document comparison', 'नागरिक द्वारा दिए दस्तावेज़ों की तुलना'),
     shortTitle: bi('Your local case', 'आपका स्थानीय केस'),
-    story: bi(
-      'Observable fields extracted from the supplied documents. Every decisive value must be checked against the original before comparison.',
-      'दिए गए दस्तावेज़ों से निकाले गए दिखने वाले फ़ील्ड। तुलना से पहले हर निर्णायक मान मूल दस्तावेज़ से मिलाना ज़रूरी है।',
-    ),
+    story: source === 'ai'
+      ? bi(
+        'Observable fields extracted from the supplied documents. Every decisive value must be checked against the original before comparison.',
+        'दिए गए दस्तावेज़ों से निकाले गए दिखने वाले फ़ील्ड। तुलना से पहले हर निर्णायक मान मूल दस्तावेज़ से मिलाना ज़रूरी है।',
+      )
+      : bi(
+        'A local workspace for entering only the observable comparison fields. Selected file bytes were not transmitted for extraction.',
+        'सिर्फ़ दिखने वाले तुलना फ़ील्ड भरने के लिए स्थानीय कार्यक्षेत्र। चुनी गई फ़ाइलों के बाइट निष्कर्षण के लिए भेजे नहीं गए।',
+      ),
     issueDate: isValidIsoDate(value(extraction.issueDate)) ? value(extraction.issueDate) : '',
     jurisdiction: bi('State procedure must be confirmed', 'राज्य की प्रक्रिया पुष्ट करना ज़रूरी'),
     challanNumber: value(extraction.challanNumber) || 'Not extracted',
@@ -119,6 +126,14 @@ function manualCase(extraction: LiveExtraction, files: UploadedFiles): DemoCase 
 function redactedFileName(file: File, sourceRole: UploadKey): string {
   const extension = /\.([a-z0-9]{1,8})$/iu.exec(file.name)?.[1]?.toLowerCase();
   return extension ? `${sourceRole}.${extension}` : sourceRole;
+}
+
+function selectedUploads(files: UploadedFiles): Array<readonly [UploadKey, File]> {
+  return ([
+    ['challan', files.challan],
+    ['vehicle', files.vehicle],
+    ['supporting', files.supporting],
+  ] as const).filter((entry): entry is readonly [UploadKey, File] => Boolean(entry[1]));
 }
 
 function Brand({ language, onLanguage, onHome, onScam, onHelp, guideText }: { language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onHelp: () => void; guideText: string }) {
@@ -297,13 +312,15 @@ function Dropzone({ language, label, description, file, onFile, optional = false
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,application/pdf" className="sr-only" onChange={handle} />
       <div className="flex items-start gap-4">
         {previewUrl ? <span role="img" aria-label={t(language, 'Selected file preview', 'चुनी गई फ़ाइल की झलक')} className="h-20 w-20 shrink-0 rounded-lg border border-[#b8d1c0] bg-cover bg-center shadow-sm" style={{ backgroundImage: `url(${previewUrl})` }} /> : <span className={joinClasses('grid h-12 w-12 shrink-0 place-items-center rounded-lg text-[10px] font-black tracking-wide', file ? 'bg-[#315f78] text-white' : dragging ? 'bg-[#315f78] text-white' : 'bg-[#ece9e2] text-[#172a33]')}>{file ? file.type === 'application/pdf' ? 'PDF' : t(language, 'READY', 'तैयार') : dragging ? t(language, 'DROP', 'छोड़ें') : t(language, 'ADD', 'जोड़ें')}</span>}
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black">{label}</h3>{optional && <span className="rounded-md bg-[#ece7de] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#66726f]">{t(language, 'Optional', 'वैकल्पिक')}</span>}{dragging && <span className="rounded-md bg-[#dce9ef] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#315f78]">{t(language, 'Release to add', 'जोड़ने के लिए छोड़ें')}</span>}</div><p className="mt-1 text-xs leading-5 text-[#6a7774]">{description} · {t(language, 'drag and drop supported', 'खींचकर छोड़ना भी चलता है')}</p>{file && <p className="mt-3 truncate rounded-md bg-white/65 px-3 py-2 text-xs font-extrabold text-[#315d48]">{file.name} · {(file.size / 1_048_576).toFixed(1)} MB</p>}<div className="mt-4 flex gap-3"><button onClick={() => inputRef.current?.click()} className="rounded-md bg-[#172a33] px-4 py-2 text-xs font-extrabold text-white transition hover:bg-[#24495d]">{file ? t(language, 'Replace file', 'फ़ाइल बदलें') : t(language, 'Choose file', 'फ़ाइल चुनें')}</button>{file && <button onClick={() => onFile(undefined)} className="text-xs font-extrabold text-[#9c3f39]">{t(language, 'Remove', 'हटाएँ')}</button>}</div></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black">{label}</h3>{optional && <span className="rounded-md bg-[#ece7de] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#66726f]">{t(language, 'Optional', 'वैकल्पिक')}</span>}{dragging && <span className="rounded-md bg-[#dce9ef] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#315f78]">{t(language, 'Release to add', 'जोड़ने के लिए छोड़ें')}</span>}</div><p className="mt-1 text-xs leading-5 text-[#6a7774]">{description} · {t(language, 'drag and drop supported', 'खींचकर छोड़ना भी चलता है')}</p>{file && <p className="mt-3 truncate rounded-md bg-white/65 px-3 py-2 text-xs font-extrabold text-[#315d48]">{file.name} · {(file.size / 1_048_576).toFixed(1)} MB</p>}<div className="mt-4 flex gap-3"><button onClick={() => inputRef.current?.click()} className="rounded-md bg-[#172a33] px-4 py-2 text-xs font-extrabold text-white transition hover:bg-[#24495d]">{file ? t(language, 'Replace file', 'फ़ाइल बदलें') : t(language, 'Choose file', 'फ़ाइल चुनें')}</button>{file && <button onClick={() => onFile(undefined)} className="touch-target text-xs font-extrabold text-[#9c3f39]">{t(language, 'Remove', 'हटाएँ')}</button>}</div></div>
       </div>
     </div>
   );
 }
 
-function UploadScreen({ language, files, setFile, error, onAnalyse, onStartCase }: { language: Language; files: UploadedFiles; setFile: (key: UploadKey, file?: File) => void; error: string; onAnalyse: () => void; onStartCase: (id: string) => void }) {
+function UploadScreen({ language, files, setFile, error, aiConsent, setAiConsent, onAnalyse, onManual, onStartCase }: { language: Language; files: UploadedFiles; setFile: (key: UploadKey, file?: File) => void; error: string; aiConsent: boolean; setAiConsent: (value: boolean) => void; onAnalyse: () => void; onManual: () => void; onStartCase: (id: string) => void }) {
+  const ready = Boolean(files.challan && files.vehicle);
+
   return (
     <div className="mx-auto w-full max-w-[1080px] px-5 py-10 sm:px-8 sm:py-14">
       <div className="grid gap-9 lg:grid-cols-[0.72fr_1.28fr]">
@@ -315,37 +332,57 @@ function UploadScreen({ language, files, setFile, error, onAnalyse, onStartCase 
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#315f78]">{t(language, 'Processing boundary', 'प्रसंस्करण की सीमा')}</p>
             <ul className="mt-3 space-y-2 text-xs leading-5 text-[#4e6874]">
               <li>• {t(language, 'For a public demo, use the included synthetic records.', 'सार्वजनिक डेमो के लिए साथ दिए नकली रिकॉर्ड इस्तेमाल करें।')}</li>
-              <li>• {t(language, 'Optional live extraction sends selected files to OpenAI with storage disabled.', 'वैकल्पिक लाइव निष्कर्षण चुनी गई फ़ाइलें OpenAI को भेजता है, भंडारण बंद रखते हुए।')}</li>
+              <li>• {t(language, 'Local entry keeps selected file bytes in this browser; only local SHA-256 fingerprints are computed.', 'स्थानीय भराई चुनी गई फ़ाइलों के बाइट इसी ब्राउज़र में रखती है; सिर्फ़ स्थानीय SHA-256 पहचान बनती है।')}</li>
+              <li>• {t(language, 'AI extraction is optional and runs only after explicit consent to send the selected files to OpenAI.', 'AI निष्कर्षण वैकल्पिक है और चुनी गई फ़ाइलें OpenAI को भेजने की स्पष्ट सहमति के बाद ही चलता है।')}</li>
               <li>• {t(language, 'If extraction is unavailable, enter fields manually and mark only sources that are clear in the original.', 'निष्कर्षण उपलब्ध न हो तो फ़ील्ड ख़ुद भरें और सिर्फ़ उन्हीं स्रोतों को साफ़ मानें जो मूल में साफ़ दिखते हैं।')}</li>
               <li>• {t(language, 'The app never requests government credentials or performs a submission.', 'ऐप कभी सरकारी लॉगिन नहीं माँगता और न कोई आवेदन जमा करता है।')}</li>
             </ul>
           </div>
-          <button onClick={() => onStartCase('wrong-vehicle')} className="mt-5 text-sm font-black text-[#315f78] underline decoration-[#315f78]/30 underline-offset-4">{t(language, 'Skip uploads and run the synthetic demo →', 'अपलोड छोड़कर नकली डेमो चलाएँ →')}</button>
+          <button onClick={() => onStartCase('wrong-vehicle')} className="touch-target mt-5 text-sm font-black text-[#315f78] underline decoration-[#315f78]/30 underline-offset-4">{t(language, 'Skip uploads and run the synthetic demo →', 'अपलोड छोड़कर नकली डेमो चलाएँ →')}</button>
         </aside>
         <section className="space-y-4">
           <Dropzone language={language} label={t(language, 'Challan and evidence', 'चालान और साक्ष्य')} description={t(language, 'JPG, PNG or PDF · up to 10 MB', 'JPG, PNG या PDF · 10 MB तक')} file={files.challan} onFile={(file) => setFile('challan', file)} />
           <Dropzone language={language} label={t(language, 'Vehicle record', 'वाहन रिकॉर्ड')} description={t(language, 'A redacted record is enough for plate and broad vehicle class', 'नंबर और मोटे प्रकार के लिए छिपाया हुआ रिकॉर्ड भी काफ़ी है')} file={files.vehicle} onFile={(file) => setFile('vehicle', file)} />
           <Dropzone language={language} optional label={t(language, 'Supporting record', 'सहायक रिकॉर्ड')} description={t(language, 'Enforcement image, second challan, or another relevant record', 'कार्रवाई-फोटो, दूसरा चालान या कोई अन्य संबंधित रिकॉर्ड')} file={files.supporting} onFile={(file) => setFile('supporting', file)} />
           {error && <div role="alert" className="rounded-lg border border-[#d4a69d] bg-[#faf0ed] px-4 py-3 text-sm font-bold text-[#8d3b27]">{error}</div>}
-          <button onClick={onAnalyse} className="w-full rounded-lg bg-[#172a33] px-6 py-4 font-extrabold text-white shadow-[0_8px_22px_rgba(23,42,51,.12)] transition hover:bg-[#24495d] disabled:cursor-not-allowed disabled:opacity-45" disabled={!files.challan || !files.vehicle}>{t(language, 'Extract observable fields →', 'दिखने वाले फ़ील्ड निकालें →')}</button>
-          <p className="text-center text-[11px] leading-5 text-[#7a8582]">{t(language, 'Originals remain unchanged. Findings cannot run until you confirm the extracted values.', 'मूल दस्तावेज़ नहीं बदलते। जब तक आप निकाले गए मान पुष्ट नहीं करते, कोई निष्कर्ष नहीं बनता।')}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button onClick={onManual} className="rounded-lg border border-[#315f78] bg-[#eef4f7] px-5 py-4 text-left transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45" disabled={!ready}>
+              <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-[#315f78]">{t(language, 'Recommended · local only', 'सुझाया गया · सिर्फ़ स्थानीय')}</span>
+              <span className="mt-1 block text-sm font-extrabold text-[#172a33]">{t(language, 'Enter fields without AI →', 'AI के बिना फ़ील्ड भरें →')}</span>
+              <span className="mt-1 block text-[10px] leading-4 text-[#60716d]">{t(language, 'No selected file bytes leave this browser.', 'चुनी गई फ़ाइल के बाइट इस ब्राउज़र से बाहर नहीं जाते।')}</span>
+            </button>
+            <button onClick={onAnalyse} aria-describedby="ai-consent-note" className="rounded-lg bg-[#172a33] px-5 py-4 text-left text-white shadow-[0_8px_22px_rgba(23,42,51,.12)] transition hover:bg-[#24495d] disabled:cursor-not-allowed disabled:opacity-45" disabled={!ready || !aiConsent}>
+              <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-[#b8d4e1]">{t(language, 'Optional · AI assisted', 'वैकल्पिक · AI सहायता')}</span>
+              <span className="mt-1 block text-sm font-extrabold">{t(language, 'Extract observable fields →', 'दिखने वाले फ़ील्ड निकालें →')}</span>
+              <span className="mt-1 block text-[10px] leading-4 text-white/60">{t(language, 'Requires the transmission consent below.', 'नीचे दी भेजने की सहमति ज़रूरी है।')}</span>
+            </button>
+          </div>
+          <label id="ai-consent-note" className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#d4cec3] bg-[#f7f4ee] p-4">
+            <input type="checkbox" checked={aiConsent} onChange={(event) => setAiConsent(event.target.checked)} disabled={!ready} className="mt-0.5 h-4 w-4 shrink-0 accent-[#315f78] disabled:opacity-45" />
+            <span className="text-[11px] leading-5 text-[#596864]">{t(language, 'I consent to send these selected files to OpenAI for one extraction request. I used redacted copies and understand that store:false disables retrievable response storage, not every form of provider retention; OpenAI API data controls may still apply.', 'मैं इन चुनी गई फ़ाइलों को एक निष्कर्षण अनुरोध के लिए OpenAI को भेजने की सहमति देता/देती हूँ। मैंने छिपाई गई प्रतियाँ ली हैं और समझता/समझती हूँ कि store:false जवाब को बाद में पाने वाला भंडारण बंद करता है, हर तरह की प्रदाता रख-रखाव नहीं; OpenAI API डेटा नियंत्रण फिर भी लागू हो सकते हैं।')}</span>
+          </label>
+          <p className="text-center text-[11px] leading-5 text-[#7a8582]">{t(language, 'Use redacted copies that keep only the comparison fields. Findings stay locked until you confirm every decisive value.', 'ऐसी छिपाई गई प्रतियाँ लें जिनमें सिर्फ़ तुलना के फ़ील्ड रहें। हर निर्णायक मान की पुष्टि तक निष्कर्ष बंद रहते हैं।')}</p>
         </section>
       </div>
     </div>
   );
 }
 
-function ProcessingScreen({ progress, live, language }: { progress: number; live: boolean; language: Language }) {
-  const steps = live
+function ProcessingScreen({ progress, mode, language }: { progress: number; mode: ProcessingMode; language: Language }) {
+  const steps = mode === 'ai'
     ? [t(language, 'Validate file type and size', 'फ़ाइल का प्रकार और आकार जाँचें'), t(language, 'Extract observable fields', 'दिखने वाले फ़ील्ड निकालें'), t(language, 'Build editable evidence map', 'बदला जा सकने वाला साक्ष्य नक़्शा बनाएँ')]
-    : [t(language, 'Open synthetic evidence bundle', 'नकली साक्ष्य बंडल खोलें'), t(language, 'Map each fact to its source', 'हर तथ्य को उसके स्रोत से जोड़ें'), t(language, 'Prepare deterministic comparison', 'निश्चित नियमों से तुलना तैयार करें')];
+    : mode === 'local'
+      ? [t(language, 'Validate selected files', 'चुनी फ़ाइलें जाँचें'), t(language, 'Compute local integrity fingerprints', 'स्थानीय अखंडता पहचान बनाएँ'), t(language, 'Open the manual evidence map', 'हाथ से भरने वाला साक्ष्य नक़्शा खोलें')]
+      : [t(language, 'Open synthetic evidence bundle', 'नकली साक्ष्य बंडल खोलें'), t(language, 'Map each fact to its source', 'हर तथ्य को उसके स्रोत से जोड़ें'), t(language, 'Prepare deterministic comparison', 'निश्चित नियमों से तुलना तैयार करें')];
   return (
     <div className="mx-auto grid min-h-[62vh] w-full max-w-[840px] place-items-center px-5 py-14 sm:px-8">
       <div className="professional-card w-full rounded-[18px] p-7 sm:p-10">
         <div className="flex items-start gap-4"><span className="status-dot mt-2 shrink-0" /><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#315f78]">{t(language, 'Evidence mapping in progress', 'साक्ष्य मानचित्रण जारी है')}</p><h1 className="mt-2 text-3xl font-black tracking-[-0.04em]">{t(language, 'Reading observable facts. No conclusion is being made.', 'दिखने वाले तथ्य पढ़े जा रहे हैं। कोई निष्कर्ष नहीं निकाला जा रहा।')}</h1></div></div>
         <div className="mt-8 h-1.5 overflow-hidden rounded-full bg-[#e4e1da]"><div className="h-full bg-[#315f78] transition-all duration-500" style={{ width: `${Math.min(100, ((progress + 1) / 4) * 100)}%` }} /></div>
         <div className="mt-7 divide-y divide-[#ded9d0] border-y border-[#ded9d0]">{steps.map((step, index) => <div key={step} className={joinClasses('flex items-center gap-4 px-1 py-4 transition', index < progress ? 'text-[#315f78]' : index === progress ? 'text-[#172a33]' : 'text-[#8b9492]')}><span className={joinClasses('grid h-7 w-7 place-items-center rounded-md border text-[10px] font-black', index < progress ? 'border-[#315f78] bg-[#315f78] text-white' : index === progress ? 'border-[#8fb2c4] bg-[#eef4f7] text-[#315f78]' : 'border-[#d7d2c9] bg-[#f3f1ec]')}>{index < progress ? '✓' : `0${index + 1}`}</span><span className="text-sm font-extrabold">{step}</span></div>)}</div>
-        <p className="mt-7 text-xs font-semibold text-[#707c79]">{t(language, 'Processing contract: the model may extract, the citizen verifies, and deterministic rules compare.', 'प्रसंस्करण अनुबंध: मॉडल निकाल सकता है, नागरिक जाँचता है, और निश्चित नियम तुलना करते हैं।')}</p>
+        <p className="mt-7 text-xs font-semibold text-[#707c79]">{mode === 'local'
+          ? t(language, 'Local contract: no file bytes are transmitted; the citizen enters and verifies facts before deterministic rules compare.', 'स्थानीय अनुबंध: फ़ाइल के बाइट भेजे नहीं जाते; निश्चित नियमों की तुलना से पहले नागरिक तथ्य भरता और जाँचता है।')
+          : t(language, 'Processing contract: the model may extract, the citizen verifies, and deterministic rules compare.', 'प्रसंस्करण अनुबंध: मॉडल निकाल सकता है, नागरिक जाँचता है, और निश्चित नियम तुलना करते हैं।')}</p>
       </div>
     </div>
   );
@@ -528,12 +565,14 @@ export default function HomePage() {
   const [uploadError, setUploadError] = useState('');
   const [notice, setNotice] = useState('');
   const [processingStep, setProcessingStep] = useState(0);
-  const [liveProcessing, setLiveProcessing] = useState(false);
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>('synthetic');
   const [packetMode, setPacketMode] = useState<PacketMode>('redacted');
   const [attested, setAttested] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [guideOpen, setGuideOpen] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+  const [transmissionState, setTransmissionState] = useState<TransmissionState>('none');
 
   // Keep the document language in step with the interface so screen readers and
   // the speech guide use the right pronunciation.
@@ -561,7 +600,9 @@ export default function HomePage() {
     setSelectedKey(undefined);
     setNotice('');
     setAttested(false);
-    setLiveProcessing(false);
+    setAiConsent(false);
+    setTransmissionState('none');
+    setProcessingMode('synthetic');
     setProcessingStep(0);
     setStage('processing');
     for (let index = 0; index < 3; index += 1) {
@@ -583,6 +624,7 @@ export default function HomePage() {
       return;
     }
     setUploadError('');
+    setAiConsent(false);
     setFiles((current) => ({ ...current, [key]: file }));
     setFileHashes((current) => {
       const next = { ...current };
@@ -596,36 +638,89 @@ export default function HomePage() {
       setUploadError(t(language, 'Add both the challan and vehicle record.', 'चालान और वाहन रिकॉर्ड दोनों जोड़ें।'));
       return;
     }
+    if (!aiConsent) {
+      setUploadError(t(language, 'Consent is required before selected files can be sent for AI extraction. Use local entry to keep file bytes on-device.', 'AI निष्कर्षण के लिए चुनी गई फ़ाइलें भेजने से पहले सहमति ज़रूरी है। फ़ाइल के बाइट डिवाइस पर रखने के लिए स्थानीय भराई चुनें।'));
+      return;
+    }
     setUploadError('');
-    setLiveProcessing(true);
+    setProcessingMode('ai');
+    setTransmissionState('none');
     setProcessingStep(0);
     setStage('processing');
+    let fileTransmissionAttempted = false;
     try {
-      const selected = ([
-        ['challan', files.challan],
-        ['vehicle', files.vehicle],
-        ['supporting', files.supporting],
-      ] as const).filter((entry): entry is readonly [UploadKey, File] => Boolean(entry[1]));
+      const selected = selectedUploads(files);
+      const capabilityResponse = await fetch('/api/analyze', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const capability = await capabilityResponse.json() as { configured?: boolean };
+      if (!capabilityResponse.ok || !capability.configured) {
+        const hashes = await Promise.all(selected.map(async ([key, file]) => [key, await fileHash(file)] as const));
+        setFileHashes(Object.fromEntries(hashes));
+        setProcessingStep(2);
+        setCaseFile(manualCase({}, files, 'manual'));
+        setNotice(t(language, 'AI extraction is not configured, so no selected file bytes were sent to the server or OpenAI. Continue locally: enter the observable fields, mark source clarity, and confirm every decisive value.', 'AI निष्कर्षण कॉन्फ़िगर नहीं है, इसलिए चुनी गई फ़ाइलों के बाइट सर्वर या OpenAI को नहीं भेजे गए। स्थानीय रूप से आगे बढ़ें: दिखने वाले फ़ील्ड भरें, स्रोत की स्पष्टता बताएँ और हर निर्णायक मान पुष्ट करें।'));
+        setConfirmed(new Set());
+        setSelectedKey(undefined);
+        setProcessingStep(3);
+        await sleep(320);
+        setStage('review');
+        return;
+      }
+      setTransmissionState('application_route_only');
+      fileTransmissionAttempted = true;
       const [documents, hashes] = await Promise.all([
-        Promise.all(selected.map(async ([, file]) => ({ name: file.name, type: file.type || 'application/octet-stream', data: await fileToDataUrl(file) }))),
+        Promise.all(selected.map(async ([key, file]) => ({ name: redactedFileName(file, key), type: file.type || 'application/octet-stream', data: await fileToDataUrl(file) }))),
         Promise.all(selected.map(async ([key, file]) => [key, await fileHash(file)] as const)),
       ]);
       setProcessingStep(1);
       setFileHashes(Object.fromEntries(hashes));
       const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documents }) });
-      const result = await response.json() as { extraction?: LiveExtraction; message?: string };
+      const result = await response.json() as { extraction?: LiveExtraction; message?: string; code?: string };
       setProcessingStep(2);
       if (response.ok && result.extraction) {
-        setCaseFile(manualCase(result.extraction, files));
-        setNotice(t(language, 'Live multimodal extraction completed with storage disabled. Verify every value against the original documents.', 'लाइव मल्टीमॉडल निष्कर्षण पूरा हुआ, भंडारण बंद रखते हुए। हर मान मूल दस्तावेज़ों से मिलाएँ।'));
+        setTransmissionState('openai_completed');
+        setCaseFile(manualCase(result.extraction, files, 'ai'));
+        setNotice(t(language, 'AI extraction completed with store:false, so the response is not saved for later retrieval. OpenAI API data controls, including possible abuse-monitoring retention, still apply. Verify every value against the originals.', 'AI निष्कर्षण store:false के साथ पूरा हुआ, इसलिए जवाब बाद में पाने के लिए सुरक्षित नहीं रहता। संभावित दुरुपयोग-निगरानी रख-रखाव सहित OpenAI API डेटा नियंत्रण फिर भी लागू होते हैं। हर मान मूल से मिलाएँ।'));
       } else {
+        if (result.code !== 'LIVE_EXTRACTION_NOT_CONFIGURED') setTransmissionState('openai_attempted_unconfirmed');
         setCaseFile(manualCase({}, files));
-        setNotice(result.message || t(language, 'Live extraction is unavailable. Enter the observable fields manually; no finding will be generated from blank values.', 'लाइव निष्कर्षण उपलब्ध नहीं है। दिखने वाले फ़ील्ड ख़ुद भरें; ख़ाली मानों से कोई निष्कर्ष नहीं बनेगा।'));
+        setNotice(result.code === 'LIVE_EXTRACTION_NOT_CONFIGURED'
+          ? t(language, 'AI extraction is not configured, so OpenAI was not contacted. Continue locally: enter the observable fields, mark source clarity, and confirm every decisive value.', 'AI निष्कर्षण कॉन्फ़िगर नहीं है, इसलिए OpenAI से संपर्क नहीं हुआ। स्थानीय रूप से आगे बढ़ें: दिखने वाले फ़ील्ड भरें, स्रोत की स्पष्टता बताएँ और हर निर्णायक मान पुष्ट करें।')
+          : result.message || t(language, 'Live extraction is unavailable. Enter the observable fields manually; no finding will be generated from blank values.', 'लाइव निष्कर्षण उपलब्ध नहीं है। दिखने वाले फ़ील्ड ख़ुद भरें; ख़ाली मानों से कोई निष्कर्ष नहीं बनेगा।'));
       }
     } catch {
+      setTransmissionState(fileTransmissionAttempted ? 'openai_attempted_unconfirmed' : 'none');
       setCaseFile(manualCase({}, files));
-      setNotice(t(language, 'The extraction service could not be reached. Your files remain selected locally; enter the comparison fields manually.', 'निष्कर्षण सेवा तक नहीं पहुँचा जा सका। आपकी फ़ाइलें यहीं चुनी हुई हैं; तुलना के फ़ील्ड ख़ुद भरें।'));
+      setNotice(fileTransmissionAttempted
+        ? t(language, 'The extraction service could not be reached after transmission began. Continue manually and treat upstream completion as unconfirmed.', 'फ़ाइल भेजना शुरू होने के बाद निष्कर्षण सेवा तक नहीं पहुँचा जा सका। हाथ से आगे बढ़ें और अपस्ट्रीम पूर्णता को अपुष्ट मानें।')
+        : t(language, 'AI availability could not be confirmed, so no selected file bytes were transmitted. Continue locally and enter the comparison fields manually.', 'AI उपलब्धता पुष्ट नहीं हो सकी, इसलिए चुनी गई फ़ाइलों के बाइट भेजे नहीं गए। स्थानीय रूप से आगे बढ़ें और तुलना के फ़ील्ड ख़ुद भरें।'));
     }
+    setConfirmed(new Set());
+    setSelectedKey(undefined);
+    setProcessingStep(3);
+    await sleep(320);
+    setStage('review');
+  };
+
+  const prepareManualUploads = async () => {
+    if (!files.challan || !files.vehicle) {
+      setUploadError(t(language, 'Add both the challan and vehicle record.', 'चालान और वाहन रिकॉर्ड दोनों जोड़ें।'));
+      return;
+    }
+    setUploadError('');
+    setProcessingMode('local');
+    setTransmissionState('none');
+    setProcessingStep(0);
+    setStage('processing');
+    const selected = selectedUploads(files);
+    try {
+      const hashes = await Promise.all(selected.map(async ([key, file]) => [key, await fileHash(file)] as const));
+      setFileHashes(Object.fromEntries(hashes));
+    } catch {
+      setFileHashes({});
+    }
+    setProcessingStep(2);
+    setCaseFile(manualCase({}, files, 'manual'));
+    setNotice(t(language, 'Local-only mode: no selected file bytes were sent to the server or OpenAI. Enter only the observable comparison fields, mark whether each source is clear, and confirm every decisive value.', 'सिर्फ़ स्थानीय मोड: चुनी गई फ़ाइलों के बाइट सर्वर या OpenAI को नहीं भेजे गए। सिर्फ़ दिखने वाले तुलना फ़ील्ड भरें, हर स्रोत साफ़ है या नहीं बताएँ, और हर निर्णायक मान पुष्ट करें।'));
     setConfirmed(new Set());
     setSelectedKey(undefined);
     setProcessingStep(3);
@@ -665,6 +760,9 @@ export default function HomePage() {
     setConfirmed(new Set());
     setNotice('');
     setUploadError('');
+    setProcessingMode('synthetic');
+    setAiConsent(false);
+    setTransmissionState('none');
     setAttested(false);
     setExportError('');
     setPacketMode('redacted');
@@ -686,7 +784,7 @@ export default function HomePage() {
       synthetic: caseFile.synthetic,
       generatedAt: new Date().toISOString(),
       language,
-      processing: caseFile.synthetic ? 'deterministic_fixture_in_browser' : 'user_confirmed_browser_workflow',
+      processing: caseFile.synthetic ? 'deterministic_fixture_in_browser' : transmissionState === 'none' ? 'local_manual_user_confirmed_browser_workflow' : transmissionState === 'application_route_only' ? 'consented_application_route_attempt_then_manual_user_confirmed_browser_workflow' : transmissionState === 'openai_completed' ? 'consented_openai_extraction_then_user_confirmed_browser_workflow' : 'consented_openai_attempt_then_manual_user_confirmed_browser_workflow',
       claims: assessment.findings.map((finding) => ({
         id: finding.id,
         findingRule: finding.rule,
@@ -698,7 +796,7 @@ export default function HomePage() {
       files: caseFile.synthetic
         ? caseFile.documentNames.map((name) => ({ path: name, sourceRole: 'synthetic_fixture', sha256: null, integrity: 'not_computed_no_source_bytes', included: false, purpose: 'Synthetic source reference only' }))
         : citizenFiles.map(([sourceRole, file]) => ({ path: packetMode === 'redacted' ? redactedFileName(file, sourceRole) : file.name, sourceRole, sha256: fileHashes[sourceRole] ?? null, integrity: fileHashes[sourceRole] ? 'locally_computed_sha256' : 'not_computed', included: false, purpose: 'Citizen-supplied source reference only' })),
-      privacy: { originalUploadsIncluded: false, omittedFields: ['owner name', 'address', 'phone', 'email', 'engine number', 'chassis number', 'QR payload', 'EXIF'], retention: 'memory_until_reset', telemetry: false },
+      privacy: { originalUploadsIncluded: false, omittedFields: ['owner name', 'address', 'phone', 'email', 'engine number', 'chassis number', 'QR payload', 'EXIF'], applicationRetention: 'browser_memory_until_reset', upstreamTransmission: transmissionState === 'none' ? 'none' : transmissionState === 'application_route_only' ? 'selected_files_sent_to_stateless_application_route_after_consent; OpenAI_not_contacted' : transmissionState === 'openai_completed' ? 'selected_files_sent_to_OpenAI_after_explicit_consent_with_store_false; OpenAI_API_data_controls_apply' : 'OpenAI_transmission_attempted_after_explicit_consent_but_completion_unconfirmed', telemetry: false },
       legal: { legalConclusionMade: false, officialSubmissionPerformed: false, disclaimer: 'Reports observable conflicts only; not legal advice or a government record.' },
     };
   };
@@ -774,8 +872,8 @@ export default function HomePage() {
     <>
       <Shell stage={stage} language={language} onLanguage={toggleLanguage} onHome={reset} onScam={() => setStage('scam')} onDelete={reset} onHelp={() => setGuideOpen(true)} guideText={guideText}>
         {stage === 'scam' && <ScamShield language={language} onBack={reset} />}
-        {stage === 'upload' && <UploadScreen language={language} files={files} setFile={setFile} error={uploadError} onAnalyse={analyseUploads} onStartCase={startCase} />}
-        {stage === 'processing' && <ProcessingScreen progress={processingStep} live={liveProcessing} language={language} />}
+        {stage === 'upload' && <UploadScreen language={language} files={files} setFile={setFile} error={uploadError} aiConsent={aiConsent} setAiConsent={setAiConsent} onAnalyse={analyseUploads} onManual={prepareManualUploads} onStartCase={startCase} />}
+        {stage === 'processing' && <ProcessingScreen progress={processingStep} mode={processingMode} language={language} />}
         {stage === 'review' && <ReviewScreen caseFile={caseFile} language={language} confirmed={confirmed} selectedKey={selectedKey} notice={notice} files={files} onSelect={setSelectedKey} onChange={updateFact} onClarity={updateClarity} onConfirm={toggleConfirmation} onConfirmAll={confirmAll} onCompare={() => { setStage('result'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
         {stage === 'result' && <ResultScreen caseFile={caseFile} language={language} assessment={assessment} onPacket={() => { setStage('packet'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} onReview={() => setStage('review')} onStartCase={startCase} />}
         {stage === 'packet' && <PacketScreen caseFile={caseFile} language={language} assessment={assessment} packetMode={packetMode} setPacketMode={setPacketMode} attested={attested} setAttested={setAttested} exporting={exporting} exportError={exportError} onDownload={downloadPdf} onManifest={downloadManifest} onReview={() => setStage('review')} />}

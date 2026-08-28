@@ -46,11 +46,11 @@ Inert URL parsing + advisory-pattern rules
 
 ### Extraction boundary
 
-`app/api/analyze/route.ts` can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. The request uses structured JSON output and `store: false`. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
+The upload screen presents two explicit paths. **Local manual entry** computes source-role SHA-256 fingerprints in the browser and does not transmit file bytes. **AI extraction** stays disabled until the citizen gives explicit transmission consent. A no-payload capability preflight first confirms that extraction is configured; failure falls back locally before any selected document bytes are encoded or sent. Only the configured AI path can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. Original filenames are replaced by source-role names before transmission. The request uses structured JSON output and `store: false`, which disables retrievable response storage but does not override OpenAI API data controls or promise zero abuse-monitoring retention. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
 
 The boundary rejects oversized, malformed, unsupported, or excess documents; applies an upstream timeout; and validates the structured result and calendar date again before returning it to the browser.
 
-If the API key is absent, the endpoint returns an honest `503 LIVE_EXTRACTION_NOT_CONFIGURED`. The interface continues with manual verification. No synthetic demo depends on the route.
+If the API key is absent, the preflight reports extraction as unavailable without receiving document bytes; direct upload requests still receive an honest `503 LIVE_EXTRACTION_NOT_CONFIGURED`. The interface continues with manual verification. No synthetic demo depends on the route.
 
 ### Human boundary
 
@@ -74,7 +74,7 @@ Rules emit neutral claims, evidence anchor IDs, limitations, and packet eligibil
 
 The MVP has no database, R2 bucket, analytics, account system, or application-owned document store. Selected files live in the current browser session. The generated packet excludes original uploads. Citizen-selected files receive a locally computed SHA-256 keyed by source role; synthetic filenames carry `sha256: null` because no source bytes exist to hash. Redacted mode applies one shared identifier-masking function to the screen, PDF, manifest, and copied brief, and replaces citizen filenames with source-role names. A reset drops all application state; normal browser garbage collection releases object URLs.
 
-The API route necessarily transmits selected files to OpenAI only when the user chooses live extraction and a server-side key is configured. Production deployments should add an explicit consent receipt, retention verification, rate limits, and abuse controls before accepting real documents.
+The API route necessarily transmits selected files to OpenAI only when the user separately consents to AI extraction and a server-side key is configured. The prototype records that choice in the local packet manifest but deliberately does not persist a consent receipt. Production deployments should add a durable consent receipt, verify the API project's retention configuration, and add rate limits and abuse controls before accepting real documents.
 
 ### Onward-navigation boundary
 
@@ -133,7 +133,7 @@ Assets under `/_next/static` carry a content hash in the filename, so they are s
 Before handling real citizen records at scale:
 
 1. Commission an Indian privacy and legal review.
-2. Add explicit consent and verifiable deletion semantics.
+2. Persist a versioned consent receipt and add verifiable deletion semantics.
 3. Add document malware scanning, per-user rate limits, and abuse monitoring.
 4. Version rule packs by jurisdiction and effective date.
 5. Validate official handoff requirements state by state.

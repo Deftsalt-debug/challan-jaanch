@@ -123,7 +123,12 @@ test('citizen-supplied findings use source-neutral counter-checks', () => {
 test('live extraction endpoint fails honestly when no API key is configured', async () => {
   const previous = process.env.OPENAI_API_KEY;
   delete process.env.OPENAI_API_KEY;
-  const { POST } = await import('../app/api/analyze/route.ts');
+  const { GET, POST } = await import('../app/api/analyze/route.ts');
+  const capabilityResponse = await GET();
+  const capability = await capabilityResponse.json();
+  assert.equal(capabilityResponse.status, 200);
+  assert.equal(capability.configured, false);
+  assert.equal(capabilityResponse.headers.get('cache-control'), 'no-store');
   const response = await POST(new Request('http://localhost/api/analyze', { method: 'POST', body: '{}' }));
   const body = await response.json();
   assert.equal(response.status, 503);
@@ -506,4 +511,32 @@ test('packet integrity metadata never invents hashes for synthetic files', async
   assert.match(page, /mode:\s*packetMode === 'redacted' \? 'redacted_share' : 'official_handoff'/u);
   assert.match(page, /sha256:\s*null,\s*integrity:\s*'not_computed_no_source_bytes'/u);
   assert.match(page, /sourceRole:\s*'synthetic_fixture'/u);
+});
+
+test('citizen document transmission is explicit, optional, and described honestly', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const [page, guide, api, buildNotes] = await Promise.all([
+    readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../components/ProductGuide.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../app/api/analyze/route.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../docs/HOW_WE_BUILT_IT.md', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(page, /Enter fields without AI/u);
+  assert.match(page, /No selected file bytes leave this browser/u);
+  assert.match(page, /disabled=\{!ready \|\| !aiConsent\}/u);
+  assert.match(api, /export async function GET\(\)/u);
+  assert.match(page, /fetch\('\/api\/analyze', \{ headers: \{ Accept: 'application\/json' \}, cache: 'no-store' \}\)/u);
+  assert.match(page, /no selected file bytes were sent to the server or OpenAI/u);
+  assert.match(page, /name:\s*redactedFileName\(file, key\)/u);
+  assert.doesNotMatch(page, /name:\s*file\.name,\s*type:/u);
+  assert.match(page, /application_route_only/u);
+  assert.match(page, /OpenAI_not_contacted/u);
+  assert.match(page, /openai_attempted_unconfirmed/u);
+  assert.match(api, /responseStoredForRetrieval:\s*false/u);
+  assert.match(api, /abuse-monitoring retention/u);
+
+  const privacyClaims = `${page}\n${guide}\n${buildNotes}`;
+  assert.doesNotMatch(privacyClaims, /stores nothing upstream|request is not retained upstream/iu);
+  assert.match(privacyClaims, /OpenAI API data controls/iu);
 });

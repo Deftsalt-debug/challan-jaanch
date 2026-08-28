@@ -16,13 +16,26 @@ There is exactly one model call in the entire application:
 | Default model | `gpt-5.6-terra`, overridable with `OPENAI_MODEL` |
 | Input | Up to three citizen-selected JPG, PNG or PDF files |
 | Output | A strict JSON schema, `challan_evidence_extraction` |
-| Retention | `store: false` — the request is not retained upstream |
+| Response storage | `store: false` — the response is not stored for later retrieval |
+| Provider controls | OpenAI API data controls still apply; default abuse-monitoring retention may apply unless the API project has an approved retention control |
 | Timeout | 45 seconds, then a clean failure into manual entry |
 
 The model reads observable fields — the registration mark printed on the challan,
 the registration mark visible in the enforcement photograph, the registration
 mark on the vehicle record, the broad vehicle family, the issue date, the
 location, the offence text and the amount. That is all.
+
+The model path is never the default continuation. After selecting files, a
+citizen can open a fully local manual workspace whose file bytes never leave the
+browser. AI extraction is a separate action, disabled until the citizen gives
+explicit transmission consent. Before encoding a selected document, the client
+runs a no-payload capability preflight; if extraction is not configured or the
+check fails, it falls back locally without sending file bytes. The client
+replaces original filenames with source-role names before an available AI
+request. OpenAI's current data-control
+documentation explains the distinction between response application state and
+abuse-monitoring logs: [`store: false` is not a claim of zero provider
+retention](https://developers.openai.com/api/docs/guides/your-data).
 
 ## 2. What the model is explicitly forbidden from doing
 

@@ -10,6 +10,8 @@ The app has no consumer login. Reviewers can open it directly and run the comple
 
 Challan Jaanch is an independent, privacy-first trust preflight for Indian eChallans. It handles two failures citizens face: a real challan whose evidence may be inconsistent, and a fake challan message designed to steal money or install malware.
 
+A local-only path keeps file bytes on-device; optional AI extraction runs only after explicit transmission consent.
+
 For disputed records, citizens compare the challan, enforcement photo and vehicle record in a source-linked workbench. It highlights plate and vehicle-class conflicts, requires confirmation of consequential fields, applies deterministic rules, exposes counter-explanations, and refuses to decide when evidence is ambiguous. Supported conflicts become a redacted or official-handoff PDF, JSON manifest or share-safe brief; nothing is submitted automatically.
 
 Scam Shield analyses pasted messages and URLs as inert text, identifies APK lures, credential requests, urgency and lookalike domains, then distinguishes a link opened, file downloaded, app installed, dangerous permission granted, credentials shared and money sent. It produces an ordered response and privacy-safe safety brief without retaining the lure.
@@ -18,7 +20,7 @@ The app names the official grievance, Virtual Court and Lok Adalat routes withou
 
 Current portals remain the system of record. Challan Jaanch adds the missing reasoning and safety layer before them: every finding is traceable, uncertainty is visible, ambiguous evidence produces a refusal rather than an allegation, suspicious links are never opened, every screen works in Hindi, and the demo runs without login or personal data.
 
-**Word count:** 229
+**Word count:** 245
 
 The release test derives this count from the summary block and fails above 250 words or when the declared count is stale.
 
@@ -27,6 +29,8 @@ The release test derives this count from the summary block and fails above 250 w
 The ready-to-submit cut is [submission/challan-jaanch-submission.mp4](submission/challan-jaanch-submission.mp4): 1 minute 54 seconds, 1280×720, with synthetic English narration. Use [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for the timed first-minute citizen demo and second-minute build explanation. [docs/VIDEO_NARRATION.txt](docs/VIDEO_NARRATION.txt) contains the clean narration track.
 
 The release test reads the MP4 movie header and fails if the cut exceeds the two-minute limit.
+
+In the narration, “storage disabled” is shorthand for `store: false`: retrievable response storage is disabled. It is not a zero-retention claim; OpenAI API data controls, including possible abuse-monitoring retention, may still apply. The public submission deployment has no API key, so the reviewer journey sends no document to OpenAI.
 
 ## How the OpenAI model is used
 

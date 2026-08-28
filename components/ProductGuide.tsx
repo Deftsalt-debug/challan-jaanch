@@ -90,6 +90,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
     [t(language, 'No government impersonation', 'सरकारी नक़ल नहीं'), t(language, 'No logos, seals, official case numbers or simulated submission success.', 'कोई लोगो, मुहर, सरकारी केस नंबर या नकली “जमा हो गया” संदेश नहीं।')],
     [t(language, 'No credential collection', 'कोई गोपनीय जानकारी नहीं ली जाती'), t(language, 'The official portal opens separately. Challan Jaanch never asks for its password or OTP.', 'आधिकारिक पोर्टल अलग से खुलता है। चालान जाँच उसका पासवर्ड या OTP कभी नहीं माँगता।')],
     [t(language, 'No unsafe-link navigation', 'असुरक्षित लिंक नहीं खुलते'), t(language, 'Pasted URLs are inspected as text. Only hard-coded official government destinations are clickable.', 'चिपकाए गए पते सिर्फ़ पाठ के रूप में जाँचे जाते हैं। सिर्फ़ पहले से तय सरकारी पते क्लिक होते हैं।')],
+    [t(language, 'Local path before transmission', 'भेजने से पहले स्थानीय रास्ता'), t(language, 'Manual entry keeps file bytes on-device. Optional AI extraction requires a separate, explicit transmission consent.', 'हाथ से भरने पर फ़ाइल के बाइट डिवाइस पर रहते हैं। वैकल्पिक AI निष्कर्षण के लिए अलग और स्पष्ट भेजने की सहमति ज़रूरी है।')],
     [t(language, 'No silent retention', 'चुपचाप कुछ नहीं रखा जाता'), t(language, 'No application database, analytics or persistent document store; reset clears the browser session.', 'कोई ऐप डेटाबेस, विश्लेषण या स्थायी दस्तावेज़ भंडार नहीं; रीसेट करते ही ब्राउज़र सत्र साफ़ हो जाता है।')],
   ];
 
@@ -97,7 +98,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
     ['React 19 + TypeScript', t(language, 'Client state machine, accessible interactions and strict evidence models.', 'क्लाइंट स्टेट मशीन, सुलभ इंटरैक्शन और सख़्त साक्ष्य मॉडल।')],
     ['Vinext + Vite', t(language, 'Fast Next-compatible application build with Cloudflare Worker output.', 'तेज़ Next-संगत बिल्ड, Cloudflare Worker आउटपुट के साथ।')],
     ['Tailwind CSS 4', t(language, 'Responsive layout, design tokens, reduced-motion support and touch-friendly components.', 'रेस्पॉन्सिव लेआउट, डिज़ाइन टोकन, कम-गति सहायता और छूने में आसान घटक।')],
-    [t(language, 'OpenAI Responses API', 'OpenAI Responses API'), t(language, 'Optional image/PDF field extraction using structured JSON output and storage disabled.', 'वैकल्पिक छवि/PDF फ़ील्ड निष्कर्षण, संरचित JSON आउटपुट के साथ और भंडारण बंद रखते हुए।')],
+    [t(language, 'OpenAI Responses API', 'OpenAI Responses API'), t(language, 'Optional, consented image/PDF extraction with structured JSON and store:false. OpenAI API data controls still apply.', 'वैकल्पिक, सहमति-आधारित छवि/PDF निष्कर्षण, संरचित JSON और store:false के साथ। OpenAI API डेटा नियंत्रण फिर भी लागू होते हैं।')],
     [t(language, 'Codex-assisted engineering', 'Codex से बनी इंजीनियरिंग'), t(language, 'Rules, tests, accessibility passes and this bilingual layer were built with Codex in the loop; see docs/HOW_WE_BUILT_IT.md.', 'नियम, टेस्ट, सुलभता सुधार और यह द्विभाषी परत Codex के साथ बनाई गई; देखें docs/HOW_WE_BUILT_IT.md।')],
     [t(language, 'Deterministic TypeScript rules', 'निश्चित TypeScript नियम'), t(language, 'Plate, broad vehicle-family and exact-duplicate comparisons; calendar-date deadline logic.', 'नंबर, वाहन के मोटे प्रकार और हूबहू दोहराव की तुलना; कैलेंडर-तारीख़ की समय-सीमा गणना।')],
     [t(language, 'Local scam-triage rules', 'स्थानीय ठगी-छँटाई नियम'), t(language, 'URL parsing, exact-host allowlisting and current advisory patterns without opening or transmitting pasted links.', 'पते की जाँच, असली होस्ट की सूची और मौजूदा सलाह-पैटर्न — चिपकाए लिंक खोले या भेजे बिना।')],
@@ -109,7 +110,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
     [
       t(language, 'Today', 'आज'),
       t(language, 'Stateless edge worker', 'बिना-स्थिति एज वर्कर'),
-      t(language, 'Every comparison runs in the browser. The one server route holds no state, writes no log of document content and stores nothing upstream.', 'हर तुलना ब्राउज़र में चलती है। इकलौता सर्वर रास्ता कोई स्थिति नहीं रखता, दस्तावेज़ की सामग्री का लॉग नहीं लिखता और ऊपर कहीं कुछ नहीं रखता।'),
+      t(language, 'Every comparison runs in the browser. The stateless server route is used only after explicit AI consent; store:false disables retrievable response storage, while OpenAI API data controls may still include abuse-monitoring retention.', 'हर तुलना ब्राउज़र में चलती है। बिना-स्थिति सर्वर रास्ता सिर्फ़ स्पष्ट AI सहमति के बाद चलता है; store:false जवाब को बाद में पाने वाला भंडारण बंद करता है, जबकि OpenAI API डेटा नियंत्रण में दुरुपयोग-निगरानी रख-रखाव फिर भी हो सकता है।'),
     ],
     [
       t(language, 'Mocked', 'नकली'),

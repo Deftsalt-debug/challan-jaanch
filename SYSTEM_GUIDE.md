@@ -129,14 +129,18 @@ The interface supports the file picker and drag-and-drop. Image files receive a 
 
 For a synthetic fixture, the app loads the fixture and builds the evidence map entirely in the browser.
 
-For citizen-supplied files, the app:
+For citizen-supplied files, the app first presents two separate paths:
+
+- **Local manual entry (recommended):** computes local SHA-256 fingerprints, transmits no file bytes, and opens an empty evidence map for the citizen to complete.
+- **AI-assisted extraction (optional):** remains disabled until the citizen explicitly consents to transmit the selected files to OpenAI. The client replaces original filenames with source-role names before sending.
+
+Across those paths, the app:
 
 1. validates required files and the client-side size limit;
 2. computes a SHA-256 hash for each selected file and keeps it under the source role, so identical filenames cannot overwrite one another;
-3. converts selected files into data URLs;
-4. calls the optional `/api/analyze` route;
-5. receives structured observable fields or a safe fallback response;
-6. creates an editable evidence map.
+3. creates an editable evidence map directly for local entry; or, after consent, converts selected files into data URLs and calls the optional `/api/analyze` route;
+4. receives structured observable fields or a safe fallback response on the AI path;
+5. creates the same editable, human-confirmed evidence map in either case.
 
 The progress screen explicitly says that the system is reading facts, not deciding the case.
 
@@ -313,7 +317,8 @@ The output is labelled a “rule-based safety date,” not an official portal de
 │   ├─ Selected File objects                                             │
 │   │      ├─► local image previews                                      │
 │   │      ├─► SHA-256 hashes                                            │
-│   │      └─► data URLs ──────────────────────────────┐                  │
+│   │      ├─► local manual map (no byte transmission)                    │
+│   │      └─► explicit AI consent ─► data URLs ───────┐                  │
 │   │                                                  │                  │
 │   ├─ User confirmations                                                │
 │   ├─ Deterministic rules                                               │
@@ -335,6 +340,7 @@ The output is labelled a “rule-based safety date,” not an official portal de
 │ Extract observable values only                                        │
 │ Return strict JSON                                                    │
 │ Make no legal or grievance decision                                   │
+│ OpenAI API data controls may still include abuse-monitoring retention  │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -454,7 +460,9 @@ This is the optional server-side extraction adapter. It:
 - maps PDFs to `input_file` and images to `input_image`;
 - requests strict JSON schema output;
 - enforces a 45-second upstream timeout and validates the returned structure and calendar date at runtime;
-- sets `store: false`;
+- sets `store: false`, which disables retrievable response storage but is not described as zero provider retention;
+- exposes a no-payload capability check so an unconfigured deployment can fall back before any selected document bytes are encoded or sent;
+- returns an explicit retention notice alongside a successful extraction;
 - returns clean manual-fallback errors if the key or service is unavailable.
 
 The route does not call `assessCase` and cannot generate a finding.
@@ -525,8 +533,9 @@ No document upload or extraction call is involved.
 User selects local files
   → browser File objects
   → local preview + SHA-256 hash
-  → optional data-URL POST to /api/analyze
-  → optional OpenAI extraction with store:false
+  ├─ local manual entry → no file-byte transmission
+  └─ explicit AI consent → source-role filenames + data-URL POST to /api/analyze
+                         → optional OpenAI extraction with store:false
   → structured fields returned to browser
   → user edits and confirms fields
   → deterministic assessment
@@ -587,8 +596,8 @@ The main demonstration does not need persistence to prove the product, and not r
 
 ### What “no database” does not mean
 
-- It does not mean files never leave the browser. If live extraction is configured and the citizen chooses it, selected files are transmitted to the application route and then to OpenAI.
-- It does not mean `store: false` is a complete privacy policy. It is one API-level control and must be paired with a published retention statement, vendor terms, consent, and operational safeguards.
+- It does not mean files never leave the browser. The local manual path keeps file bytes on-device, but if live extraction is configured and the citizen separately consents to it, selected files are transmitted to the application route and then to OpenAI.
+- It does not mean `store: false` is a complete privacy policy. It disables retrievable response storage, while [OpenAI API data controls](https://developers.openai.com/api/docs/guides/your-data) may still include abuse-monitoring retention. It must be paired with a published retention statement, vendor terms, consent, and operational safeguards.
 - It does not mean a production service can never use persistence.
 - It does not mean browser-generated downloads disappear; the citizen controls files saved by their browser.
 
@@ -623,7 +632,7 @@ If the project moves beyond a stateless prototype, introduce persistence in stag
 
 ### Required controls
 
-- explicit consent before upload;
+- explicit consent before any remote transmission, with a durable receipt when persistence exists;
 - clear purpose and retention notice;
 - encryption in transit and at rest;
 - per-user authorization;
@@ -646,7 +655,10 @@ If the project moves beyond a stateless prototype, introduce persistence in stag
 - No local-storage or session-storage case persistence.
 - No government credentials.
 - No original document bytes in exports.
-- `store: false` on optional OpenAI requests.
+- Local manual entry transmits no selected file bytes.
+- Separate transmission consent before optional OpenAI extraction.
+- Original filenames are replaced with source-role names before AI transmission.
+- `store: false` on optional OpenAI requests, without claiming that it disables all OpenAI retention.
 - Server-side API key only.
 - No official submission.
 - Explicit reset control.

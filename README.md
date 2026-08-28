@@ -14,6 +14,7 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
 - **Human verification gates:** editing a decisive field invalidates its confirmation and the prior result.
 - **A complete no-key path:** manual entry includes explicit source-clarity controls, closed vehicle-family choices, and an abstention when the original is unclear; a blank field cannot be confirmed.
+- **Privacy choice before processing:** the default local path computes file fingerprints and opens manual entry without transmitting file bytes. Optional AI extraction is a separate action gated by explicit consent, uses source-role filenames, and describes `store: false` without claiming zero provider retention.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
 - **Truthful integrity metadata:** citizen files are hashed locally by source role; synthetic references carry a null hash instead of a fabricated checksum.
 - **Share-safe briefing:** after attestation, a redacted or official-handoff case brief can be copied in the active language with the same source anchors and non-government boundary. Redacted mode masks every challan/registration identifier and citizen filename across the screen, PDF, manifest, and copied brief.
@@ -36,7 +37,7 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 7. Build a redacted or official-handoff packet.
 8. Continue separately on the official eChallan portal.
 
-The synthetic evidence demo and Scam Shield are complete without an API key. Live file extraction is optional and fails safely into a fully usable manual-verification path when it is not configured.
+The synthetic evidence demo and Scam Shield are complete without an API key. Citizen documents also have a fully usable local-only path. Live file extraction is optional, requires explicit transmission consent, and fails safely into manual verification when it is not configured.
 
 ## Technology
 

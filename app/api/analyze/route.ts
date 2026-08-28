@@ -18,6 +18,10 @@ function json(body: Record<string, unknown>, status = 200) {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+export async function GET() {
+  return json({ configured: Boolean(process.env.OPENAI_API_KEY) });
+}
+
 function validIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -148,7 +152,12 @@ export async function POST(request: Request) {
   try {
     const extraction = validatedExtraction(JSON.parse(text));
     if (!extraction) return json({ code: 'INVALID_EXTRACTION', message: 'The extracted fields did not match the required safe structure.' }, 502);
-    return json({ extraction, processing: 'OpenAI multimodal extraction', stored: false });
+    return json({
+      extraction,
+      processing: 'OpenAI multimodal extraction',
+      responseStoredForRetrieval: false,
+      retentionNotice: 'store:false disables retrievable response storage. OpenAI API data controls, including possible abuse-monitoring retention, still apply.',
+    });
   } catch {
     return json({ code: 'INVALID_EXTRACTION', message: 'The extraction could not be verified as structured data.' }, 502);
   }
