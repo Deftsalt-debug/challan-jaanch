@@ -40,11 +40,11 @@ export function NextSteps({ language, outcome, deadline }: { language: Language;
                 <div className="flex min-w-0 items-start gap-3">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#172a33] text-xs font-black text-white">{index + 1}</span>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#7b8582]">{t(language, 'Run by', 'संचालक')} · {pick(language, route.authority)}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7b8582]">{t(language, 'Run by', 'संचालक')} · {pick(language, route.authority)}</p>
                     <h3 className="mt-1 text-base font-black leading-5">{pick(language, route.title)}</h3>
                   </div>
                 </div>
-                <span className={classes('shrink-0 rounded-md border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em]', chip.tone)}>{chip.label}</span>
+                <span className={classes('shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em]', chip.tone)}>{chip.label}</span>
               </div>
 
               <p className="mt-4 text-sm leading-6 text-[#586662]">{pick(language, route.what)}</p>

@@ -168,7 +168,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
 
         {tab === 'guardrails' && (
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
-            {guardrails.map(([title, body], index) => <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5"><span className={classes('inline-flex rounded-md border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]', index % 2 ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]')}>{index % 2 ? t(language, 'Check', 'जाँच') : t(language, 'Control', 'नियंत्रण')}</span><h3 className="mt-4 font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p></article>)}
+            {guardrails.map(([title, body], index) => <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5"><span className={classes('inline-flex rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]', index % 2 ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]')}>{index % 2 ? t(language, 'Check', 'जाँच') : t(language, 'Control', 'नियंत्रण')}</span><h3 className="mt-4 font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p></article>)}
           </div>
         )}
 
@@ -190,7 +190,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
             <div className="space-y-3">
               {scaleRows.map(([badge, title, body]) => (
                 <article key={title} className="rounded-xl border border-[#d4cec3] bg-[#fbfaf7] p-5">
-                  <span className={classes('inline-flex rounded-md border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]', badge === t(language, 'Today', 'आज') ? 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]' : badge === t(language, 'Mocked', 'नकली') ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#b9ced8] bg-[#eef4f7] text-[#315f78]')}>{badge}</span>
+                  <span className={classes('inline-flex rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]', badge === t(language, 'Today', 'आज') ? 'border-[#b8d1c4] bg-[#edf5f0] text-[#246344]' : badge === t(language, 'Mocked', 'नकली') ? 'border-[#d6c28d] bg-[#faf5e7] text-[#735814]' : 'border-[#b9ced8] bg-[#eef4f7] text-[#315f78]')}>{badge}</span>
                   <h3 className="mt-4 font-black">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-[#66736f]">{body}</p>
                 </article>

@@ -46,7 +46,7 @@ Inert URL parsing + advisory-pattern rules
 
 ### Extraction boundary
 
-The upload screen presents two explicit paths. **Local manual entry** computes source-role SHA-256 fingerprints in the browser and does not transmit file bytes. **AI extraction** stays disabled until the citizen gives explicit transmission consent. A no-payload capability preflight first confirms that extraction is configured; failure falls back locally before any selected document bytes are encoded or sent. Only the configured AI path can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. Original filenames are replaced by source-role names before transmission. The request uses structured JSON output and `store: false`, which disables retrievable response storage but does not override OpenAI API data controls or promise zero abuse-monitoring retention. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
+The documents screen first asks which comparison the citizen is making — a vehicle mismatch or an exact duplicate event — and then presents two explicit paths. **Local manual entry** needs no files at all; a citizen can type the fields from a paper challan. Any file they do add stays in the browser and receives a source-role SHA-256 fingerprint for the packet; no file bytes are transmitted. **AI extraction** stays disabled until the citizen gives explicit transmission consent. A no-payload capability preflight first confirms that extraction is configured; failure falls back locally before any selected document bytes are encoded or sent. Only the configured AI path can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. Original filenames are replaced by source-role names before transmission. The request uses structured JSON output and `store: false`, which disables retrievable response storage but does not override OpenAI API data controls or promise zero abuse-monitoring retention. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
 
 The boundary rejects oversized, malformed, unsupported, or excess documents; applies an upstream timeout; and validates the structured result and calendar date again before returning it to the browser.
 
@@ -54,7 +54,7 @@ If the API key is absent, the preflight reports extraction as unavailable withou
 
 ### Human boundary
 
-Every decisive value must be confirmed. Blank values cannot be confirmed. For citizen-supplied records, the reviewer also marks whether each decisive source is clear in the original; changing that clarity removes confirmation. Closed vehicle-family choices prevent spelling variants from creating a false class mismatch. Until all decisive values are confirmed, `assessCase` returns a `review` state and produces no finding.
+Every decisive value must be confirmed. Blank values cannot be confirmed. For citizen-supplied records, the reviewer also marks whether each decisive source is clear in the original; changing that clarity removes confirmation. The citizen also supplies the challan number and issue date in a separate, non-decisive panel: those never create a finding, but they drive the Rule 167 clock and the packet header. `buildManualCase()` in `lib/cases.ts` constructs both comparison types with every decisive fact `unreviewed`, whether it was typed or AI-extracted. Closed vehicle-family choices prevent spelling variants from creating a false class mismatch. Until all decisive values are confirmed, `assessCase` returns a `review` state and produces no finding.
 
 ### Decision boundary
 
@@ -64,7 +64,9 @@ Every decisive value must be confirmed. Blank values cannot be confirmed. For ci
 - broad vehicle-family conflict;
 - exact duplicate-event matching across distinct challan numbers;
 - safe refusal for unclear or materially ambiguous registration sources and unreadable vehicle-family sources;
-- a 45-calendar-day Rule 167 safety-date calculation for the current rule pack.
+- a 45-calendar-day Rule 167 safety-date calculation for the current rule pack, applied only to issue dates on or after the gazetted `RULE_167_EFFECTIVE_FROM`; every screen asks `ruleClockApplies()` rather than repeating the date.
+
+Identifiers in a duplicate-event case are compared after trimming and case-folding (`normaliseIdentifier`), so a stray space cannot manufacture two records, and no character is ever guessed.
 
 The deadline status changes at midnight in `Asia/Kolkata`. Using the UTC calendar date would make the status one day late between 00:00 and 05:30 IST, so an explicit regression test covers that boundary.
 
@@ -92,7 +94,7 @@ Canonical values compared by the rules — vehicle family, colour — stay in En
 
 ### Scam-navigation boundary
 
-`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled official destinations are clickable. The checker can label a known exact host, a lookalike, or an unverified destination; it never labels a sender or message safe.
+`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled official destinations are clickable. The checker can label a known exact host, a government domain, a lookalike, or an unverified destination; it never labels a sender or message safe. A hostname that genuinely ends in `.gov.in` or `.nic.in` over HTTPS is a government domain because those names are issued only through the National Informatics Centre; state traffic portals such as `mahatrafficechallan.gov.in` contain the word “challan” and would otherwise have been reported as lookalikes, which would teach citizens to distrust the real portal. The suffix check is on the registrable domain, so `echallan.parivahan.gov.in.example` remains a lookalike and an `http://` link is never treated as the portal. A personal UPI handle such as `name@ybl` is a critical signal in its own right and is excluded from website parsing.
 
 Exposure is modelled separately from message risk. Opening a link, downloading a file, installing an APK, granting SMS/Accessibility/VPN permissions, sharing credentials, and sending money are distinct states. That prevents a download from being described as an installation while still escalating an installed app or dangerous permission to an offline-device/clean-device containment plan. A local report-ready brief carries only selected exposure facts, signal names, inert hostnames, ordered recovery steps, and official routes; it deliberately omits the pasted lure.
 

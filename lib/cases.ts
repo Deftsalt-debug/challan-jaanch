@@ -144,13 +144,97 @@ export const cases: Record<string, DemoCase> = {
   },
 };
 
+export type ManualCaseKind = 'wrong-vehicle' | 'duplicate-event';
+export type ManualCaseSource = 'manual' | 'ai';
+
+export interface ManualCaseInput {
+  challanNumber?: string | null;
+  issueDate?: string | null;
+  recordPlate?: string | null;
+  photoPlate?: string | null;
+  rcPlate?: string | null;
+  photoFamily?: string | null;
+  rcFamily?: string | null;
+  occurredAt?: string | null;
+  location?: string | null;
+  offence?: string | null;
+  amount?: string | null;
+}
+
+const NOT_EXTRACTED = bi('Not extracted', 'नहीं निकला');
+
+/**
+ * Builds a citizen case for either comparison type. Every decisive fact starts
+ * `unreviewed`, whatever its origin: an AI-extracted value is still a guess
+ * until the citizen has checked it against the original. Files are optional —
+ * a citizen reading a paper challan can type the fields directly — so document
+ * names may be empty.
+ */
+export function buildManualCase(kind: ManualCaseKind, input: ManualCaseInput, documentNames: string[], source: ManualCaseSource = 'manual'): DemoCase {
+  const value = (entry: string | null | undefined) => entry?.trim() ?? '';
+  const story = source === 'ai'
+    ? bi(
+      'Observable fields extracted from the supplied documents. Every decisive value must be checked against the original before comparison.',
+      'दिए गए दस्तावेज़ों से निकाले गए दिखने वाले फ़ील्ड। तुलना से पहले हर निर्णायक मान मूल दस्तावेज़ से मिलाना ज़रूरी है।',
+    )
+    : bi(
+      'A local workspace for entering only the observable comparison fields. Nothing typed here leaves this browser.',
+      'सिर्फ़ दिखने वाले तुलना फ़ील्ड भरने के लिए स्थानीय कार्यक्षेत्र। यहाँ लिखा कुछ भी इस ब्राउज़र से बाहर नहीं जाता।',
+    );
+  const base = {
+    id: `CJ-LOCAL-${Date.now().toString().slice(-6)}`,
+    story,
+    issueDate: isValidIsoDate(value(input.issueDate)) ? value(input.issueDate) : '',
+    jurisdiction: bi('State procedure must be confirmed', 'राज्य की प्रक्रिया पुष्ट करना ज़रूरी'),
+    challanNumber: value(input.challanNumber),
+    amount: value(input.amount),
+    offence: value(input.offence) ? bi(value(input.offence), value(input.offence)) : NOT_EXTRACTED,
+    occurredAt: value(input.occurredAt),
+    location: value(input.location) ? bi(value(input.location), value(input.location)) : NOT_EXTRACTED,
+    documentNames,
+    synthetic: false,
+  };
+
+  if (kind === 'duplicate-event') {
+    return {
+      ...base,
+      kind,
+      title: bi('Two challans for one event', 'एक घटना के दो चालान'),
+      shortTitle: bi('Your duplicate-event case', 'आपका दोहरी-घटना केस'),
+      facts: [
+        { key: 'challanA', label: bi('First challan number', 'पहला चालान नंबर'), value: '', source: 'challan', sourceLabel: bi('First challan · heading', 'पहला चालान · शीर्षक'), clarity: 'unreviewed', decisive: true, help: bi('Copy the challan number exactly as printed on the first record.', 'पहले रिकॉर्ड पर छपा चालान नंबर हूबहू लिखें।') },
+        { key: 'challanB', label: bi('Second challan number', 'दूसरा चालान नंबर'), value: '', source: 'second-challan', sourceLabel: bi('Second challan · heading', 'दूसरा चालान · शीर्षक'), clarity: 'unreviewed', decisive: true, help: bi('It must differ from the first number, or these are the same record.', 'यह पहले नंबर से अलग होना चाहिए, वरना यह एक ही रिकॉर्ड है।') },
+        { key: 'captureA', label: bi('Capture or image ID · first', 'कैप्चर या छवि पहचान · पहला'), value: '', source: 'challan', sourceLabel: bi('First challan · evidence metadata', 'पहला चालान · साक्ष्य मेटाडेटा'), clarity: 'unreviewed', decisive: true, help: bi('The camera capture, image, or notice ID printed with the evidence. Leave blank if none is printed.', 'साक्ष्य के साथ छपी कैमरा कैप्चर, छवि या नोटिस पहचान। न छपी हो तो ख़ाली छोड़ें।') },
+        { key: 'captureB', label: bi('Capture or image ID · second', 'कैप्चर या छवि पहचान · दूसरा'), value: '', source: 'second-challan', sourceLabel: bi('Second challan · evidence metadata', 'दूसरा चालान · साक्ष्य मेटाडेटा'), clarity: 'unreviewed', decisive: true, help: bi('Copy it exactly. A finding needs the same ID on both records.', 'हूबहू लिखें। निष्कर्ष के लिए दोनों रिकॉर्ड पर एक ही पहचान चाहिए।') },
+        { key: 'eventA', label: bi('Time · camera · amount · first', 'समय · कैमरा · राशि · पहला'), value: '', source: 'challan', sourceLabel: bi('First challan · event fields', 'पहला चालान · घटना फ़ील्ड'), clarity: 'unreviewed', decisive: true, help: bi('Write the offence time, camera or location code, and amount in one line, e.g. 18:07:04 · CAM-44 · ₹500.', 'अपराध का समय, कैमरा या स्थान कोड और राशि एक पंक्ति में लिखें, जैसे 18:07:04 · CAM-44 · ₹500।') },
+        { key: 'eventB', label: bi('Time · camera · amount · second', 'समय · कैमरा · राशि · दूसरा'), value: '', source: 'second-challan', sourceLabel: bi('Second challan · event fields', 'दूसरा चालान · घटना फ़ील्ड'), clarity: 'unreviewed', decisive: true, help: bi('Use the same format as the first record so the comparison is exact.', 'पहले रिकॉर्ड जैसा ही प्रारूप रखें ताकि तुलना सटीक हो।') },
+      ],
+    };
+  }
+
+  return {
+    ...base,
+    kind: 'manual',
+    title: bi('Citizen-supplied document comparison', 'नागरिक द्वारा दिए दस्तावेज़ों की तुलना'),
+    shortTitle: bi('Your local case', 'आपका स्थानीय केस'),
+    facts: [
+      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: value(input.recordPlate), source: 'challan', sourceLabel: bi('Challan · printed registration field', 'चालान · छपा पंजीकरण फ़ील्ड'), clarity: 'unreviewed', decisive: true, help: bi('Check every character against the original document.', 'हर अक्षर मूल दस्तावेज़ से मिलाएँ।') },
+      { key: 'photoPlate', label: bi('Plate visible in photograph', 'फोटो में दिख रहा नंबर'), value: value(input.photoPlate), source: 'photo', sourceLabel: bi('Evidence image', 'साक्ष्य छवि'), clarity: 'unreviewed', decisive: true, help: bi('Leave blank when the plate is not fully visible.', 'अगर नंबर पूरा नहीं दिख रहा तो ख़ाली छोड़ें।') },
+      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: value(input.rcPlate), source: 'vehicle', sourceLabel: bi('Vehicle record', 'वाहन रिकॉर्ड'), clarity: 'unreviewed', decisive: true, help: bi('Check every character against the registration certificate.', 'हर अक्षर पंजीकरण प्रमाणपत्र से मिलाएँ।') },
+      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: value(input.photoFamily) || 'Unknown', source: 'photo', sourceLabel: bi('Evidence image · full frame', 'साक्ष्य छवि · पूरा फ़्रेम'), clarity: 'unreviewed', decisive: true, help: bi('Choose the broad family only. Pick Unknown if the frame does not show it.', 'सिर्फ़ मोटा प्रकार चुनें। फ़्रेम में न दिखे तो अज्ञात चुनें।') },
+      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: value(input.rcFamily) || 'Unknown', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), clarity: 'unreviewed', decisive: true, help: bi('Choose the broad family rather than a specific model.', 'किसी ख़ास मॉडल के बजाय मोटा प्रकार चुनें।') },
+    ],
+  };
+}
+
 export function cloneCase(source: DemoCase): DemoCase {
   return JSON.parse(JSON.stringify(source)) as DemoCase;
 }
 
 export function maskIdentifier(value: string): string {
-  if (value.length < 6) return '••••';
-  return `${value.slice(0, 2)}••••${value.slice(-4)}`;
+  const identifier = value.trim();
+  if (identifier.length < 6) return '••••';
+  return `${identifier.slice(0, 2)}••••${identifier.slice(-4)}`;
 }
 
 /** Masks every challan and registration identifier that can appear in prose. */
@@ -162,6 +246,11 @@ export function redactCaseText(value: string, caseFile: DemoCase): string {
   return [...new Set(identifiers)]
     .sort((left, right) => right.length - left.length)
     .reduce((text, identifier) => text.replaceAll(identifier, maskIdentifier(identifier)), value);
+}
+
+/** Trims and case-folds a typed identifier without touching its characters. */
+export function normaliseIdentifier(value: string): string {
+  return value.normalize('NFKC').trim().replace(/\s+/g, ' ').toUpperCase();
 }
 
 export function normaliseRegistration(value: string): string {
@@ -190,7 +279,8 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
         'रिकॉर्ड मिलाने से पहले छहों निर्णायक फ़ील्ड पुष्ट करें।',
       ));
     }
-    const exactDuplicate = byKey.challanA.value !== byKey.challanB.value && byKey.captureA.value === byKey.captureB.value && byKey.eventA.value === byKey.eventB.value;
+    const same = (left: string, right: string) => normaliseIdentifier(left) === normaliseIdentifier(right);
+    const exactDuplicate = !same(byKey.challanA.value, byKey.challanB.value) && same(byKey.captureA.value, byKey.captureB.value) && same(byKey.eventA.value, byKey.eventB.value);
     if (exactDuplicate) {
       return {
         outcome: 'supported',
@@ -432,6 +522,19 @@ function noGroundAssessment(): Assessment {
   };
 }
 
+/**
+ * CMVR Rule 167 as amended by G.S.R. 48(E) took effect on this date. Challans
+ * issued earlier fall under a different clock, so the 45-day safety date is only
+ * calculated for issue dates on or after it. Every screen that shows the clock
+ * asks this one function rather than repeating the date.
+ */
+export const RULE_167_EFFECTIVE_FROM = '2026-01-20';
+export const RULE_167_WINDOW_DAYS = 45;
+
+export function ruleClockApplies(issueDate: string): boolean {
+  return isValidIsoDate(issueDate) && issueDate >= RULE_167_EFFECTIVE_FROM;
+}
+
 export function addCalendarDays(date: string, days: number): string {
   if (!isValidIsoDate(date)) throw new Error('Expected a valid YYYY-MM-DD calendar date.');
   const [year, month, day] = date.split('-').map(Number);
@@ -453,7 +556,7 @@ export function formatDate(date: string, language: Language = 'en'): string {
 }
 
 export function deadlineFor(caseFile: DemoCase, today = new Date()): { date: string; daysLeft: number; status: 'open' | 'today' | 'passed' } {
-  const date = addCalendarDays(caseFile.issueDate, 45);
+  const date = addCalendarDays(caseFile.issueDate, RULE_167_WINDOW_DAYS);
   const [year, month, day] = date.split('-').map(Number);
   const deadline = Date.UTC(year, month - 1, day);
   // The rule is a calendar-day clock for an Indian public service. Using the

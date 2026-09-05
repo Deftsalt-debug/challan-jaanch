@@ -13,13 +13,16 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **A real refusal path:** ambiguous plate characters or unreadable vehicle classes stop the finding instead of becoming an allegation.
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
 - **Human verification gates:** each decisive field is reviewed individually; there is no bulk-confirm shortcut. Citizen fields start with unreviewed source clarity, including AI-extracted values. Editing a citizen field resets both its clarity review and confirmation.
-- **A complete no-key path:** manual entry includes explicit source-clarity controls, closed vehicle-family choices, and an abstention when the original is unclear; a blank field cannot be confirmed.
+- **A complete no-key, no-file path:** a citizen with a paper challan in front of them can type the fields directly. Files are optional; manual entry includes explicit source-clarity controls, closed vehicle-family choices, a challan-number and issue-date panel that drives the Rule 167 clock, and an abstention when the original is unclear. A blank field cannot be confirmed.
+- **Both comparison types for real cases:** the citizen chooses between “the photo shows a different vehicle” and “two challans for the same event” before entering fields, so the exact-duplicate rule is reachable outside the synthetic fixture. Typed identifiers are compared after trimming and case-folding, never after guessing characters.
 - **Privacy choice before processing:** the default local path computes file fingerprints and opens manual entry without transmitting file bytes. Optional AI extraction is a separate action gated by explicit consent, uses source-role filenames, and describes `store: false` without claiming zero provider retention.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
 - **Truthful integrity metadata:** citizen files are hashed locally by source role; synthetic references carry a null hash instead of a fabricated checksum.
 - **Share-safe briefing:** after attestation, a redacted or official-handoff case brief can be copied in the active language with the same source anchors and non-government boundary. Redacted mode masks every challan/registration identifier and citizen filename across the screen, PDF, manifest, and copied brief.
 - **Complete Hindi and English:** the language toggle switches the entire journey — workbench, findings, refusals, packet and Scam Shield — and tests fail if any rule-layer string lacks Hindi.
 - **Scam Shield:** pasted messages and URLs are inspected locally with deterministic rules; suspicious destinations remain inert and are never opened. Its exposure ladder distinguishes a link opened, a file downloaded, an APK installed, dangerous permissions granted, credentials shared, and money sent.
+- **Real state portals are not called scams:** a hostname that genuinely ends in `.gov.in` or `.nic.in` over HTTPS is labelled a government domain, not a lookalike, even when it contains the word “challan”. Only the registrable suffix counts, so `echallan.parivahan.gov.in.example` is still a lookalike, and any `http://` link still fails.
+- **UPI handles are a signal, not a website:** a message that names a personal UPI address such as `something@ybl` is flagged as critical, because a government fine is never collected to an individual handle. The handle is no longer mis-parsed as a domain.
 - **Hinglish and Devanagari triage:** scam patterns match the way these messages actually arrive in India, not only their English translations.
 - **Names the route out:** after a finding, the app names the three official destinations a challan can actually be taken to — the MoRTH grievance form, the Virtual Court and a Lok Adalat — without claiming to know where a given challan currently sits.
 - **Incident-aware routing:** suspicious calls, SMS, and WhatsApp can go to DoT Chakshu; suspect identifiers can go to I4C; payments, credential exposure, APK installation, or dangerous permissions route to a clean-device containment plan, 1930, and the National Cyber Crime Reporting Portal.
@@ -28,8 +31,8 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 
 ## Guided experience
 
-1. Open one of three visibly synthetic cases immediately, or select your own records.
-2. Inspect the sources in the evidence workbench.
+1. Open one of three visibly synthetic cases immediately, or check your own challan. Choose the comparison type; files are optional.
+2. Inspect the sources in the evidence workbench, and for your own case add the challan number and issue date.
 3. Compare plate characters and review the Rule 167 clock.
 4. Confirm each decisive fact and, for citizen files, mark whether the original source is actually clear.
 5. Run the deterministic comparison.
@@ -82,7 +85,7 @@ Add `OPENAI_API_KEY` to `.env.local`. Never commit that file. The demo does not 
 npm run verify
 ```
 
-This runs linting, TypeScript checks, deterministic-rule tests, submission-limit checks, and the production build. The release suite also guards the India-local Rule 167 day boundary, official-route wording, security-header parity, and truthful packet-integrity metadata.
+This runs linting, TypeScript checks, deterministic-rule tests, submission-limit checks, and the production build. The release suite also guards the India-local Rule 167 day boundary, the gazetted date from which the clock applies, official-route wording, security-header parity, truthful packet-integrity metadata, citizen-entered cases of both comparison types, government-domain classification, and UPI-handle detection.
 
 For the full release gate, including the npm production-dependency advisory check:
 

@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  RULE_167_EFFECTIVE_FROM,
   addCalendarDays,
   assessCase,
+  buildManualCase,
   cases,
   cloneCase,
   deadlineFor,
@@ -12,6 +14,7 @@ import {
   isValidIsoDate,
   maskIdentifier,
   redactCaseText,
+  ruleClockApplies,
 } from '../lib/cases.ts';
 import { inspectChallanMessage, officialSafetyUrls, responseSteps } from '../lib/scam-shield.ts';
 import { nextRoutes, officialRouteUrls } from '../lib/routes.ts';
@@ -566,4 +569,106 @@ test('unclear registration sources abstain rather than imply that the records ag
     assert.equal(result.outcome, 'unable', key);
     assert.equal(result.findings.length, 0, key);
   }
+});
+
+/**
+ * A citizen-entered case must reach the same rules as the fixtures, for both
+ * comparison types, and must start with nothing pre-confirmed.
+ */
+test('a citizen can build either comparison type without any files', () => {
+  const vehicle = buildManualCase('wrong-vehicle', {}, []);
+  assert.equal(vehicle.synthetic, false);
+  assert.equal(vehicle.challanNumber, '');
+  assert.deepEqual(vehicle.facts.map((fact) => fact.key), ['recordPlate', 'photoPlate', 'rcPlate', 'photoFamily', 'rcFamily']);
+  assert.ok(vehicle.facts.every((fact) => fact.clarity === 'unreviewed'));
+  assert.equal(assessCase(vehicle, confirmDecisive(vehicle)).outcome, 'review');
+
+  const duplicate = buildManualCase('duplicate-event', {}, []);
+  assert.equal(duplicate.kind, 'duplicate-event');
+  assert.deepEqual(duplicate.facts.map((fact) => fact.key), ['challanA', 'challanB', 'captureA', 'captureB', 'eventA', 'eventB']);
+  for (const fact of duplicate.facts) {
+    assertBilingual(fact.label, `manual.${fact.key}.label`);
+    assertBilingual(fact.sourceLabel, `manual.${fact.key}.sourceLabel`);
+    assertBilingual(fact.help, `manual.${fact.key}.help`);
+  }
+  assertBilingual(duplicate.title, 'manual-duplicate.title');
+  assertBilingual(duplicate.story, 'manual-duplicate.story');
+});
+
+test('a typed duplicate-event case is judged on trimmed, case-folded identifiers', () => {
+  const caseFile = buildManualCase('duplicate-event', {}, []);
+  const values = { challanA: 'MH-2026-3001', challanB: 'mh-2026-3002', captureA: 'cam-44-000771 ', captureB: 'CAM-44-000771', eventA: '18:07:04 · CAM-44 · ₹500', eventB: '18:07:04  · cam-44 · ₹500' };
+  for (const fact of caseFile.facts) {
+    fact.value = values[fact.key];
+    fact.clarity = 'clear';
+  }
+  const assessment = assessCase(caseFile, confirmDecisive(caseFile));
+  assert.equal(assessment.outcome, 'supported');
+  assert.equal(assessment.findings[0].rule, 'EXACT_DUPLICATE_EVENT');
+
+  caseFile.facts.find((fact) => fact.key === 'challanB').value = ' mh-2026-3001';
+  assert.equal(assessCase(caseFile, confirmDecisive(caseFile)).outcome, 'none', 'the same number with different spacing is one record, not two');
+});
+
+test('AI-extracted values still start unreviewed and an invalid date is dropped', () => {
+  const caseFile = buildManualCase('wrong-vehicle', { recordPlate: 'ZZ00CJ0001', photoPlate: 'ZZ00CJ0007', rcPlate: 'ZZ00CJ0001', photoFamily: 'Two-wheeler', rcFamily: 'Passenger car', issueDate: '2026-02-30', challanNumber: ' DEMO-1 ' }, ['challan.pdf'], 'ai');
+  assert.equal(caseFile.issueDate, '');
+  assert.equal(caseFile.challanNumber, 'DEMO-1');
+  assert.ok(caseFile.facts.every((fact) => fact.clarity === 'unreviewed'));
+  assert.equal(assessCase(caseFile, confirmDecisive(caseFile)).outcome, 'review');
+});
+
+test('the Rule 167 clock applies from its gazetted date and nowhere earlier', () => {
+  assert.equal(RULE_167_EFFECTIVE_FROM, '2026-01-20');
+  assert.equal(ruleClockApplies('2026-01-19'), false);
+  assert.equal(ruleClockApplies('2026-01-20'), true);
+  assert.equal(ruleClockApplies(''), false);
+  assert.equal(ruleClockApplies('2026-02-30'), false);
+});
+
+test('masking never leaks fragments of a placeholder or padded value', () => {
+  assert.equal(maskIdentifier('  ZZ00CJ0001  '), 'ZZ••••0001');
+  assert.equal(maskIdentifier('   '), '••••');
+  const blank = buildManualCase('wrong-vehicle', {}, []);
+  assert.equal(redactCaseText('Nothing to mask here', blank), 'Nothing to mask here');
+});
+
+/**
+ * State traffic portals live on .gov.in hostnames that contain the word
+ * "challan". Reporting the genuine Maharashtra or Telangana portal as a
+ * lookalike would teach citizens to distrust the real thing.
+ */
+test('Scam Shield treats genuine .gov.in hosts as government, not lookalike', () => {
+  const quiet = { channel: 'sms', clicked: false, downloaded: false, installed: false, grantedPermissions: false, paid: false, sharedCredentials: false };
+  for (const url of ['https://mahatrafficechallan.gov.in/payechallan/PaymentService.htm', 'https://echallan.tspolice.gov.in/publicview/', 'https://traffic.delhipolice.gov.in/notice/']) {
+    const result = inspectChallanMessage({ ...quiet, message: `Your challan is at ${url}` });
+    assert.equal(result.destinations[0].classification, 'government', url);
+    assert.equal(result.outcome, 'unverified', url);
+    assert.equal(result.signals.length, 0, url);
+    assertBilingual(result.destinations[0].explanation, `government.${url}`);
+  }
+
+  // Only the registrable suffix counts. Lookalikes and HTTP still fail.
+  assert.equal(inspectChallanMessage({ ...quiet, message: 'https://echallan.parivahan.gov.in.example/pay' }).destinations[0].classification, 'lookalike');
+  assert.equal(inspectChallanMessage({ ...quiet, message: 'https://evil-gov.in/pay' }).destinations[0].classification, 'unverified');
+  assert.equal(inspectChallanMessage({ ...quiet, message: 'https://gov.in/pay' }).destinations[0].classification, 'unverified');
+  const http = inspectChallanMessage({ ...quiet, message: 'http://mahatrafficechallan.gov.in/pay' });
+  assert.equal(http.destinations[0].classification, 'lookalike', 'an unencrypted link is not treated as the government portal');
+  assert.ok(http.signals.some((signal) => signal.id.startsWith('http-')));
+});
+
+test('Scam Shield flags payment to a personal UPI handle and does not mistake it for a website', () => {
+  const quiet = { channel: 'whatsapp', clicked: false, downloaded: false, installed: false, grantedPermissions: false, paid: false, sharedCredentials: false };
+  const result = inspectChallanMessage({ ...quiet, message: 'Send payment to trafficfine.rto@ybl today' });
+  assert.equal(result.outcome, 'danger');
+  assert.ok(result.signals.some((signal) => signal.id === 'upi-handle'));
+  assert.equal(result.destinations.length, 0, 'the handle must not be parsed as the website trafficfine.rto');
+  const upi = result.signals.find((signal) => signal.id === 'upi-handle');
+  assertBilingual(upi.title, 'upi.title');
+  assertBilingual(upi.detail, 'upi.detail');
+  assert.match(upi.detail.en, /trafficfine\.rto@ybl/);
+
+  // An ordinary e-mail address is not a UPI handle.
+  const email = inspectChallanMessage({ ...quiet, message: 'Contact helpdesk@example.com for details' });
+  assert.ok(!email.signals.some((signal) => signal.id === 'upi-handle'));
 });

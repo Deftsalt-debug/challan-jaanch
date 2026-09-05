@@ -115,15 +115,20 @@ The demo fixtures are visibly fictional. They use impossible-looking registratio
 
 ### Stage 2: Documents
 
-The citizen selects:
+The citizen first chooses what they are comparing:
 
-1. a challan and its evidence bundle;
-2. the corresponding vehicle record;
-3. an optional enforcement image, second challan, or other supporting record.
+1. **The photo shows a different vehicle** — plate and broad vehicle family across the challan, its photograph, and the registration record.
+2. **Two challans for the same event** — two challan numbers that share one capture identifier, time, camera, and amount.
 
-Accepted formats are JPG, PNG, and PDF, up to 10 MB per file.
+Files are optional. A citizen with a paper challan in front of them can continue straight to typing the fields. If they have files, they may add:
 
-The interface supports the file picker and drag-and-drop. Image files receive a local preview. Selecting a file does not by itself call the extraction endpoint.
+1. the challan and its evidence bundle (or, for a duplicate case, the first challan);
+2. the vehicle record (or the second challan);
+3. an optional enforcement image or other supporting record.
+
+Accepted formats are JPG, PNG, and PDF, up to 10 MB per file. Added files stay in the browser, appear beside the fields for checking, and receive a locally computed SHA-256 fingerprint for the packet manifest.
+
+The interface supports the file picker and drag-and-drop. Image files receive a local preview. Selecting a file does not by itself call the extraction endpoint. AI extraction is offered only for the vehicle comparison, and only when both primary files are present and transmission consent is given.
 
 ### Stage 3: Processing
 
@@ -234,7 +239,9 @@ The checker looks for:
 - internationalised/punycode hostnames;
 - transport or challan wording on a hostname that is not one of the exact recognised official transport-service hosts.
 
-The allowlist is intentionally narrow. Only the exact HTTPS hostnames `echallan.parivahan.gov.in` and `mparivahan.parivahan.gov.in` receive the “Exact official host” label. An unfamiliar state-government destination is labelled unverified, not fraudulent, because the checker does not maintain an exhaustive registry of every state service.
+The allowlist is intentionally narrow. Only the exact HTTPS hostnames `echallan.parivahan.gov.in` and `mparivahan.parivahan.gov.in` receive the “Exact official host” label. A hostname that genuinely ends in `.gov.in` or `.nic.in` over HTTPS receives a distinct “Government domain” label: those names are issued only through the National Informatics Centre, so a state traffic portal such as `mahatrafficechallan.gov.in` is never reported as a lookalike merely because it contains the word “challan”. The citizen is still told to type the address rather than tap the link, because the checker does not maintain an exhaustive registry of every state service. The suffix check is on the registrable domain, so `echallan.parivahan.gov.in.example` remains a lookalike, and any `http://` link keeps its unencrypted-link warning.
+
+A personal UPI handle such as `trafficfine.rto@ybl` is a critical signal in its own right: a government fine is paid through the portal's own gateway, never to an individual handle. The handle is recognised against a closed list of payment-service suffixes so an ordinary e-mail address cannot trigger it, and it is excluded from website parsing.
 
 There are three outcomes:
 
@@ -1055,7 +1062,7 @@ Check `OPENAI_API_KEY` in `.env.local`, restart the development server, and insp
 
 ### A file is rejected
 
-Use JPG, PNG, or PDF below 10 MB. Both challan and vehicle record are required.
+Use JPG, PNG, or PDF below 10 MB. Files are optional for local entry; AI extraction needs both the challan and the vehicle record.
 
 ### The app returns “unable to assess”
 

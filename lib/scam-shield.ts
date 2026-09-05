@@ -27,7 +27,7 @@ export interface InspectedDestination {
   raw: string;
   display: string;
   hostname: string;
-  classification: 'official' | 'lookalike' | 'unverified';
+  classification: 'official' | 'government' | 'lookalike' | 'unverified';
   explanation: Bilingual;
 }
 
@@ -52,6 +52,26 @@ const officialHosts = new Map<string, Bilingual>([
   ['echallan.parivahan.gov.in', bi('Exact HTTPS hostname used by the national eChallan service.', 'राष्ट्रीय ई-चालान सेवा का असली HTTPS पता।')],
   ['mparivahan.parivahan.gov.in', bi('Exact HTTPS hostname used by the official mParivahan service.', 'आधिकारिक mParivahan सेवा का असली HTTPS पता।')],
 ]);
+/**
+ * `.gov.in` and `.nic.in` are registered only through the National Informatics
+ * Centre, so a hostname that genuinely ends in one of them is government
+ * controlled even when it is not on the exact allowlist above. State traffic
+ * portals such as mahatrafficechallan.gov.in and echallan.tspolice.gov.in
+ * contain the word "challan" and would otherwise be reported as lookalikes —
+ * which would teach citizens to distrust the real portal. The check is on the
+ * registrable suffix, so echallan.parivahan.gov.in.example is still a lookalike.
+ */
+const governmentSuffixes = ['.gov.in', '.nic.in'];
+
+/**
+ * Payment handles the fake-challan trade actually uses. A government fine is
+ * paid through the portal's own gateway, never to a personal UPI address, so a
+ * message naming one is a strong signal on its own. The list is closed so an
+ * ordinary e-mail address cannot trigger it.
+ */
+const upiHandles = ['upi', 'ybl', 'ibl', 'axl', 'apl', 'yapl', 'rapl', 'okaxis', 'oksbi', 'okicici', 'okhdfcbank', 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi', 'axisbank', 'sbi', 'icici', 'hdfcbank', 'kotak', 'yesbank', 'jio', 'airtel', 'freecharge', 'waaxis', 'wahdfcbank', 'waicici', 'wasbi', 'barodampay', 'idfcbank', 'indus', 'federal', 'cnrb', 'boi', 'pnb', 'unionbank', 'iob', 'rbl', 'aubank', 'ikwik', 'amazonpay', 'slice', 'fam', 'naviaxis', 'superyes', 'abfspay'];
+const upiHandlePattern = new RegExp(`(?<![\\w.-])[a-z0-9][a-z0-9._-]{1,48}@(?:${upiHandles.join('|')})(?![\\w.-])`, 'giu');
+
 const shortenerHosts = new Set(['bit.ly', 'tinyurl.com', 't.co', 'cutt.ly', 'rb.gy', 'shorturl.at', 'goo.gl', 'is.gd']);
 const impersonationWords = ['challan', 'echallan', 'parivahan', 'mparivahan', 'vahan', 'rto', 'trafficpolice', 'traffic-police'];
 
@@ -60,7 +80,7 @@ function stripTrailingPunctuation(value: string): string {
 }
 
 function extractDestinations(message: string): InspectedDestination[] {
-  const matches = message.match(/(?:https?:\/\/|www\.)[^\s<>{}\[\]"']+|(?<![@\w/.])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?:\/[^\s<>{}\[\]"']*)?/giu) ?? [];
+  const matches = message.match(/(?:https?:\/\/|www\.)[^\s<>{}\[\]"']+|(?<![@\w/.])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?![\w@])(?:\/[^\s<>{}\[\]"']*)?/giu) ?? [];
   const seen = new Set<string>();
   const destinations: InspectedDestination[] = [];
 
@@ -74,16 +94,19 @@ function extractDestinations(message: string): InspectedDestination[] {
       const display = `${hostname}${parsed.pathname === '/' ? '' : parsed.pathname}`.slice(0, 96);
       const looksOfficial = impersonationWords.some((word) => `${hostname}${parsed.pathname}`.toLowerCase().includes(word));
       const isOfficial = parsed.protocol === 'https:' && officialHosts.has(hostname);
+      const isGovernment = !isOfficial && parsed.protocol === 'https:' && governmentSuffixes.some((suffix) => hostname.endsWith(suffix) && hostname.length > suffix.length);
       destinations.push({
         raw,
         display,
         hostname,
-        classification: isOfficial ? 'official' : looksOfficial ? 'lookalike' : 'unverified',
+        classification: isOfficial ? 'official' : isGovernment ? 'government' : looksOfficial ? 'lookalike' : 'unverified',
         explanation: isOfficial
           ? officialHosts.get(hostname) ?? bi('Exact hostname on the recognised official transport-service allowlist.', 'मान्यता प्राप्त आधिकारिक परिवहन सेवा सूची में शामिल असली पता।')
-          : looksOfficial
-            ? bi('Uses transport or challan wording but is not a recognised official transport-service hostname.', 'परिवहन या चालान जैसे शब्द इस्तेमाल करता है, पर यह मान्यता प्राप्त आधिकारिक पता नहीं है।')
-            : bi('Not one of the official destinations recognised by this checker.', 'यह इस जाँचकर्ता की आधिकारिक सूची में शामिल पता नहीं है।'),
+          : isGovernment
+            ? bi('A government-controlled domain: .gov.in and .nic.in names are issued only through the National Informatics Centre. It is not on this checker’s exact allowlist, so type the address yourself rather than tapping the link.', 'सरकारी नियंत्रण वाला डोमेन: .gov.in और .nic.in नाम सिर्फ़ राष्ट्रीय सूचना-विज्ञान केंद्र से मिलते हैं। यह इस जाँचकर्ता की सटीक सूची में नहीं है, इसलिए लिंक दबाने के बजाय पता ख़ुद टाइप करें।')
+            : looksOfficial
+              ? bi('Uses transport or challan wording but is not a recognised official transport-service hostname.', 'परिवहन या चालान जैसे शब्द इस्तेमाल करता है, पर यह मान्यता प्राप्त आधिकारिक पता नहीं है।')
+              : bi('Not one of the official destinations recognised by this checker.', 'यह इस जाँचकर्ता की आधिकारिक सूची में शामिल पता नहीं है।'),
       });
     } catch {
       // Malformed text is not rendered as a destination. Other message signals still apply.
@@ -154,6 +177,18 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
       detail: bi(
         'Do not pay from a message or caller-provided destination. Independently type the official eChallan address and verify whether a challan exists.',
         'संदेश या कॉल करने वाले के दिए पते से भुगतान न करें। आधिकारिक ई-चालान पता ख़ुद टाइप करके जाँचें कि चालान है भी या नहीं।',
+      ),
+    });
+  }
+  const upiHandle = message.match(upiHandlePattern)?.[0];
+  if (upiHandle) {
+    addSignal(signals, {
+      id: 'upi-handle',
+      severity: 'critical',
+      title: bi('Payment to a personal UPI address', 'निजी UPI पते पर भुगतान की माँग'),
+      detail: bi(
+        `The message names the UPI address ${upiHandle}. Government fines are paid through the official portal’s own gateway, never to an individual UPI handle.`,
+        `संदेश में UPI पता ${upiHandle} दिया गया है। सरकारी जुर्माना आधिकारिक पोर्टल के अपने गेटवे से भरा जाता है, किसी निजी UPI पते पर कभी नहीं।`,
       ),
     });
   }
