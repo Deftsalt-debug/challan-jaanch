@@ -12,7 +12,7 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Source-linked findings:** every claim points back to the exact confirmed fields that produced it.
 - **A real refusal path:** ambiguous plate characters or unreadable vehicle classes stop the finding instead of becoming an allegation.
 - **Model/code separation:** optional multimodal AI extracts observable fields; deterministic TypeScript rules choose the outcome.
-- **Human verification gates:** editing a decisive field invalidates its confirmation and the prior result.
+- **Human verification gates:** each decisive field is reviewed individually; there is no bulk-confirm shortcut. Citizen fields start with unreviewed source clarity, including AI-extracted values. Editing a citizen field resets both its clarity review and confirmation.
 - **A complete no-key path:** manual entry includes explicit source-clarity controls, closed vehicle-family choices, and an abstention when the original is unclear; a blank field cannot be confirmed.
 - **Privacy choice before processing:** the default local path computes file fingerprints and opens manual entry without transmitting file bytes. Optional AI extraction is a separate action gated by explicit consent, uses source-role filenames, and describes `store: false` without claiming zero provider retention.
 - **Portable evidence packet:** supported claims can be downloaded as a citizen-prepared PDF plus a machine-readable JSON manifest.
@@ -28,7 +28,7 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 
 ## Guided experience
 
-1. Run one of three visibly synthetic cases or select your own records.
+1. Open one of three visibly synthetic cases immediately, or select your own records.
 2. Inspect the sources in the evidence workbench.
 3. Compare plate characters and review the Rule 167 clock.
 4. Confirm each decisive fact and, for citizen files, mark whether the original source is actually clear.
@@ -36,6 +36,8 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 6. Inspect the finding map and adversarial counter-checks.
 7. Build a redacted or official-handoff packet.
 8. Continue separately on the official eChallan portal.
+
+Source clarity is an explicit review state, not a model confidence score. Real file work has a simple busy message; synthetic cases have no simulated processing or artificial wait. Leaving during processing cancels the pending operation.
 
 The synthetic evidence demo and Scam Shield are complete without an API key. Citizen documents also have a fully usable local-only path. Live file extraction is optional, requires explicit transmission consent, and fails safely into manual verification when it is not configured.
 

@@ -24,7 +24,7 @@ Target length: **1:47–1:55**. The shipped submission is silent and caption-led
 
 ### 0:34–0:46 — Keep the human in control
 
-**Action:** Choose **Confirm all visible values**, then **Run objective comparison**.
+**Action:** Check and confirm each decisive field individually, then choose **Run objective comparison**.
 
 **Say:** “The comparison stays locked until I confirm every decisive value. If I edit one, that confirmation and any earlier result are invalidated.”
 

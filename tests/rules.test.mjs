@@ -103,7 +103,7 @@ test('unclear vehicle-family sources abstain instead of claiming no ground', () 
   const caseFile = cloneCase(cases['wrong-vehicle']);
   const byKey = Object.fromEntries(caseFile.facts.map((fact) => [fact.key, fact]));
   byKey.photoPlate.value = byKey.rcPlate.value;
-  byKey.photoFamily.reliability = 0.5;
+  byKey.photoFamily.clarity = 'unclear';
   const assessment = assessCase(caseFile, confirmDecisive(caseFile));
   assert.equal(assessment.outcome, 'unable');
   assert.match(assessment.headline.en, /vehicle family/i);
@@ -526,7 +526,7 @@ test('citizen document transmission is explicit, optional, and described honestl
   assert.match(page, /No selected file bytes leave this browser/u);
   assert.match(page, /disabled=\{!ready \|\| !aiConsent\}/u);
   assert.match(api, /export async function GET\(\)/u);
-  assert.match(page, /fetch\('\/api\/analyze', \{ headers: \{ Accept: 'application\/json' \}, cache: 'no-store' \}\)/u);
+  assert.match(page, /fetch\('\/api\/analyze', \{ headers: \{ Accept: 'application\/json' \}, cache: 'no-store', signal: request\.signal \}\)/u);
   assert.match(page, /no selected file bytes were sent to the server or OpenAI/u);
   assert.match(page, /name:\s*redactedFileName\(file, key\)/u);
   assert.doesNotMatch(page, /name:\s*file\.name,\s*type:/u);
@@ -539,4 +539,31 @@ test('citizen document transmission is explicit, optional, and described honestl
   const privacyClaims = `${page}\n${guide}\n${buildNotes}`;
   assert.doesNotMatch(privacyClaims, /stores nothing upstream|request is not retained upstream/iu);
   assert.match(privacyClaims, /OpenAI API data controls/iu);
+});
+
+test('nonempty unreviewed fields cannot become findings even if confirmation keys are supplied', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  caseFile.synthetic = false;
+  caseFile.kind = 'manual';
+  for (const fact of caseFile.facts) fact.clarity = 'unreviewed';
+  assert.equal(assessCase(caseFile, confirmDecisive(caseFile)).outcome, 'review');
+  for (const fact of caseFile.facts) fact.clarity = 'clear';
+  assert.equal(assessCase(caseFile, confirmDecisive(caseFile)).outcome, 'supported');
+});
+
+test('a blank decisive value cannot pass the rule gate with a stale confirmation', () => {
+  const caseFile = cloneCase(cases['wrong-vehicle']);
+  const confirmed = confirmDecisive(caseFile);
+  caseFile.facts.find((fact) => fact.key === 'photoPlate').value = ' ';
+  assert.equal(assessCase(caseFile, confirmed).outcome, 'review');
+});
+
+test('unclear registration sources abstain rather than imply that the records agree', () => {
+  for (const key of ['recordPlate', 'photoPlate', 'rcPlate']) {
+    const caseFile = cloneCase(cases['wrong-vehicle']);
+    caseFile.facts.find((fact) => fact.key === key).clarity = 'unclear';
+    const result = assessCase(caseFile, confirmDecisive(caseFile));
+    assert.equal(result.outcome, 'unable', key);
+    assert.equal(result.findings.length, 0, key);
+  }
 });

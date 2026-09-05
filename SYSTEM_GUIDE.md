@@ -142,7 +142,7 @@ Across those paths, the app:
 4. receives structured observable fields or a safe fallback response on the AI path;
 5. creates the same editable, human-confirmed evidence map in either case.
 
-The progress screen explicitly says that the system is reading facts, not deciding the case.
+Synthetic cases open directly into review. Actual file preparation and optional AI extraction show a simple busy message, with no invented progress percentages or minimum waiting time. Leaving or clearing the case cancels pending processing.
 
 ### Stage 4: Verification
 
@@ -265,7 +265,7 @@ A finding is created only when:
 - challan registration, visible-photo registration, and vehicle-record registration are confirmed;
 - challan and vehicle record agree;
 - the visible photo differs;
-- the three relevant reliability values are at or above the rule threshold.
+- all three sources have explicitly clear source status.
 
 Normalization performs only Unicode normalization, uppercase conversion, and removal of spaces or hyphens. It deliberately does not transform `O` into `0`, `I` into `1`, or similar characters.
 
@@ -275,7 +275,7 @@ A finding is created only when:
 
 - the photo family and record family are confirmed;
 - neither value is `Unknown`;
-- both values meet the rule threshold;
+- both sources have explicitly clear source status;
 - the broad families differ.
 
 The rule compares categories such as two-wheeler and passenger car. It does not infer make, model, or exact vehicle identity.
@@ -294,8 +294,10 @@ The finding still carries a limitation: only the issuing authority can decide wh
 
 The system returns `unable` when:
 
-- a decisive photo-plate read is below the reliability threshold; or
-- an alternative reading is close enough to change the outcome.
+- any registration source is marked unclear, or a competing photo-plate reading remains;
+- vehicle-family evidence is unclear and no independent plate conflict supports a finding.
+
+Source clarity is `unreviewed`, `clear`, or `unclear`; there are no numerical confidence thresholds. Every citizen field, including a populated AI extraction, starts `unreviewed`. The citizen must review each source and confirm each value individually. Unreviewed or blank decisive fields keep the comparison pending; they cannot produce findings even if a stale confirmation key is supplied. Editing a citizen value resets both its clarity and confirmation.
 
 The refusal fixture demonstrates `Z` versus `2`. No packet can be built from this state.
 

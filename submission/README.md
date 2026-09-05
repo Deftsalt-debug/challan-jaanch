@@ -1,5 +1,7 @@
 # Video deliverable
 
+Recording provenance: this cut uses the 28 August 2026 interface. The September review removed the bulk-confirm button and simulated processing; the current app requires individual field review and explicit source clarity. The recorded technical test count was 36; the current suite has 39 tests. The existing video is retained as the original submission artifact.
+
 ![Submission video cover](video-cover.png)
 
 `challan-jaanch-submission.mp4` is a 1 minute 47.5 second, 1920×1080 H.264 silent submission cut built entirely from the public synthetic demo. It contains no real challan, vehicle registration, phone number, login or personal upload.

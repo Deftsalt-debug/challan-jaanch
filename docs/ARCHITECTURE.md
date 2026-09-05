@@ -63,7 +63,7 @@ Every decisive value must be confirmed. Blank values cannot be confirmed. For ci
 - registration-mark conflict across challan, photo, and vehicle record;
 - broad vehicle-family conflict;
 - exact duplicate-event matching across distinct challan numbers;
-- safe refusal for low-confidence or materially ambiguous plate characters and unreadable vehicle-family sources;
+- safe refusal for unclear or materially ambiguous registration sources and unreadable vehicle-family sources;
 - a 45-calendar-day Rule 167 safety-date calculation for the current rule pack.
 
 The deadline status changes at midnight in `Asia/Kolkata`. Using the UTC calendar date would make the status one day late between 00:00 and 05:30 IST, so an explicit regression test covers that boundary.
@@ -100,11 +100,13 @@ Exposure is modelled separately from message risk. Opening a link, downloading a
 
 `home → upload → processing → review → result → packet`
 
+Synthetic cases go directly from `home` to `review`. Real processing has no simulated percentage or artificial delay; leaving cancels pending work.
+
 Parallel lane: `home → scam → verify | report-attempt | emergency`
 
 - **Home:** synthetic cases, product evidence, and interactive outcome preview.
 - **Upload:** drag/drop or file selection with local preview and size/type guidance.
-- **Processing:** transparent extraction steps; no simulated official progress.
+- **Processing:** a simple busy message for actual file preparation or optional extraction.
 - **Review:** source inspector, character-level diff, rule clock, editing, and confirmation.
 - **Result:** finding trace, adversarial counter-checks, deadline context, and refusal path.
 - **Packet:** redacted/official-handoff views, attestation, PDF/JSON exports, a bilingual share-safe brief, and a separate official link.

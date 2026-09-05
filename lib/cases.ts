@@ -11,9 +11,9 @@ export interface CaseFact {
   value: string;
   source: FactSource;
   sourceLabel: Bilingual;
-  reliability: number;
+  clarity: 'unreviewed' | 'clear' | 'unclear';
   decisive?: boolean;
-  alternatives?: { value: string; reliability: number }[];
+  alternatives?: { value: string }[];
   help: Bilingual;
 }
 
@@ -81,12 +81,12 @@ export const cases: Record<string, DemoCase> = {
     documentNames: ['synthetic-challan-0001.pdf', 'synthetic-vehicle-record-0001.pdf'],
     synthetic: true,
     facts: [
-      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), reliability: 0.99, decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
-      { key: 'photoPlate', label: bi('Plate visible in photograph', 'फोटो में दिख रहा नंबर'), value: 'ZZ00CJ0007', source: 'photo', sourceLabel: bi('Enforcement photo · highlighted crop', 'कार्रवाई-फोटो · चिह्नित हिस्सा'), reliability: 0.98, decisive: true, help: bi('Visible plate read from the supplied enforcement photograph.', 'दी गई कार्रवाई-फोटो से पढ़ा गया नंबर।') },
-      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Registration confirmed from the supplied synthetic vehicle record.', 'दिए गए नकली वाहन रिकॉर्ड से पुष्ट पंजीकरण।') },
-      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Two-wheeler', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), reliability: 0.97, decisive: true, help: bi('Broad vehicle family only; the system does not infer a specific model.', 'सिर्फ़ मोटा प्रकार; सिस्टम कोई ख़ास मॉडल नहीं बताता।') },
-      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
-      { key: 'rcColour', label: bi('Colour on vehicle record', 'वाहन रिकॉर्ड पर रंग'), value: 'Blue', source: 'vehicle', sourceLabel: bi('Vehicle record · colour field', 'वाहन रिकॉर्ड · रंग फ़ील्ड'), reliability: 0.99, help: bi('Colour is corroborating context only and never creates a finding by itself.', 'रंग सिर्फ़ सहायक संदर्भ है; अकेले इससे कोई निष्कर्ष नहीं बनता।') },
+      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), clarity: 'clear', decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
+      { key: 'photoPlate', label: bi('Plate visible in photograph', 'फोटो में दिख रहा नंबर'), value: 'ZZ00CJ0007', source: 'photo', sourceLabel: bi('Enforcement photo · highlighted crop', 'कार्रवाई-फोटो · चिह्नित हिस्सा'), clarity: 'clear', decisive: true, help: bi('Visible plate read from the supplied enforcement photograph.', 'दी गई कार्रवाई-फोटो से पढ़ा गया नंबर।') },
+      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0001', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Registration confirmed from the supplied synthetic vehicle record.', 'दिए गए नकली वाहन रिकॉर्ड से पुष्ट पंजीकरण।') },
+      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Two-wheeler', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), clarity: 'clear', decisive: true, help: bi('Broad vehicle family only; the system does not infer a specific model.', 'सिर्फ़ मोटा प्रकार; सिस्टम कोई ख़ास मॉडल नहीं बताता।') },
+      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
+      { key: 'rcColour', label: bi('Colour on vehicle record', 'वाहन रिकॉर्ड पर रंग'), value: 'Blue', source: 'vehicle', sourceLabel: bi('Vehicle record · colour field', 'वाहन रिकॉर्ड · रंग फ़ील्ड'), clarity: 'clear', help: bi('Colour is corroborating context only and never creates a finding by itself.', 'रंग सिर्फ़ सहायक संदर्भ है; अकेले इससे कोई निष्कर्ष नहीं बनता।') },
     ],
   },
   'ambiguous-photo': {
@@ -108,11 +108,11 @@ export const cases: Record<string, DemoCase> = {
     documentNames: ['synthetic-challan-0002.pdf', 'synthetic-vehicle-record-0002.pdf'],
     synthetic: true,
     facts: [
-      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), reliability: 0.99, decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
-      { key: 'photoPlate', label: bi('Possible plate in photograph', 'फोटो में संभावित नंबर'), value: 'ZZ00CJ000Z', source: 'photo', sourceLabel: bi('Enforcement photo · blurred crop', 'कार्रवाई-फोटो · धुंधला हिस्सा'), reliability: 0.56, decisive: true, alternatives: [{ value: 'ZZ00CJ0002', reliability: 0.44 }], help: bi('Two readings remain plausible; neither is safe to treat as fact.', 'दो पाठ संभव हैं; किसी को भी तथ्य मानना सुरक्षित नहीं।') },
-      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Registration confirmed from the supplied synthetic record.', 'दिए गए नकली रिकॉर्ड से पुष्ट पंजीकरण।') },
-      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Unknown', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), reliability: 0.45, decisive: true, help: bi('The frame is too dark for a dependable broad-class reading.', 'फ़्रेम इतना अंधेरा है कि मोटा प्रकार भी भरोसे से नहीं पढ़ा जा सकता।') },
-      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
+      { key: 'recordPlate', label: bi('Registration on challan', 'चालान पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'challan', sourceLabel: bi('Challan record · field 04', 'चालान रिकॉर्ड · फ़ील्ड 04'), clarity: 'clear', decisive: true, help: bi('Printed registration mark on the synthetic challan.', 'नकली चालान पर छपा पंजीकरण चिह्न।') },
+      { key: 'photoPlate', label: bi('Possible plate in photograph', 'फोटो में संभावित नंबर'), value: 'ZZ00CJ000Z', source: 'photo', sourceLabel: bi('Enforcement photo · blurred crop', 'कार्रवाई-फोटो · धुंधला हिस्सा'), clarity: 'unclear', decisive: true, alternatives: [{ value: 'ZZ00CJ0002' }], help: bi('Two readings remain plausible; neither is safe to treat as fact.', 'दो पाठ संभव हैं; किसी को भी तथ्य मानना सुरक्षित नहीं।') },
+      { key: 'rcPlate', label: bi('Registration on vehicle record', 'वाहन रिकॉर्ड पर पंजीकरण नंबर'), value: 'ZZ00CJ0002', source: 'vehicle', sourceLabel: bi('Vehicle record · registration field', 'वाहन रिकॉर्ड · पंजीकरण फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Registration confirmed from the supplied synthetic record.', 'दिए गए नकली रिकॉर्ड से पुष्ट पंजीकरण।') },
+      { key: 'photoFamily', label: bi('Vehicle family in photograph', 'फोटो में वाहन का प्रकार'), value: 'Unknown', source: 'photo', sourceLabel: bi('Enforcement photo · full frame', 'कार्रवाई-फोटो · पूरा फ़्रेम'), clarity: 'unclear', decisive: true, help: bi('The frame is too dark for a dependable broad-class reading.', 'फ़्रेम इतना अंधेरा है कि मोटा प्रकार भी भरोसे से नहीं पढ़ा जा सकता।') },
+      { key: 'rcFamily', label: bi('Vehicle family on record', 'रिकॉर्ड पर वाहन का प्रकार'), value: 'Passenger car', source: 'vehicle', sourceLabel: bi('Vehicle record · class field', 'वाहन रिकॉर्ड · श्रेणी फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Normalised from the vehicle-class field.', 'वाहन-श्रेणी फ़ील्ड से सामान्यीकृत।') },
     ],
   },
   'duplicate-event': {
@@ -134,12 +134,12 @@ export const cases: Record<string, DemoCase> = {
     documentNames: ['synthetic-challan-3001.pdf', 'synthetic-challan-3002.pdf', 'synthetic-vehicle-record-0003.pdf'],
     synthetic: true,
     facts: [
-      { key: 'challanA', label: bi('First challan number', 'पहला चालान नंबर'), value: 'DEMO-MH-260814-3001', source: 'challan', sourceLabel: bi('Challan A · heading', 'चालान A · शीर्षक'), reliability: 0.99, decisive: true, help: bi('First independently issued synthetic challan number.', 'अलग से जारी पहला नकली चालान नंबर।') },
-      { key: 'challanB', label: bi('Second challan number', 'दूसरा चालान नंबर'), value: 'DEMO-MH-260814-3002', source: 'second-challan', sourceLabel: bi('Challan B · heading', 'चालान B · शीर्षक'), reliability: 0.99, decisive: true, help: bi('Second independently issued synthetic challan number.', 'अलग से जारी दूसरा नकली चालान नंबर।') },
-      { key: 'captureA', label: bi('Capture ID · first record', 'कैप्चर पहचान · पहला रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'challan', sourceLabel: bi('Challan A · evidence metadata', 'चालान A · साक्ष्य मेटाडेटा'), reliability: 0.99, decisive: true, help: bi('Capture identifier included in the supplied evidence bundle.', 'दिए गए साक्ष्य बंडल में शामिल कैप्चर पहचान।') },
-      { key: 'captureB', label: bi('Capture ID · second record', 'कैप्चर पहचान · दूसरा रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'second-challan', sourceLabel: bi('Challan B · evidence metadata', 'चालान B · साक्ष्य मेटाडेटा'), reliability: 0.99, decisive: true, help: bi('Same capture identifier appears on the second record.', 'वही कैप्चर पहचान दूसरे रिकॉर्ड पर भी है।') },
-      { key: 'eventA', label: bi('Event fingerprint · first', 'घटना पहचान · पहली'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'challan', sourceLabel: bi('Challan A · event fields', 'चालान A · घटना फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Time, camera and amount condensed for comparison.', 'तुलना के लिए समय, कैमरा और राशि एक साथ।') },
-      { key: 'eventB', label: bi('Event fingerprint · second', 'घटना पहचान · दूसरी'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'second-challan', sourceLabel: bi('Challan B · event fields', 'चालान B · घटना फ़ील्ड'), reliability: 0.99, decisive: true, help: bi('Same time, camera and amount on the second record.', 'दूसरे रिकॉर्ड पर भी वही समय, कैमरा और राशि।') },
+      { key: 'challanA', label: bi('First challan number', 'पहला चालान नंबर'), value: 'DEMO-MH-260814-3001', source: 'challan', sourceLabel: bi('Challan A · heading', 'चालान A · शीर्षक'), clarity: 'clear', decisive: true, help: bi('First independently issued synthetic challan number.', 'अलग से जारी पहला नकली चालान नंबर।') },
+      { key: 'challanB', label: bi('Second challan number', 'दूसरा चालान नंबर'), value: 'DEMO-MH-260814-3002', source: 'second-challan', sourceLabel: bi('Challan B · heading', 'चालान B · शीर्षक'), clarity: 'clear', decisive: true, help: bi('Second independently issued synthetic challan number.', 'अलग से जारी दूसरा नकली चालान नंबर।') },
+      { key: 'captureA', label: bi('Capture ID · first record', 'कैप्चर पहचान · पहला रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'challan', sourceLabel: bi('Challan A · evidence metadata', 'चालान A · साक्ष्य मेटाडेटा'), clarity: 'clear', decisive: true, help: bi('Capture identifier included in the supplied evidence bundle.', 'दिए गए साक्ष्य बंडल में शामिल कैप्चर पहचान।') },
+      { key: 'captureB', label: bi('Capture ID · second record', 'कैप्चर पहचान · दूसरा रिकॉर्ड'), value: 'CJ-CAM-44-000771', source: 'second-challan', sourceLabel: bi('Challan B · evidence metadata', 'चालान B · साक्ष्य मेटाडेटा'), clarity: 'clear', decisive: true, help: bi('Same capture identifier appears on the second record.', 'वही कैप्चर पहचान दूसरे रिकॉर्ड पर भी है।') },
+      { key: 'eventA', label: bi('Event fingerprint · first', 'घटना पहचान · पहली'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'challan', sourceLabel: bi('Challan A · event fields', 'चालान A · घटना फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Time, camera and amount condensed for comparison.', 'तुलना के लिए समय, कैमरा और राशि एक साथ।') },
+      { key: 'eventB', label: bi('Event fingerprint · second', 'घटना पहचान · दूसरी'), value: '18:07:04 · CJ-CAM-44 · ₹500', source: 'second-challan', sourceLabel: bi('Challan B · event fields', 'चालान B · घटना फ़ील्ड'), clarity: 'clear', decisive: true, help: bi('Same time, camera and amount on the second record.', 'दूसरे रिकॉर्ड पर भी वही समय, कैमरा और राशि।') },
     ],
   },
 };
@@ -174,6 +174,13 @@ function allConfirmed(keys: string[], confirmed: Set<string>): boolean {
 
 export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessment {
   const byKey = Object.fromEntries(caseFile.facts.map((fact) => [fact.key, fact]));
+
+  if (caseFile.facts.some((fact) => fact.decisive && (!fact.value.trim() || fact.clarity === 'unreviewed'))) {
+    return pendingAssessment(bi(
+      'Review each decisive value and its source clarity before comparing.',
+      'तुलना से पहले हर निर्णायक मान और उसके स्रोत की स्पष्टता जाँचें।',
+    ));
+  }
 
   if (caseFile.kind === 'duplicate-event') {
     const keys = ['challanA', 'challanB', 'captureA', 'captureB', 'eventA', 'eventB'];
@@ -228,32 +235,28 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
   }
 
   const photoPlate = byKey.photoPlate;
-  if (photoPlate.reliability < 0.7 || (photoPlate.alternatives?.length && Math.abs(photoPlate.reliability - photoPlate.alternatives[0].reliability) < 0.15)) {
+  if (plateKeys.some((key) => byKey[key].clarity !== 'clear') || photoPlate.alternatives?.length) {
     const alternate = photoPlate.alternatives?.[0]?.value;
     return {
       outcome: 'unable',
       eyebrow: bi('Unable to assess safely', 'सुरक्षित रूप से आकलन संभव नहीं'),
-      headline: bi('The decisive character is too ambiguous.', 'निर्णायक अक्षर बहुत अस्पष्ट है।'),
+      headline: bi('The registration sources are not clear enough.', 'पंजीकरण के स्रोत पर्याप्त साफ़ नहीं हैं।'),
       explanation: bi(
-        'Two different plate readings remain plausible. Challan Jaanch will not turn an uncertain OCR reading into an allegation.',
-        'नंबर के दो अलग पाठ संभव हैं। चालान जाँच किसी अनिश्चित पाठ को आरोप में नहीं बदलेगा।',
+        'At least one registration source is unclear or has an alternative reading. Review the originals before making a plate comparison.',
+        'कम से कम एक पंजीकरण स्रोत अस्पष्ट है या उसका दूसरा पाठ संभव है। नंबर की तुलना से पहले मूल दस्तावेज़ जाँचें।',
       ),
       findings: [],
       counterChecks: [
-        { label: bi('Full plate visible', 'पूरा नंबर दिख रहा है'), result: 'unresolved', explanation: bi('The final character is blurred.', 'आख़िरी अक्षर धुंधला है।') },
-        {
-          label: bi('Alternative OCR reading ruled out', 'दूसरा संभावित पाठ ख़ारिज'),
-          result: 'unresolved',
-          explanation: bi(
-            `${alternate ?? 'Another reading'} remains plausible.`,
-            `${alternate ?? 'कोई दूसरा पाठ'} अब भी संभव है।`,
-          ),
-        },
-        { label: bi('Vehicle family independently visible', 'वाहन का प्रकार अलग से दिख रहा है'), result: 'unresolved', explanation: bi('The broad vehicle class cannot be read dependably from this frame.', 'इस फ़्रेम से वाहन का मोटा प्रकार भी भरोसे से नहीं पढ़ा जा सकता।') },
+        { label: bi('Full plate visible', 'पूरा नंबर दिख रहा है'), result: 'unresolved', explanation: bi('A complete, clear reading has not been established for every registration source.', 'हर पंजीकरण स्रोत का पूरा और साफ़ पाठ स्थापित नहीं हुआ है।') },
+        ...(alternate ? [{
+          label: bi('Alternative reading remains', 'दूसरा संभावित पाठ बाकी है'),
+          result: 'unresolved' as const,
+          explanation: bi(`${alternate} remains plausible.`, `${alternate} अब भी संभव है।`),
+        }] : []),
       ],
       nextBestEvidence: bi(
-        'Download or request the original, uncropped enforcement photograph.',
-        'मूल, बिना काटी गई कार्रवाई-फोटो डाउनलोड करें या माँगें।',
+        'Review clearer original registration records and the uncropped enforcement photograph.',
+        'पंजीकरण के अधिक साफ़ मूल रिकॉर्ड और बिना काटी गई कार्रवाई-फोटो जाँचें।',
       ),
     };
   }
@@ -261,11 +264,10 @@ export function assessCase(caseFile: DemoCase, confirmed: Set<string>): Assessme
   const recordPlate = normaliseRegistration(byKey.recordPlate.value);
   const visiblePlate = normaliseRegistration(photoPlate.value);
   const rcPlate = normaliseRegistration(byKey.rcPlate.value);
-  const plateSourcesClear = Math.min(byKey.recordPlate.reliability, photoPlate.reliability, byKey.rcPlate.reliability) >= 0.92;
-  const plateConflict = plateSourcesClear && recordPlate === rcPlate && visiblePlate !== rcPlate;
+  const plateConflict = recordPlate === rcPlate && visiblePlate !== rcPlate;
   const familySourcesClear = byKey.photoFamily.value !== 'Unknown'
     && byKey.rcFamily.value !== 'Unknown'
-    && Math.min(byKey.photoFamily.reliability, byKey.rcFamily.reliability) >= 0.92;
+    && byKey.photoFamily.clarity === 'clear' && byKey.rcFamily.clarity === 'clear';
   const familyConflict = familySourcesClear && byKey.photoFamily.value !== byKey.rcFamily.value;
 
   // A clear plate contradiction is independently sufficient. Without one, an
