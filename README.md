@@ -87,6 +87,8 @@ npm run verify
 
 This runs linting, TypeScript checks, deterministic-rule tests, submission-limit checks, and the production build. The release suite also guards the India-local Rule 167 day boundary, the gazetted date from which the clock applies, official-route wording, security-header parity, truthful packet-integrity metadata, citizen-entered cases of both comparison types, government-domain classification, and UPI-handle detection.
 
+The same gate runs in GitHub Actions on every push to `main` and every pull request; see `.github/workflows/verify.yml`. It needs no secrets.
+
 For the full release gate, including the npm production-dependency advisory check:
 
 ```bash
@@ -111,6 +113,7 @@ lib/i18n.ts                        Bilingual primitives shared by rules and inte
 lib/routes.ts                      Official next-step destinations and their ordering
 lib/use-language.ts                Persisted, tab-synchronised language selection
 tests/rules.test.mjs               Deterministic rule, API-boundary, and bilingual-completeness tests
+.github/workflows/verify.yml       Continuous integration: the full verify gate on push and pull request
 docs/ARCHITECTURE.md               Trust boundaries and data flow
 docs/HOW_WE_BUILT_IT.md            Where the OpenAI model runs and how the build was produced
 docs/LOCALISATION.md               Bilingual design and the tests that protect it

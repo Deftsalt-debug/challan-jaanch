@@ -1,0 +1,26 @@
+# Runs the same gate a contributor runs before pushing: lint, typecheck, the
+# deterministic rule and localisation tests, and a production build. The
+# workflow needs no secrets — the synthetic demo, Scam Shield, and every test
+# work without an OpenAI key, and the build must too.
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
