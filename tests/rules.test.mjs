@@ -518,12 +518,16 @@ test('packet integrity metadata never invents hashes for synthetic files', async
 
 test('citizen document transmission is explicit, optional, and described honestly', async () => {
   const { readFile } = await import('node:fs/promises');
-  const [page, guide, api, buildNotes] = await Promise.all([
+  const [container, upload, guide, api, buildNotes] = await Promise.all([
     readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../components/screens/Upload.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../components/ProductGuide.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../app/api/analyze/route.ts', import.meta.url), 'utf8'),
     readFile(new URL('../docs/HOW_WE_BUILT_IT.md', import.meta.url), 'utf8'),
   ]);
+  // The transmission decision is split between the documents screen and the
+  // state container; the guarantees below hold across both.
+  const page = `${container}\n${upload}`;
 
   assert.match(page, /Enter fields without AI/u);
   assert.match(page, /No selected file bytes leave this browser/u);
