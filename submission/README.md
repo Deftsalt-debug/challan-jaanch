@@ -1,6 +1,6 @@
 # Video deliverable
 
-Recording provenance: this cut uses the 28 August 2026 interface. The September review removed the bulk-confirm button and simulated processing; the current app requires individual field review and explicit source clarity. The recorded technical test count was 36; the current suite has 39 tests. The existing video is retained as the original submission artifact.
+Recording provenance: this cut uses the 28 August 2026 interface. Later updates removed bulk confirmation and simulated processing, refined the interface, and added payment follow-up. The current app requires individual field review and explicit source clarity. The recorded test count is historical; consult the current GitHub Actions run for verification. This file is retained as the original submission artifact, not a demonstration of every current feature.
 
 ![Submission video cover](video-cover.png)
 

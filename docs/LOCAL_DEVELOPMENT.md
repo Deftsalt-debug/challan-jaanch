@@ -9,11 +9,11 @@
 ## Start the app
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. Choose **Run the 90-second demo** for the complete keyless journey.
+Open `http://localhost:3000`. Choose **See a 90-second demo** for the complete keyless journey.
 
 Choose **Scam check** for the second keyless journey. Pasted scam text is evaluated locally and does not require an API key.
 
