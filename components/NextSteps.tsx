@@ -4,6 +4,7 @@ import { Outcome } from '../lib/cases';
 import { Language, pick, t } from '../lib/i18n';
 import { ClockStatus, RouteStatus, nextRoutes } from '../lib/routes';
 import { Chip, Tone } from './ui';
+import { PaymentHelp } from './PaymentHelp';
 
 function statusChip(status: RouteStatus, language: Language): { label: string; tone: Tone } {
   if (status === 'act-now') return { label: t(language, 'Start here · soon', 'यहाँ से शुरू करें · जल्द'), tone: 'bad' };
@@ -50,6 +51,7 @@ export function NextSteps({ language, outcome, deadline }: { language: Language;
       </ol>
       <p className="callout callout-warn mt-4 text-sm"><strong>{t(language, 'What this tool does not know:', 'यह टूल क्या नहीं जानता:')}</strong> {pick(language, plan.caution)}</p>
       <p className="help mt-3 text-ink-3">{t(language, 'Each authority named above runs the destination it is listed against. Challan Jaanch is an independent prototype: it is not affiliated with, endorsed by, or acting for any of them, and it files nothing on your behalf.', 'ऊपर बताया गया हर विभाग सिर्फ़ अपने साथ लिखे गए पते को चलाता है। चालान जाँच एक स्वतंत्र प्रोटोटाइप है: यह इनमें से किसी से संबद्ध नहीं है, न इनका अनुमोदन प्राप्त है, न इनकी ओर से काम करता है, और यह आपकी ओर से कुछ भी दाख़िल नहीं करता।')}</p>
+      <PaymentHelp language={language} />
     </section>
   );
 }

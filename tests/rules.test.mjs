@@ -661,13 +661,15 @@ test('Scam Shield treats genuine .gov.in hosts as government, not lookalike', ()
   assert.ok(http.signals.some((signal) => signal.id.startsWith('http-')));
 });
 
-test('Scam Shield flags payment to a personal UPI handle and does not mistake it for a website', () => {
+test('Scam Shield flags a UPI handle for verification without claiming ownership or fraud', () => {
   const quiet = { channel: 'whatsapp', clicked: false, downloaded: false, installed: false, grantedPermissions: false, paid: false, sharedCredentials: false };
   const result = inspectChallanMessage({ ...quiet, message: 'Send payment to trafficfine.rto@ybl today' });
-  assert.equal(result.outcome, 'danger');
+  assert.equal(result.outcome, 'suspicious');
   assert.ok(result.signals.some((signal) => signal.id === 'upi-handle'));
   assert.equal(result.destinations.length, 0, 'the handle must not be parsed as the website trafficfine.rto');
   const upi = result.signals.find((signal) => signal.id === 'upi-handle');
+  assert.equal(upi.severity, 'caution');
+  assert.match(upi.detail.en, /cannot identify its owner or prove fraud/);
   assertBilingual(upi.title, 'upi.title');
   assertBilingual(upi.detail, 'upi.detail');
   assert.match(upi.detail.en, /trafficfine\.rto@ybl/);

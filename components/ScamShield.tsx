@@ -192,7 +192,7 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
               <h2 className="h2">{t(language, 'Ready for a local safety check.', 'स्थानीय सुरक्षा जाँच के लिए तैयार।')}</h2>
               <p className="help mt-2">{t(language, 'Paste the message or choose a synthetic example. Suspicious destinations are shown only as inert text; Challan Jaanch never opens them.', 'संदेश चिपकाएँ या कोई नकली उदाहरण चुनें। संदिग्ध पते सिर्फ़ निष्क्रिय पाठ के रूप में दिखते हैं; चालान जाँच उन्हें कभी नहीं खोलता।')}</p>
               <ul className="mt-5 grid gap-2 text-[15px] text-ink-2 sm:grid-cols-2">
-                {[t(language, 'App-install lures', 'ऐप इंस्टॉल के जाल'), t(language, 'Lookalike domains', 'नकली पते'), t(language, 'OTP and PIN requests', 'OTP और PIN की माँग'), t(language, 'Personal UPI handles', 'निजी UPI पते')].map((item) => <li key={item} className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{item}</li>)}
+                {[t(language, 'App-install lures', 'ऐप इंस्टॉल के जाल'), t(language, 'Lookalike domains', 'नकली पते'), t(language, 'OTP and PIN requests', 'OTP और PIN की माँग'), t(language, 'Unverified UPI addresses', 'अपुष्ट UPI पते')].map((item) => <li key={item} className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{item}</li>)}
               </ul>
             </div>
           ) : (

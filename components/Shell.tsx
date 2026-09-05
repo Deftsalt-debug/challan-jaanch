@@ -55,7 +55,7 @@ export function Shell({ children, stage, language, onLanguage, onHome, onScam, o
   return (
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-bg text-ink">
       <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
-        <div className="container-x flex h-16 items-center justify-between gap-3">
+        <div className="container-x flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
           <Brand language={language} onHome={onHome} />
           <div className="flex items-center gap-2">
             <AudioGuideButton text={guideText} language={language} />

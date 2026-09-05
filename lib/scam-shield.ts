@@ -64,10 +64,10 @@ const officialHosts = new Map<string, Bilingual>([
 const governmentSuffixes = ['.gov.in', '.nic.in'];
 
 /**
- * Payment handles the fake-challan trade actually uses. A government fine is
- * paid through the portal's own gateway, never to a personal UPI address, so a
- * message naming one is a strong signal on its own. The list is closed so an
- * ordinary e-mail address cannot trigger it.
+ * A handle identifies a payment address, not its owner or legitimacy. Legitimate
+ * challan services can accept UPI too. Flag independent verification without
+ * labelling every handle personal or fraudulent. The closed suffix list keeps
+ * ordinary email addresses out of this signal.
  */
 const upiHandles = ['upi', 'ybl', 'ibl', 'axl', 'apl', 'yapl', 'rapl', 'okaxis', 'oksbi', 'okicici', 'okhdfcbank', 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi', 'axisbank', 'sbi', 'icici', 'hdfcbank', 'kotak', 'yesbank', 'jio', 'airtel', 'freecharge', 'waaxis', 'wahdfcbank', 'waicici', 'wasbi', 'barodampay', 'idfcbank', 'indus', 'federal', 'cnrb', 'boi', 'pnb', 'unionbank', 'iob', 'rbl', 'aubank', 'ikwik', 'amazonpay', 'slice', 'fam', 'naviaxis', 'superyes', 'abfspay'];
 const upiHandlePattern = new RegExp(`(?<![\\w.-])[a-z0-9][a-z0-9._-]{1,48}@(?:${upiHandles.join('|')})(?![\\w.-])`, 'giu');
@@ -184,11 +184,11 @@ export function inspectChallanMessage(input: ScamInput): ScamAssessment {
   if (upiHandle) {
     addSignal(signals, {
       id: 'upi-handle',
-      severity: 'critical',
-      title: bi('Payment to a personal UPI address', 'निजी UPI पते पर भुगतान की माँग'),
+      severity: 'caution',
+      title: bi('UPI address needs independent verification', 'UPI पते की अलग से पुष्टि ज़रूरी है'),
       detail: bi(
-        `The message names the UPI address ${upiHandle}. Government fines are paid through the official portal’s own gateway, never to an individual UPI handle.`,
-        `संदेश में UPI पता ${upiHandle} दिया गया है। सरकारी जुर्माना आधिकारिक पोर्टल के अपने गेटवे से भरा जाता है, किसी निजी UPI पते पर कभी नहीं।`,
+        `The message contains ${upiHandle}. A handle alone cannot identify its owner or prove fraud. Do not transfer money based only on this message; independently open the issuing service and verify the challan and payment route.`,
+        `संदेश में ${upiHandle} है। केवल पते से मालिक की पहचान या ठगी साबित नहीं होती। सिर्फ़ इस संदेश के आधार पर पैसा न भेजें; जारी करने वाली सेवा अलग से खोलकर चालान और भुगतान रास्ते की पुष्टि करें।`,
       ),
     });
   }

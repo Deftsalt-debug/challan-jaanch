@@ -241,7 +241,7 @@ The checker looks for:
 
 The allowlist is intentionally narrow. Only the exact HTTPS hostnames `echallan.parivahan.gov.in` and `mparivahan.parivahan.gov.in` receive the “Exact official host” label. A hostname that genuinely ends in `.gov.in` or `.nic.in` over HTTPS receives a distinct “Government domain” label: those names are issued only through the National Informatics Centre, so a state traffic portal such as `mahatrafficechallan.gov.in` is never reported as a lookalike merely because it contains the word “challan”. The citizen is still told to type the address rather than tap the link, because the checker does not maintain an exhaustive registry of every state service. The suffix check is on the registrable domain, so `echallan.parivahan.gov.in.example` remains a lookalike, and any `http://` link keeps its unencrypted-link warning.
 
-A personal UPI handle such as `trafficfine.rto@ybl` is a critical signal in its own right: a government fine is paid through the portal's own gateway, never to an individual handle. The handle is recognised against a closed list of payment-service suffixes so an ordinary e-mail address cannot trigger it, and it is excluded from website parsing.
+A UPI handle such as `trafficfine.rto@ybl` is a caution signal requiring independent verification, not proof of personal ownership or fraud. Legitimate challan bill-payment services can also use UPI. The handle is recognised against a closed list of payment-service suffixes so an ordinary e-mail address cannot trigger it, and it is excluded from website parsing.
 
 There are three outcomes:
 
@@ -260,6 +260,18 @@ There are also three response tracks:
 | `emergency` | Money sent, credentials shared, a suspicious app installed, or dangerous device permissions granted | Keep the affected device offline; use a clean device, call 1930, contact the financial provider, preserve evidence, remove the app and permissions, scan/update the phone, and report at cybercrime.gov.in. |
 
 The application does not display a user-supplied address as a link. The only clickable safety destinations are constants controlled in source code.
+
+### Parallel lane: Already-paid follow-up
+
+The home screen and the next-steps panel both offer a collapsed **Already paid?** helper. It does not alter a case finding: a payment problem and a contradictory evidence record are different questions.
+
+Choose the original payment service and one of four problems: money deducted without a receipt, a missing receipt copy, a receipt with a still-pending status, or possible double payment. `lib/payment-help.ts` maps these choices to bilingual instructions and a fixed destination. `components/PaymentHelp.tsx` renders the plan with native labelled selectors and a keyboard-operable disclosure. A local copy button exports the selected checklist; a selectable text fallback remains available if clipboard access fails.
+
+The supported service paths are NextGen eChallan, national eChallan, Virtual Courts, Google Pay's dedicated challan bill-payment flow, and other/unknown services. The unknown path explicitly says that the national portal is not a universal lookup. An ordinary UPI transfer made from Google Pay is not the same as its challan bill-payment service. Suspicious payment requests belong in Scam Shield.
+
+No transaction number, account number, receipt, bank access or payment status is collected by this helper. It does not contact an authority, create a refund request, or change a deadline. The user checks the original service and keeps supporting records privately. No dependency, backend endpoint, account, or database was added. Research and limitations are documented in [docs/PAYMENT_RESEARCH.md](docs/PAYMENT_RESEARCH.md).
+
+The September interface refinement uses shared navy/slate tokens, restrained borders and corners, clearer heading spacing, wrapping header controls, and visible disclosure focus. Red is reserved for actual danger states instead of the unassessed message-check action. The homepage distinguishes browser-only comparison from optional consent-based AI transmission.
 
 ## 6. The deterministic rules
 

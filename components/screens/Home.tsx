@@ -3,6 +3,7 @@
 import { cases } from '../../lib/cases';
 import { Language, pick, t } from '../../lib/i18n';
 import { Chip, cx } from '../ui';
+import { PaymentHelp } from '../PaymentHelp';
 
 interface HomeProps {
   language: Language;
@@ -31,15 +32,16 @@ export function Home({ language, onStartCase, onUpload, onScam }: HomeProps) {
 
   return (
     <>
-      <section className="container-x pb-14 pt-10 sm:pt-16">
+      <section className="container-x pb-12 pt-8 sm:pt-12">
         <div className="max-w-3xl">
-          <Chip tone="accent">{t(language, 'Private · works without an account or any upload', 'निजी · बिना खाते या अपलोड के चलता है')}</Chip>
+          <p className="eyebrow">{t(language, 'EVIDENCE · MESSAGE SAFETY · PAYMENT FOLLOW-UP', 'सबूत · संदेश सुरक्षा · भुगतान पूछताछ')}</p>
           <h1 className="h1 mt-5 max-w-2xl">{t(language, 'Check an eChallan before you pay it or contest it.', 'ई-चालान भरने या आपत्ति करने से पहले उसे जाँचें।')}</h1>
-          <p className="lede mt-4 max-w-2xl">{t(language, 'Challan Jaanch compares what your challan, its photo and your vehicle record actually say, and checks whether a challan message is a scam. Everything runs in your browser.', 'चालान जाँच देखता है कि आपका चालान, उसकी फोटो और आपका वाहन रिकॉर्ड असल में क्या कहते हैं, और यह भी कि कोई चालान संदेश ठगी है या नहीं। सब कुछ आपके ब्राउज़र में चलता है।')}</p>
+          <p className="lede mt-4 max-w-2xl">{t(language, 'Compare your records, look for scam warning signs, or find your next step after payment. No account or upload required.', 'अपने रिकॉर्ड मिलाएँ, ठगी के संकेत देखें, या भुगतान के बाद अगला कदम खोजें। खाते या अपलोड की ज़रूरत नहीं।')}</p>
+          <p className="help mt-3 max-w-2xl">{t(language, 'Comparison and message checks run in your browser. Optional AI document reading sends files for processing only with your consent.', 'तुलना और संदेश जाँच आपके ब्राउज़र में चलती हैं। वैकल्पिक AI दस्तावेज़ पढ़ने के लिए सिर्फ़ आपकी सहमति से फ़ाइलें प्रोसेसिंग के लिए भेजी जाती हैं।')}</p>
         </div>
 
         <div className="mt-9 grid gap-4 md:grid-cols-2">
-          <article className="card flex flex-col p-6 sm:p-7">
+          <article className="card action-card flex flex-col p-6 sm:p-7">
             <p className="eyebrow">{t(language, 'I think my challan is wrong', 'मुझे लगता है मेरा चालान ग़लत है')}</p>
             <h2 className="h2 mt-2">{t(language, 'Check the evidence', 'सबूत जाँचें')}</h2>
             <ul className="mt-4 space-y-2 text-[15px] text-ink-2">
@@ -47,25 +49,26 @@ export function Home({ language, onStartCase, onUpload, onScam }: HomeProps) {
               <li className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{t(language, 'See the 45-day pay-or-contest date for your issue date', 'अपनी जारी तारीख़ के लिए 45 दिन की भुगतान-या-आपत्ति तारीख़ देखें')}</li>
               <li className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{t(language, 'Download a packet you can take to the official grievance route', 'ऐसा पैकेट डाउनलोड करें जो आधिकारिक शिकायत रास्ते पर ले जाया जा सके')}</li>
             </ul>
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap">
               <button onClick={onUpload} className="btn btn-primary btn-lg">{t(language, 'Check my challan', 'मेरा चालान जाँचें')}</button>
               <button onClick={() => onStartCase('wrong-vehicle')} className="btn btn-ghost btn-lg">{t(language, 'See a 90-second demo', '90 सेकंड का डेमो देखें')}</button>
             </div>
           </article>
 
-          <article className="card flex flex-col border-bad-line p-6 sm:p-7">
-            <p className="eyebrow text-bad">{t(language, 'I got a message about a challan', 'मुझे चालान का संदेश मिला है')}</p>
-            <h2 className="h2 mt-2">{t(language, 'Check if it is a scam', 'जाँचें कि यह ठगी है या नहीं')}</h2>
+          <article className="card action-card flex flex-col p-6 sm:p-7">
+            <p className="eyebrow">{t(language, 'I got a message about a challan', 'मुझे चालान का संदेश मिला है')}</p>
+            <h2 className="h2 mt-2">{t(language, 'Check for scam warning signs', 'ठगी के चेतावनी संकेत जाँचें')}</h2>
             <ul className="mt-4 space-y-2 text-[15px] text-ink-2">
               <li className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{t(language, 'Paste the SMS, WhatsApp or link; it is never opened', 'SMS, WhatsApp या लिंक चिपकाएँ; वह कभी खोला नहीं जाता')}</li>
               <li className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{t(language, 'Spot APK lures, OTP requests, UPI handles and lookalike sites', 'APK जाल, OTP माँग, UPI पते और नकली साइटें पहचानें')}</li>
               <li className="flex gap-2"><span className="text-good" aria-hidden>✓</span>{t(language, 'Get the right steps for what already happened, including 1930', 'जो हो चुका है उसके लिए सही क़दम पाएँ, 1930 सहित')}</li>
             </ul>
-            <div className="mt-6">
-              <button onClick={onScam} className="btn btn-danger btn-lg">{t(language, 'Check a message', 'संदेश जाँचें')}</button>
+            <div className="mt-auto pt-6">
+              <button onClick={onScam} className="btn btn-secondary btn-lg">{t(language, 'Check a message', 'संदेश जाँचें')}</button>
             </div>
           </article>
         </div>
+        <PaymentHelp language={language} />
       </section>
 
       <section className="border-y border-line bg-surface">
