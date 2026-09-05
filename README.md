@@ -2,12 +2,28 @@
 
 ![Challan Jaanch social card](public/og-release.png)
 
-An evidence-first preflight for potentially incorrect or fraudulent Indian eChallans. It combines a source-linked contradiction checker with a local Scam Shield for suspicious messages, APK lures, credential requests, and lookalike payment destinations.
+Understand the evidence, check suspicious messages, and find the next step after a payment problem. Challan Jaanch is an independent, bilingual companion to Indian eChallan services—not a government portal, payment processor, or automated legal decision-maker.
 
-- **Live public demo:** https://challan-jaanch.deftsalt.chatgpt.site
-- **Hackathon submission pack:** [SUBMISSION.md](SUBMISSION.md)
+- **[Open the live application](https://challan-jaanch.deftsalt.chatgpt.site)** — no login, API key, or personal documents needed for the demo.
+- **[Submission pack](SUBMISSION.md)** · **[System guide](SYSTEM_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Latest changes](CHANGELOG.md)**
+
+## Start here
+
+| Your task | Where to begin |
+| --- | --- |
+| Try the product | Open the live app and select **See a 90-second demo** |
+| Check a suspicious message | Select **Check a message**; pasted links are never opened |
+| Resolve a payment mismatch | Expand **Already paid?** and select the original service and symptom |
+| Run or extend the code | [Local setup below](#run-locally), then [contribution guidelines](CONTRIBUTING.md) |
+| Understand the design decisions | [System guide](SYSTEM_GUIDE.md) and [payment research](docs/PAYMENT_RESEARCH.md) |
 
 ## What makes it different
+
+Three clear boundaries: **humans confirm the evidence; code compares it; official services make the decision.** Optional AI only extracts observable fields. The default paths work locally without a database.
+
+<details>
+<summary>Explore the capabilities and safeguards</summary>
+
 
 - **Source-linked findings:** every claim points back to the exact confirmed fields that produced it.
 - **A real refusal path:** ambiguous plate characters or unreadable vehicle classes stop the finding instead of becoming an allegation.
@@ -29,6 +45,8 @@ An evidence-first preflight for potentially incorrect or fraudulent Indian eChal
 - **Incident-aware routing:** suspicious calls, SMS, and WhatsApp can go to DoT Chakshu; suspect identifiers can go to I4C; payments, credential exposure, APK installation, or dangerous permissions route to a clean-device containment plan, 1930, and the National Cyber Crime Reporting Portal.
 - **Report-ready safety brief:** Scam Shield produces a privacy-safe local summary of the selected exposure, detected signals, inert hostnames, ordered recovery steps, and verified official destinations without copying the original lure.
 - **No government impersonation:** the app never asks for portal credentials, submits a grievance, or claims a government decision.
+
+</details>
 
 ## Guided experience
 
@@ -66,11 +84,15 @@ The production artifact also carries restrictive framing, referrer, MIME-sniffin
 Requirements: Node.js 22.13 or newer and npm.
 
 ```bash
-npm install
+git clone https://github.com/Deftsalt-debug/challan-jaanch.git
+cd challan-jaanch
+npm ci
 npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+Already have the project folder? Skip the clone and directory-change commands. Use `npm ci` to install the exact dependency versions in the lockfile.
 
 For optional live extraction:
 
