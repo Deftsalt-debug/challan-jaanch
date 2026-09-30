@@ -1,6 +1,6 @@
 # Challan Jaanch
 
-An independent, bilingual companion for understanding Indian eChallans: compare evidence, check suspicious messages, and navigate payment problems.
+A small app for checking Indian eChallan evidence, suspicious messages and payment problems. It works in English and Hindi. You review the source records; the app compares the details you confirm.
 
 [Live application](https://challan-jaanch.deftsalt.chatgpt.site) · [Documentation](docs/README.md) · [Submission](SUBMISSION.md) · [Changelog](CHANGELOG.md)
 
@@ -10,7 +10,7 @@ An independent, bilingual companion for understanding Indian eChallans: compare 
 
 ## What it does
 
-| Citizen need | Product response |
+| What you want to check | What the app helps with |
 | --- | --- |
 | “The photo may show a different vehicle.” | Compare source-linked plate and vehicle fields, confirm evidence and export supported contradictions. |
 | “Two challans may describe the same event.” | Compare distinct records with deterministic rules, without guessing missing values. |
@@ -67,7 +67,7 @@ Use `npm run release:check` to additionally check production dependencies for pu
 | Exports | jsPDF, JSON, clipboard and browser SHA-256 APIs |
 | Data | In-memory citizen workspace; no application database or persistent document store |
 
-Comparison and message checks run locally. Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, **not all provider retention**. Language preference is stored locally; citizen cases are not saved as accounts or cloud records.
+The comparison rules and pasted-message checks run in your browser. Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, **not all provider retention**. Language preference is stored locally; citizen cases are not saved as accounts or cloud records.
 
 ```text
 app/          Routes, page state, optional extraction endpoint
@@ -78,10 +78,10 @@ docs/         Architecture, research and development guides
 submission/   Original demo video, captures and production sources
 ```
 
-## Documentation and contribution
+## More detail
 
-- [Documentation index](docs/README.md): choose the right guide.
-- [System guide](SYSTEM_GUIDE.md): complete workflows, trust boundaries and design rationale.
+- [Documentation index](docs/README.md): a starting point for the guides.
+- [System guide](SYSTEM_GUIDE.md): the workflows, limits and reasons behind the design.
 - [Contributing](CONTRIBUTING.md): coding standards, source requirements and review checklist.
 - [Submission pack](SUBMISSION.md): summary, live link and video. The recording predates the current UI; see [recording provenance](submission/README.md).
 

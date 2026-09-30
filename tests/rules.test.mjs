@@ -185,6 +185,28 @@ test('live extraction endpoint rejects structurally invalid model output', async
   }
 });
 
+test('live extraction handles non-object upstream JSON without throwing', async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousFetch = globalThis.fetch;
+  process.env.OPENAI_API_KEY = 'test-key';
+  try {
+    const { POST } = await import('../app/api/analyze/route.ts');
+    for (const output of [null, [], 'unavailable', 42]) {
+      globalThis.fetch = async () => Response.json(output);
+      const response = await POST(new Request('http://localhost/api/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documents: [mockImage('challan.png'), mockImage('vehicle.png')] }),
+      }));
+      assert.equal(response.status, 502);
+      assert.equal((await response.json()).code, 'EMPTY_EXTRACTION');
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+    }
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey) process.env.OPENAI_API_KEY = previousKey; else delete process.env.OPENAI_API_KEY;
+  }
+});
+
 test('Scam Shield flags fake challan APKs and lookalike destinations without opening them', () => {
   const assessment = inspectChallanMessage({
     message: 'Pay ₹1,000 now and install https://mparivahan-pay.example/RTO-Challan.apk',
