@@ -27,11 +27,16 @@ function FileRow({ language, label, description, file, onFile }: { language: Lan
   const [dragging, setDragging] = useState(false);
   const previewUrl = useMemo(() => file?.type.startsWith('image/') ? URL.createObjectURL(file) : undefined, [file]);
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
-  const handle = (event: ChangeEvent<HTMLInputElement>) => onFile(event.target.files?.[0]);
+  const handle = (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    if (selected) onFile(selected);
+    // Allow choosing the same file after removing it or a failed validation.
+    event.target.value = '';
+  };
   const drop = (event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setDragging(false); onFile(event.dataTransfer.files?.[0]); };
   return (
     <div onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false); }} onDrop={drop} className={cx('flex items-center gap-4 rounded-[10px] border p-3 transition sm:p-4', dragging ? 'border-accent bg-accent-soft' : file ? 'border-good-line bg-good-soft/50' : 'border-dashed border-line-strong bg-surface')}>
-      <input ref={inputRef} type="file" accept="image/jpeg,image/png,application/pdf" className="sr-only" onChange={handle} />
+      <input ref={inputRef} type="file" aria-label={label} accept="image/jpeg,image/png,application/pdf" className="sr-only" onChange={handle} />
       {previewUrl
         ? <span role="img" aria-label={t(language, 'Selected file preview', 'चुनी गई फ़ाइल की झलक')} className="h-14 w-14 shrink-0 rounded-lg border border-line bg-cover bg-center" style={{ backgroundImage: `url(${previewUrl})` }} />
         : <span className={cx('grid h-14 w-14 shrink-0 place-items-center rounded-lg text-xs font-bold', file ? 'bg-good text-white' : 'bg-surface-3 text-ink-2')}>{file ? 'PDF' : dragging ? t(language, 'Drop', 'छोड़ें') : '+'}</span>}

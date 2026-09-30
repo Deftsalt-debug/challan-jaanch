@@ -65,9 +65,11 @@ const extractionSchema = {
   required: ['challanNumber', 'issueDate', 'recordPlate', 'photoPlate', 'rcPlate', 'photoFamily', 'rcFamily', 'occurredAt', 'location', 'offence', 'amount', 'notes'],
 };
 
-function outputText(response: Record<string, unknown>): string | null {
-  if (typeof response.output_text === 'string') return response.output_text;
-  const output = Array.isArray(response.output) ? response.output : [];
+function outputText(response: unknown): string | null {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) return null;
+  const record = response as Record<string, unknown>;
+  if (typeof record.output_text === 'string') return record.output_text;
+  const output = Array.isArray(record.output) ? record.output : [];
   for (const item of output) {
     if (!item || typeof item !== 'object') continue;
     const content = Array.isArray((item as { content?: unknown[] }).content) ? (item as { content: unknown[] }).content : [];
@@ -140,9 +142,9 @@ export async function POST(request: Request) {
     return json({ code: 'EXTRACTION_FAILED', message: 'The documents could not be extracted safely. Continue with manual verification.', upstreamStatus: openAIResponse.status }, 502);
   }
 
-  let raw: Record<string, unknown>;
+  let raw: unknown;
   try {
-    raw = await openAIResponse.json() as Record<string, unknown>;
+    raw = await openAIResponse.json();
   } catch {
     return json({ code: 'INVALID_UPSTREAM_RESPONSE', message: 'The extraction service returned an unreadable response. Continue manually.' }, 502);
   }
