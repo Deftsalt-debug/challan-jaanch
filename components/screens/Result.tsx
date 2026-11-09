@@ -48,7 +48,7 @@ interface ResultScreenProps {
   language: Language;
   assessment: Assessment;
   onPacket: () => void;
-  onReview: () => void;
+  onReview: (factKey?: string) => void;
   onStartCase: (id: string) => void;
 }
 
@@ -71,10 +71,10 @@ export function ResultScreen({ caseFile, language, assessment, onPacket, onRevie
         <>
           <h2 className="h2 mt-1">{t(language, 'Do not overclaim.', 'ज़्यादा दावा न करें।')}</h2>
           <p className="help mt-2 text-white/70">{t(language, 'Improve the evidence, or use the official routes below for a ground this tool cannot see.', 'सबूत बेहतर करें, या ऐसे आधार के लिए नीचे दिए आधिकारिक रास्ते अपनाएँ जो यह टूल नहीं देख सकता।')}</p>
-          <button onClick={onReview} className="btn btn-inverse btn-block btn-lg mt-4">{t(language, 'Return to the evidence', 'सबूत पर लौटें')}</button>
+          <button onClick={() => onReview()} className="btn btn-inverse btn-block btn-lg mt-4">{t(language, 'Return to the evidence', 'सबूत पर लौटें')}</button>
         </>
       )}
-      <button onClick={onReview} className="btn btn-outline-inverse btn-block mt-2">{t(language, 'Edit confirmed facts', 'पुष्ट तथ्य बदलें')}</button>
+      <button onClick={() => onReview()} className="btn btn-outline-inverse btn-block mt-2">{t(language, 'Edit confirmed facts', 'पुष्ट तथ्य बदलें')}</button>
       {caseFile.synthetic && (
         assessment.outcome !== 'unable'
           ? <button onClick={() => onStartCase('ambiguous-photo')} className="mt-4 w-full text-center text-sm font-semibold text-white/70 underline underline-offset-4">{t(language, 'Try the insufficient-evidence case', 'अपर्याप्त-सबूत वाला केस आज़माएँ')}</button>
@@ -109,7 +109,10 @@ export function ResultScreen({ caseFile, language, assessment, onPacket, onRevie
                         <h3 className="h3">{pick(language, finding.title)}</h3>
                         <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">{pick(language, finding.neutralClaim)}</p>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {finding.anchors.map((anchor) => <button key={anchor} onClick={onReview} className="chip chip-neutral mono hover:border-accent">{anchor}</button>)}
+                          {finding.anchors.map((anchor) => {
+                            const fact = caseFile.facts.find((entry) => entry.key === anchor);
+                            return <button key={anchor} onClick={() => onReview(anchor)} title={t(language, 'Show this field in the evidence', 'यह फ़ील्ड सबूत में दिखाएँ')} className="chip chip-neutral transition-colors hover:border-accent hover:text-accent-strong">{fact ? pick(language, fact.label) : anchor} <span aria-hidden>↗</span></button>;
+                          })}
                         </div>
                         {finding.limitations.map((limitation) => <p key={limitation.en} className="help mt-3 border-l-2 border-line pl-3">{pick(language, limitation)}</p>)}
                       </div>

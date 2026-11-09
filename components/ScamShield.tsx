@@ -13,7 +13,7 @@ import {
   responseSteps,
 } from '../lib/scam-shield';
 import { Language, localeTag, pick, t } from '../lib/i18n';
-import { Callout, Chip, Tone, cx } from './ui';
+import { Callout, Chip, Tone, cx, moveSelection } from './ui';
 
 type SampleKey = 'apk' | 'link' | 'upi' | 'secret' | 'official';
 
@@ -158,7 +158,7 @@ export function ScamShield({ language, onBack }: { language: Language; onBack: (
               <Chip tone="good">{t(language, 'Nothing uploaded', 'कुछ अपलोड नहीं')}</Chip>
             </div>
             <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={t(language, 'Message channel', 'संदेश का माध्यम')}>
-              {channelLabels.map(([value, label]) => <button key={value} type="button" role="radio" aria-checked={channel === value} onClick={() => setChannel(value)} className={cx('btn btn-sm', channel === value ? 'btn-primary' : 'btn-secondary')}>{label}</button>)}
+              {channelLabels.map(([value, label], index) => <button key={value} type="button" role="radio" aria-checked={channel === value} tabIndex={channel === value ? 0 : -1} onKeyDown={(event) => moveSelection(event, index, channelLabels.length, (next) => setChannel(channelLabels[next][0]))} onClick={() => setChannel(value)} className={cx('btn btn-sm', channel === value ? 'btn-primary' : 'btn-secondary')}>{label}</button>)}
             </div>
           </div>
 

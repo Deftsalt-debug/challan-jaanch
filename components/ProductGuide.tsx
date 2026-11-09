@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Language, localeTag, t } from '../lib/i18n';
+import { Modal } from './Modal';
 import { Chip, Segmented, cx } from './ui';
 
 type GuideTab = 'journey' | 'scams' | 'guardrails' | 'stack' | 'scale';
@@ -41,12 +42,6 @@ export function AudioGuideButton({ text, language = 'en' }: { text: string; lang
 
 export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boolean; onClose: () => void; language?: Language }) {
   const [tab, setTab] = useState<GuideTab>('journey');
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
-  }, [open, onClose]);
   if (!open) return null;
 
   const tabs: Array<{ id: GuideTab; label: string }> = [
@@ -106,7 +101,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
   ];
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-end bg-ink/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="guide-title" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <Modal open onClose={onClose} labelledBy="guide-title" placement="drawer">
       <section className="h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-t-[var(--radius)] bg-bg p-5 shadow-2xl sm:h-full sm:rounded-none sm:p-8">
         <header className="flex items-start justify-between gap-4 border-b border-line pb-5">
           <div>
@@ -114,7 +109,7 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
             <h2 id="guide-title" className="h1 mt-1">{t(language, 'How Challan Jaanch works.', 'चालान जाँच कैसे काम करता है।')}</h2>
             <p className="help mt-2 max-w-xl">{t(language, 'A transparent evidence preflight between receiving a confusing challan and using the official grievance process.', 'उलझन भरा चालान मिलने और आधिकारिक शिकायत प्रक्रिया के बीच एक पारदर्शी साक्ष्य जाँच।')}</p>
           </div>
-          <button autoFocus onClick={onClose} className="btn btn-secondary btn-sm h-10 w-10 shrink-0 rounded-full p-0 text-lg" aria-label={t(language, 'Close how it works', 'गाइड बंद करें')}>×</button>
+          <button data-autofocus onClick={onClose} className="btn btn-secondary btn-sm h-10 w-10 shrink-0 rounded-full p-0 text-lg" aria-label={t(language, 'Close how it works', 'गाइड बंद करें')}>×</button>
         </header>
 
         <div className="mt-5 overflow-x-auto"><Segmented value={tab} onChange={setTab} label={t(language, 'Guide sections', 'गाइड के हिस्से')} options={tabs} /></div>
@@ -152,6 +147,6 @@ export function HowItWorksDrawer({ open, onClose, language = 'en' }: { open: boo
           </div>
         )}
       </section>
-    </div>
+    </Modal>
   );
 }

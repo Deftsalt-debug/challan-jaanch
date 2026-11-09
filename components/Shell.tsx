@@ -1,9 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Language, t } from '../lib/i18n';
+import { ThemeChoice, useTheme } from '../lib/use-theme';
 import { AudioGuideButton } from './ProductGuide';
-import { cx } from './ui';
+import { cx, moveSelection } from './ui';
 
 export type Stage = 'home' | 'scam' | 'upload' | 'processing' | 'review' | 'result' | 'packet';
 
@@ -15,21 +16,31 @@ const stageLabels: Record<string, [string, string]> = {
   packet: ['Packet', 'पैकेट'],
 };
 
-function Progress({ stage, language }: { stage: Stage; language: Language }) {
+function Progress({ stage, language, onStep }: { stage: Stage; language: Language; onStep: (step: Stage) => void }) {
   const current = Math.max(0, stepOrder.indexOf(stage === 'processing' ? 'upload' : stage));
   return (
     <nav aria-label={t(language, 'Case progress', 'केस की प्रगति')} className="container-x pb-3">
       <ol className="grid grid-cols-4 gap-2">
         {stepOrder.map((step, index) => {
           const state = index < current ? 'done' : index === current ? 'current' : 'todo';
-          return (
-            <li key={step} aria-current={state === 'current' ? 'step' : undefined} className="min-w-0">
-              <div className={cx('h-1.5 rounded-full', state === 'todo' ? 'bg-line' : 'bg-accent')} />
-              <div className="mt-2 flex items-center gap-1.5 text-sm">
+          const label = stageLabels[step][language === 'en' ? 0 : 1];
+          const body = (
+            <>
+              <div className={cx('progress-bar h-1.5 rounded-full transition-colors', state === 'todo' ? 'bg-line' : 'bg-accent')} />
+              <div className="mt-2 flex items-center gap-1.5 text-[13px] sm:text-sm">
                 <span className={cx('font-semibold', state === 'todo' ? 'text-ink-3' : 'text-ink')}>{index + 1}</span>
-                <span className={cx('hidden truncate sm:inline', state === 'todo' ? 'text-ink-3' : 'text-ink-2')}>{stageLabels[step][language === 'en' ? 0 : 1]}</span>
+                <span className={cx('progress-label truncate', state === 'current' ? 'font-semibold text-ink' : state === 'todo' ? 'text-ink-3' : 'text-ink-2')}>{label}</span>
                 {state === 'done' && <span className="text-good" aria-hidden>✓</span>}
               </div>
+            </>
+          );
+          // Finished steps are a way back; the processing screen is transient, so nothing is clickable during it.
+          const clickable = state === 'done' && stage !== 'processing';
+          return (
+            <li key={step} aria-current={state === 'current' ? 'step' : undefined} className="min-w-0">
+              {clickable
+                ? <button type="button" onClick={() => onStep(step)} className="progress-step" aria-label={t(language, `Back to step ${index + 1}: ${label}`, `चरण ${index + 1} पर लौटें: ${label}`)}>{body}</button>
+                : <div className="progress-step">{body}</div>}
             </li>
           );
         })}
@@ -38,10 +49,29 @@ function Progress({ stage, language }: { stage: Stage; language: Language }) {
   );
 }
 
+function ThemeControl({ language }: { language: Language }) {
+  const [theme, setTheme] = useTheme();
+  const options: Array<[ThemeChoice, string]> = [
+    ['system', t(language, 'Auto', 'ऑटो')],
+    ['light', t(language, 'Light', 'हल्की')],
+    ['dark', t(language, 'Dark', 'गहरी')],
+  ];
+  return (
+    <div className="flex items-center gap-3 text-sm text-ink-2">
+      <span id="theme-label">{t(language, 'Theme', 'थीम')}</span>
+      <div className="segmented" role="radiogroup" aria-labelledby="theme-label">
+        {options.map(([value, label], index) => (
+          <button key={value} type="button" role="radio" aria-checked={theme === value} tabIndex={theme === value ? 0 : -1} onClick={() => setTheme(value)} onKeyDown={(event) => moveSelection(event, index, options.length, (next) => setTheme(options[next][0]), false)}>{label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Brand({ language, onHome }: { language: Language; onHome: () => void }) {
   return (
     <button onClick={onHome} className="flex min-w-0 items-center gap-2.5 text-left" aria-label={t(language, 'Challan Jaanch home', 'चालान जाँच होम')}>
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-accent text-sm font-bold text-white">CJ</span>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-accent text-sm font-bold text-on-accent">CJ</span>
       <span className="min-w-0">
         <strong className="block truncate text-[15px] leading-tight">{t(language, 'Challan Jaanch', 'चालान जाँच')}</strong>
         <span className="hidden text-xs text-ink-3 sm:block">{t(language, 'Independent eChallan preflight', 'स्वतंत्र ई-चालान जाँच')}</span>
@@ -50,14 +80,23 @@ export function Brand({ language, onHome }: { language: Language; onHome: () => 
   );
 }
 
-export function Shell({ children, stage, language, onLanguage, onHome, onScam, onDelete, onHelp, guideText }: { children: ReactNode; stage: Stage; language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onDelete: () => void; onHelp: () => void; guideText: string }) {
+export function Shell({ children, stage, language, onLanguage, onHome, onScam, onDelete, onHelp, onStep, guideText }: { children: ReactNode; stage: Stage; language: Language; onLanguage: () => void; onHome: () => void; onScam: () => void; onDelete: () => void; onHelp: () => void; onStep: (step: Stage) => void; guideText: string }) {
   const inCase = stage !== 'home' && stage !== 'scam';
+  // Each stage replaces the whole view. Moving focus to it tells screen-reader
+  // and keyboard users the page changed, instead of leaving focus on a button
+  // that no longer exists.
+  const view = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    view.current?.focus({ preventScroll: true });
+  }, [stage]);
   return (
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-bg text-ink">
       <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
-        <div className="container-x flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
+        <div className="container-x flex min-h-16 items-center justify-between gap-2 py-3 sm:gap-3">
           <Brand language={language} onHome={onHome} />
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <AudioGuideButton text={guideText} language={language} />
             {stage !== 'scam' && (
               <button onClick={onScam} className="btn btn-secondary btn-sm text-bad">
@@ -73,10 +112,10 @@ export function Shell({ children, stage, language, onLanguage, onHome, onScam, o
             <button onClick={onLanguage} className="btn btn-secondary btn-sm" aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'} lang={language === 'en' ? 'hi' : 'en'}>{language === 'en' ? 'हिंदी' : 'English'}</button>
           </div>
         </div>
-        {inCase && <Progress stage={stage} language={language} />}
+        {inCase && <Progress stage={stage} language={language} onStep={onStep} />}
       </header>
 
-      <div key={stage} className="stage-transition">{children}</div>
+      <div key={stage} ref={view} tabIndex={-1} className="stage-transition">{children}</div>
 
       <footer className="border-t border-line">
         <div className="container-x flex flex-col gap-3 py-8 text-sm text-ink-2 sm:flex-row sm:items-center sm:justify-between">
@@ -92,6 +131,7 @@ export function Shell({ children, stage, language, onLanguage, onHome, onScam, o
             </>
           )}
         </div>
+        <div className="container-x border-t border-line py-5"><ThemeControl language={language} /></div>
       </footer>
     </main>
   );

@@ -37,14 +37,23 @@ export const metadata: Metadata = {
   },
 };
 
+const themeScript = `try{var t=localStorage.getItem('challan-jaanch:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`;
+
 export const viewport: Viewport = {
-  themeColor: '#1d56d6',
-  colorScheme: 'light',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#161f2e' },
+  ],
+  colorScheme: 'light dark',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Applies a stored theme before first paint so a dark-theme visitor never sees a light flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <a href="#main-content" className="skip-link">Skip to main content · मुख्य सामग्री पर जाएँ</a>
         {children}

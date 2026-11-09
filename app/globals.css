@@ -44,6 +44,102 @@
   --radius: 10px;
   --radius-sm: 7px;
   --shadow: 0 2px 6px rgba(23, 37, 60, 0.035);
+  /* Text on a filled accent or status surface, callout body text, and the
+   * always-dark panel. Separate tokens because in the dark theme `--ink` is a
+   * light colour and can no longer double as a dark background. */
+  --on-accent: #ffffff;
+  --good-ink: #1b4d32;
+  --warn-ink: #5f4200;
+  --bad-ink: #7d1d17;
+  --info-ink: #1f4b5b;
+  --accent-ink: #1e3a7a;
+  --panel: #17253c;
+  --panel-line: transparent;
+  --badge: #17253c;
+  color-scheme: light;
+}
+
+/*
+ * Dark theme. Follows the system unless the citizen picks a theme in the
+ * footer, which sets data-theme on <html>. The two blocks must stay identical.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0e1520;
+    --surface: #161f2e;
+    --surface-2: #1b2637;
+    --surface-3: #243146;
+    --ink: #e9eef6;
+    --ink-2: #b7c1d0;
+    --ink-3: #93a0b3;
+    --line: #2a364a;
+    --line-strong: #3d4c64;
+    --accent: #8db5f2;
+    --accent-strong: #b3cffa;
+    --accent-soft: #1b2c47;
+    --accent-line: #35527d;
+    --on-accent: #0e1520;
+    --good: #63d193;
+    --good-soft: #112e1f;
+    --good-line: #1f5b3a;
+    --good-ink: #b9ecd0;
+    --warn: #e8bc5a;
+    --warn-soft: #30260c;
+    --warn-line: #6a5417;
+    --warn-ink: #f3dfa6;
+    --bad: #f38f87;
+    --bad-soft: #391614;
+    --bad-line: #7b2f2a;
+    --bad-ink: #fac9c4;
+    --info: #6fc6de;
+    --info-soft: #0f2b35;
+    --info-line: #20566a;
+    --info-ink: #bfe6f1;
+    --accent-ink: #c9dcf8;
+    --panel: #0a1019;
+    --panel-line: #2a364a;
+    --badge: #34445c;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #0e1520;
+  --surface: #161f2e;
+  --surface-2: #1b2637;
+  --surface-3: #243146;
+  --ink: #e9eef6;
+  --ink-2: #b7c1d0;
+  --ink-3: #93a0b3;
+  --line: #2a364a;
+  --line-strong: #3d4c64;
+  --accent: #8db5f2;
+  --accent-strong: #b3cffa;
+  --accent-soft: #1b2c47;
+  --accent-line: #35527d;
+  --on-accent: #0e1520;
+  --good: #63d193;
+  --good-soft: #112e1f;
+  --good-line: #1f5b3a;
+  --good-ink: #b9ecd0;
+  --warn: #e8bc5a;
+  --warn-soft: #30260c;
+  --warn-line: #6a5417;
+  --warn-ink: #f3dfa6;
+  --bad: #f38f87;
+  --bad-soft: #391614;
+  --bad-line: #7b2f2a;
+  --bad-ink: #fac9c4;
+  --info: #6fc6de;
+  --info-soft: #0f2b35;
+  --info-line: #20566a;
+  --info-ink: #bfe6f1;
+  --accent-ink: #c9dcf8;
+  --panel: #0a1019;
+  --panel-line: #2a364a;
+  --badge: #34445c;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -72,12 +168,21 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-info-line: var(--info-line);
+  --color-on-accent: var(--on-accent);
+  --color-panel: var(--panel);
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/*
+ * Element defaults and component classes live in cascade layers. Left
+ * unlayered they outrank every Tailwind utility, so `btn hidden`, `help
+ * text-white/70` or `container-x max-w-[760px]` silently did nothing.
+ */
+@layer base {
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+html:has(dialog[open]) { overflow: hidden; }
 body {
   margin: 0;
   background: var(--bg);
@@ -97,11 +202,13 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   outline-offset: 2px;
 }
 ::selection { background: var(--accent-soft); color: var(--ink); }
+}
 
 /* ---------------------------------------------------------------------------
  * Component classes. Plain CSS on the tokens above so the build never depends
  * on Tailwind resolving custom names inside @apply.
  * ------------------------------------------------------------------------- */
+@layer components {
 .container-x { margin-inline: auto; width: 100%; max-width: 1120px; padding-inline: 1rem; }
 @media (min-width: 640px) { .container-x { padding-inline: 1.5rem; } }
 
@@ -117,7 +224,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 .card-flat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .card-soft { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); }
-.card-dark { background: var(--ink); color: #fff; border-radius: var(--radius); }
+.card-dark { background: var(--panel); color: #fff; border: 1px solid var(--panel-line); border-radius: var(--radius); }
 .action-card { border-top: 3px solid var(--accent); }
 .payment-help[open] { border-color: var(--accent-line); }
 .payment-help summary { line-height: 1.5; padding-block: 0.25rem; }
@@ -132,16 +239,16 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-strong); }
 .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
 .btn-secondary:hover:not(:disabled) { border-color: var(--ink-3); background: var(--surface-2); }
 .btn-ghost { background: transparent; color: var(--accent); }
 .btn-ghost:hover:not(:disabled) { background: var(--accent-soft); }
-.btn-danger { background: var(--bad); color: #fff; }
+.btn-danger { background: var(--bad); color: var(--on-accent); }
 .btn-danger:hover:not(:disabled) { filter: brightness(0.94); }
-.btn-inverse { background: #fff; color: var(--ink); }
-.btn-inverse:hover:not(:disabled) { background: var(--surface-3); }
+.btn-inverse { background: #fff; color: #17253c; }
+.btn-inverse:hover:not(:disabled) { background: #e6eaf0; }
 .btn-outline-inverse { background: transparent; color: #fff; border-color: rgba(255,255,255,0.35); }
 .btn-outline-inverse:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
 .btn-lg { min-height: 3.25rem; padding: 0.875rem 1.375rem; font-size: 1.0625rem; }
@@ -167,16 +274,16 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .chip-bad { background: var(--bad-soft); border-color: var(--bad-line); color: var(--bad); }
 
 .callout { border-radius: var(--radius-sm); border: 1px solid; padding: 0.875rem 1rem; font-size: 0.9375rem; line-height: 1.55; }
-.callout-info { background: var(--info-soft); border-color: var(--info-line); color: #1f4b5b; }
-.callout-accent { background: var(--accent-soft); border-color: var(--accent-line); color: #1e3a7a; }
-.callout-good { background: var(--good-soft); border-color: var(--good-line); color: #1b4d32; }
-.callout-warn { background: var(--warn-soft); border-color: var(--warn-line); color: #5f4200; }
-.callout-bad { background: var(--bad-soft); border-color: var(--bad-line); color: #7d1d17; }
+.callout-info { background: var(--info-soft); border-color: var(--info-line); color: var(--info-ink); }
+.callout-accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-ink); }
+.callout-good { background: var(--good-soft); border-color: var(--good-line); color: var(--good-ink); }
+.callout-warn { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn-ink); }
+.callout-bad { background: var(--bad-soft); border-color: var(--bad-line); color: var(--bad-ink); }
 
 .segmented { display: inline-flex; gap: 0.25rem; padding: 0.25rem; border-radius: 12px; background: var(--surface-3); border: 1px solid var(--line); max-width: 100%; }
 .segmented > button { border-radius: 9px; padding: 0.5rem 0.875rem; font-size: 0.875rem; font-weight: 600; color: var(--ink-2); white-space: nowrap; transition: background-color .15s, color .15s; }
 .segmented > button:hover { color: var(--ink); }
-.segmented > button[aria-selected='true'], .segmented > button[aria-pressed='true'], .segmented > button[aria-checked='true'] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(17,20,24,.08); }
+.segmented > button[aria-selected='true'], .segmented > button[aria-pressed='true'], .segmented > button[aria-checked='true'] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(17,20,24,.18); }
 
 .option {
   display: block; width: 100%; text-align: left; border-radius: var(--radius-sm);
@@ -185,7 +292,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .option:hover { border-color: var(--ink-3); }
 .option[aria-checked='true'], .option[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-.step-number { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 999px; background: var(--ink); color: #fff; font-size: 0.875rem; font-weight: 700; flex: none; }
+.step-number { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 999px; background: var(--badge); color: #fff; font-size: 0.875rem; font-weight: 700; flex: none; }
 .step-number-soft { background: var(--accent-soft); color: var(--accent-strong); }
 
 .mono { font-family: var(--font-mono); }
@@ -193,17 +300,49 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 
 .skip-link {
   position: fixed; left: 1rem; top: 1rem; z-index: 100; transform: translateY(-180%);
-  border-radius: 0.5rem; background: var(--ink); color: #fff; padding: 0.75rem 1rem; font-weight: 600; transition: transform .2s;
+  border-radius: 0.5rem; background: var(--panel); color: #fff; padding: 0.75rem 1rem; font-weight: 600; transition: transform .2s;
 }
 .skip-link:focus { transform: translateY(0); }
 
 .stage-transition { animation: stage-in .32s cubic-bezier(.2,.7,.2,1) both; }
 .animate-evidence-in { animation: stage-in .28s cubic-bezier(.2,.7,.2,1) both; }
+.stage-transition:focus { outline: none; }
+
+.sticky-bar { position: sticky; bottom: 0; z-index: 30; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line); }
+
+/* Progress steps the citizen has already completed are links back to them. */
+.progress-step { display: block; width: 100%; text-align: left; border-radius: 6px; padding: 0; background: none; border: 0; }
+button.progress-step:hover .progress-bar { background: var(--accent-strong); }
+button.progress-step:hover .progress-label { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/*
+ * Native <dialog> shown with showModal(): the browser supplies the focus trap,
+ * Escape handling and the inert page behind it. Only the look is ours.
+ */
+.modal {
+  position: fixed; inset: 0; margin: 0; padding: 0; border: 0; width: 100%; height: 100%;
+  max-width: none; max-height: none; background: transparent; color: inherit; overflow: hidden;
+}
+.modal[open] { display: flex; }
+.modal::backdrop { background: rgba(23, 37, 60, 0.5); backdrop-filter: blur(4px); animation: fade-in .2s ease-out both; }
+.modal-drawer { align-items: flex-end; justify-content: flex-end; }
+.modal-sheet { align-items: flex-end; justify-content: center; }
+.modal-center { align-items: center; justify-content: center; padding: 1rem; }
+.modal-drawer > *, .modal-sheet > * { animation: sheet-up .28s cubic-bezier(.2,.7,.2,1) both; }
+.modal-center > * { animation: stage-in .2s cubic-bezier(.2,.7,.2,1) both; }
+@media (min-width: 640px) {
+  .modal-sheet { align-items: center; padding: 1rem; }
+  .modal-sheet > * { animation-name: stage-in; }
+  .modal-drawer > * { animation-name: drawer-in; }
+}
+}
+
 @keyframes stage-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+@keyframes drawer-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .stage-transition, .animate-evidence-in { animation: none; }
+  .stage-transition, .animate-evidence-in, .modal > *, .modal::backdrop { animation: none !important; }
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }
-
-.sticky-bar { position: sticky; bottom: 0; z-index: 30; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-top: 1px solid var(--line); }

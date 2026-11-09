@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 /** Joins class names, dropping falsy entries. */
 export function cx(...values: Array<string | false | null | undefined>) {
@@ -15,12 +15,35 @@ export function Callout({ tone = 'info', children, className, role }: { tone?: E
   return <div role={role} className={cx('callout', `callout-${tone}`, className)}>{children}</div>;
 }
 
+/**
+ * Arrow-key movement for a tab list or radio group: one stop in the tab order,
+ * arrows (plus Home and End) move both focus and selection, as the ARIA
+ * patterns for those roles expect. The options must be sibling elements.
+ */
+export function moveSelection(event: KeyboardEvent<HTMLElement>, index: number, count: number, select: (next: number) => void, vertical = true) {
+  const forward = event.key === 'ArrowRight' || (vertical && event.key === 'ArrowDown');
+  const back = event.key === 'ArrowLeft' || (vertical && event.key === 'ArrowUp');
+  const next = forward ? (index + 1) % count : back ? (index - 1 + count) % count : event.key === 'Home' ? 0 : event.key === 'End' ? count - 1 : null;
+  if (next === null) return;
+  event.preventDefault();
+  select(next);
+  (event.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+}
+
 /** A row of mutually exclusive choices rendered as a segmented control. */
 export function Segmented<T extends string>({ value, options, onChange, label, className }: { value: T; options: Array<{ id: T; label: string }>; onChange: (value: T) => void; label: string; className?: string }) {
   return (
     <div className={cx('segmented', className)} role="tablist" aria-label={label}>
-      {options.map((option) => (
-        <button key={option.id} type="button" role="tab" aria-selected={value === option.id} onClick={() => onChange(option.id)}>{option.label}</button>
+      {options.map((option, index) => (
+        <button
+          key={option.id}
+          type="button"
+          role="tab"
+          aria-selected={value === option.id}
+          tabIndex={value === option.id ? 0 : -1}
+          onClick={() => onChange(option.id)}
+          onKeyDown={(event) => moveSelection(event, index, options.length, (next) => onChange(options[next].id), false)}
+        >{option.label}</button>
       ))}
     </div>
   );

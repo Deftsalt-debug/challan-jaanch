@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ConfirmDialog } from '../components/Modal';
 import { HowItWorksDrawer } from '../components/ProductGuide';
 import { ScamShield } from '../components/ScamShield';
 import { Shell, Stage } from '../components/Shell';
@@ -95,19 +96,56 @@ export default function HomePage() {
   const [aiConsent, setAiConsent] = useState(false);
   const [manualKind, setManualKind] = useState<ManualCaseKind>('wrong-vehicle');
   const [transmissionState, setTransmissionState] = useState<TransmissionState>('none');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const processingRequest = useRef<AbortController | null>(null);
+  const stageRef = useRef<Stage>('home');
+  // Bumped on every reset. History entries from before a reset belong to a
+  // case that no longer exists, so Back or Forward onto one lands on home.
+  const epoch = useRef(0);
 
   useEffect(() => () => processingRequest.current?.abort(), []);
 
   const cancelProcessing = () => processingRequest.current?.abort();
-  const go = (next: Stage) => {
+  const showStage = (next: Stage) => {
+    stageRef.current = next;
     setStage(next);
+  };
+  /**
+   * Every stage is a browser-history entry, so the Back button (and the
+   * Android back gesture) steps through the case instead of leaving the site
+   * and discarding it. The transient processing screen is replaced, not kept.
+   */
+  const go = (next: Stage) => {
+    const previous = stageRef.current;
+    if (previous !== next) {
+      const entry = { stage: next, epoch: epoch.current };
+      if (previous === 'processing') window.history.replaceState(entry, '');
+      else window.history.pushState(entry, '');
+    }
+    showStage(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const openScamCheck = () => {
     cancelProcessing();
     go('scam');
   };
+
+  useEffect(() => {
+    // A reload keeps the old history entry but not the in-memory case.
+    window.history.replaceState({ stage: 'home', epoch: 0 }, '');
+    const onPop = (event: PopStateEvent) => {
+      const entry = event.state as { stage?: Stage; epoch?: number } | null;
+      processingRequest.current?.abort();
+      const current = entry?.epoch === epoch.current;
+      const target: Stage = !current || !entry?.stage ? 'home' : entry.stage === 'processing' ? 'upload' : entry.stage;
+      if (!current || entry?.stage === 'processing') window.history.replaceState({ stage: target, epoch: epoch.current }, '');
+      stageRef.current = target;
+      setStage(target);
+      window.scrollTo({ top: 0 });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Keep the document language in step with the interface so screen readers and
   // the speech guide use the right pronunciation.
@@ -294,7 +332,11 @@ export default function HomePage() {
 
   const reset = () => {
     cancelProcessing();
-    setStage('home');
+    setConfirmDelete(false);
+    epoch.current += 1;
+    if (stageRef.current === 'home') window.history.replaceState({ stage: 'home', epoch: epoch.current }, '');
+    else window.history.pushState({ stage: 'home', epoch: epoch.current }, '');
+    showStage('home');
     setFiles({});
     setFileHashes({});
     setConfirmed(new Set());
@@ -309,6 +351,24 @@ export default function HomePage() {
     setPacketMode('redacted');
     setCaseFile(cloneCase(cases['wrong-vehicle']));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Anything the citizen typed or attached. Synthetic demo cases hold nothing
+  // of theirs, so those are cleared without asking.
+  const hasCitizenWork = !caseFile.synthetic || selectedUploads(files).length > 0;
+  const requestReset = () => {
+    if (hasCitizenWork) setConfirmDelete(true);
+    else reset();
+  };
+  // Scam Shield is a side trip. Leaving it returns to the case in progress
+  // rather than wiping it.
+  const leaveScamCheck = () => {
+    if (hasCitizenWork) window.history.back();
+    else reset();
+  };
+  const reviewField = (factKey?: string) => {
+    if (factKey) setSelectedKey(factKey);
+    go('review');
   };
 
   const manifest = () => {
@@ -404,16 +464,25 @@ export default function HomePage() {
 
   return (
     <>
-      <Shell stage={stage} language={language} onLanguage={toggleLanguage} onHome={reset} onScam={openScamCheck} onDelete={reset} onHelp={() => setGuideOpen(true)} guideText={guideText}>
+      <Shell stage={stage} language={language} onLanguage={toggleLanguage} onHome={requestReset} onScam={openScamCheck} onDelete={stage === 'scam' ? leaveScamCheck : requestReset} onHelp={() => setGuideOpen(true)} onStep={go} guideText={guideText}>
         {stage === 'home' && <Home language={language} onStartCase={startCase} onUpload={() => go('upload')} onScam={openScamCheck} />}
-        {stage === 'scam' && <ScamShield language={language} onBack={reset} />}
+        {stage === 'scam' && <ScamShield language={language} onBack={leaveScamCheck} />}
         {stage === 'upload' && <UploadScreen language={language} files={files} setFile={setFile} error={uploadError} aiConsent={aiConsent} setAiConsent={setAiConsent} manualKind={manualKind} setManualKind={setManualKind} onAnalyse={analyseUploads} onManual={prepareManualUploads} onStartCase={startCase} />}
         {stage === 'processing' && <ProcessingScreen mode={processingMode} language={language} />}
         {stage === 'review' && <ReviewScreen caseFile={caseFile} language={language} confirmed={confirmed} selectedKey={selectedKey} notice={notice} files={files} onSelect={setSelectedKey} onChange={updateFact} onClarity={updateClarity} onConfirm={toggleConfirmation} onDetail={updateCaseDetail} onCompare={() => go('result')} />}
-        {stage === 'result' && <ResultScreen caseFile={caseFile} language={language} assessment={assessment} onPacket={() => go('packet')} onReview={() => go('review')} onStartCase={startCase} />}
+        {stage === 'result' && <ResultScreen caseFile={caseFile} language={language} assessment={assessment} onPacket={() => go('packet')} onReview={reviewField} onStartCase={startCase} />}
         {stage === 'packet' && <PacketScreen caseFile={caseFile} language={language} assessment={assessment} packetMode={packetMode} setPacketMode={setPacketMode} attested={attested} setAttested={setAttested} exporting={exporting} exportError={exportError} onDownload={downloadPdf} onManifest={downloadManifest} onReview={() => go('review')} />}
       </Shell>
       <HowItWorksDrawer open={guideOpen} language={language} onClose={() => setGuideOpen(false)} />
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t(language, 'Delete this case?', 'यह केस मिटाएँ?')}
+        body={t(language, 'The fields you entered, your confirmations and any files you added will be cleared from this browser. This cannot be undone.', 'आपके भरे फ़ील्ड, आपकी पुष्टियाँ और जोड़ी गई फ़ाइलें इस ब्राउज़र से हटा दी जाएँगी। इसे वापस नहीं लाया जा सकता।')}
+        confirmLabel={t(language, 'Delete case', 'केस मिटाएँ')}
+        cancelLabel={t(language, 'Keep working', 'काम जारी रखें')}
+        onConfirm={reset}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DemoCase, colourLabel, deadlineFor, formatDate, normaliseRegistration, ruleClockApplies, vehicleFamilyLabel } from '../lib/cases';
 import { Language, pick, t } from '../lib/i18n';
+import { Modal } from './Modal';
 import { Chip, Segmented, cx } from './ui';
 
 type SourceKey = 'challan' | 'photo' | 'vehicle';
@@ -44,9 +45,9 @@ function DocumentArtwork({ caseFile, source, language, imageUrl, selectedKey }: 
   const sourceFact = source === 'challan' ? field(caseFile, 'recordPlate') : source === 'photo' ? field(caseFile, 'photoPlate') : field(caseFile, 'rcPlate');
   if (imageUrl) {
     return (
-      <div className="relative min-h-[240px] overflow-hidden rounded-[var(--radius-sm)] bg-ink">
+      <div className="relative min-h-[240px] overflow-hidden rounded-[var(--radius-sm)] bg-panel">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }} />
-        <div className="absolute inset-x-3 bottom-3 rounded-[var(--radius-sm)] bg-ink/85 p-3 text-white backdrop-blur">
+        <div className="absolute inset-x-3 bottom-3 rounded-[var(--radius-sm)] bg-panel/85 p-3 text-white backdrop-blur">
           <p className="text-xs text-white/65">{t(language, 'Selected evidence field', 'चुना गया साक्ष्य फ़ील्ड')}</p>
           <p className="mono mt-0.5 font-semibold">{sourceFact?.value || t(language, 'Select and verify a field', 'कोई फ़ील्ड चुनकर जाँचें')}</p>
         </div>
@@ -98,14 +99,9 @@ function DocumentArtwork({ caseFile, source, language, imageUrl, selectedKey }: 
 }
 
 function SourceInspector({ caseFile, source, language, imageUrl, selectedKey, onClose }: { caseFile: DemoCase; source: SourceKey; language: Language; imageUrl?: string; selectedKey?: string; onClose: () => void }) {
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
-  }, [onClose]);
   const meta = sourceMeta(language)[source];
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="source-inspector-title" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <Modal open onClose={onClose} labelledBy="source-inspector-title" placement="sheet">
       <section className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[var(--radius)] bg-surface p-5 shadow-2xl sm:rounded-[var(--radius)] sm:p-7">
         <header className="flex items-start justify-between gap-4 border-b border-line pb-4">
           <div>
@@ -113,7 +109,7 @@ function SourceInspector({ caseFile, source, language, imageUrl, selectedKey, on
             <h2 id="source-inspector-title" className="h2 mt-1">{meta.title}</h2>
             <p className="help mt-1">{t(language, 'The original is never changed. Highlights are a separate visual layer.', 'मूल दस्तावेज़ कभी नहीं बदलता। चिह्न सिर्फ़ एक अलग दृश्य परत हैं।')}</p>
           </div>
-          <button autoFocus onClick={onClose} className="btn btn-secondary btn-sm h-10 w-10 shrink-0 rounded-full p-0 text-lg" aria-label={t(language, 'Close source inspector', 'स्रोत निरीक्षक बंद करें')}>×</button>
+          <button data-autofocus onClick={onClose} className="btn btn-secondary btn-sm h-10 w-10 shrink-0 rounded-full p-0 text-lg" aria-label={t(language, 'Close source inspector', 'स्रोत निरीक्षक बंद करें')}>×</button>
         </header>
         <div className="mt-5"><DocumentArtwork caseFile={caseFile} source={source} language={language} imageUrl={imageUrl} selectedKey={selectedKey} /></div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -129,7 +125,7 @@ function SourceInspector({ caseFile, source, language, imageUrl, selectedKey, on
           </div>
         </div>
       </section>
-    </div>
+    </Modal>
   );
 }
 
@@ -161,7 +157,7 @@ function PlateDiff({ caseFile, language, onSelect }: { caseFile: DemoCase; langu
               <button onClick={() => onSelect(key)} className="text-left text-sm font-semibold text-ink-2 hover:text-accent">{label}</button>
               {columns.map((column) => {
                 const character = value[column.index] || '·';
-                return <button key={column.index} onClick={() => setActiveIndex(column.index)} aria-label={`${label} · ${t(language, 'position', 'स्थान')} ${column.index + 1}`} className={cx('mono grid h-10 place-items-center rounded-md border text-base font-bold transition', activeIndex === column.index ? 'border-ink bg-ink text-white' : column.conflict ? 'border-bad-line bg-bad-soft text-bad' : 'border-line bg-surface-2')}>{character}</button>;
+                return <button key={column.index} onClick={() => setActiveIndex(column.index)} aria-label={`${label} · ${t(language, 'position', 'स्थान')} ${column.index + 1}`} className={cx('mono grid h-10 place-items-center rounded-md border text-base font-bold transition', activeIndex === column.index ? 'border-accent bg-accent text-on-accent' : column.conflict ? 'border-bad-line bg-bad-soft text-bad' : 'border-line bg-surface-2')}>{character}</button>;
               })}
             </div>
           ))}

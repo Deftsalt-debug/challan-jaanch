@@ -3,7 +3,7 @@
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ManualCaseKind } from '../../lib/cases';
 import { Language, t } from '../../lib/i18n';
-import { Callout, Chip, cx } from '../ui';
+import { Callout, Chip, cx, moveSelection } from '../ui';
 
 export type UploadKey = 'challan' | 'vehicle' | 'supporting';
 export type ProcessingMode = 'local' | 'ai';
@@ -34,7 +34,7 @@ function FileRow({ language, label, description, file, onFile }: { language: Lan
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,application/pdf" className="sr-only" onChange={handle} />
       {previewUrl
         ? <span role="img" aria-label={t(language, 'Selected file preview', 'चुनी गई फ़ाइल की झलक')} className="h-14 w-14 shrink-0 rounded-lg border border-line bg-cover bg-center" style={{ backgroundImage: `url(${previewUrl})` }} />
-        : <span className={cx('grid h-14 w-14 shrink-0 place-items-center rounded-lg text-xs font-bold', file ? 'bg-good text-white' : 'bg-surface-3 text-ink-2')}>{file ? 'PDF' : dragging ? t(language, 'Drop', 'छोड़ें') : '+'}</span>}
+        : <span className={cx('grid h-14 w-14 shrink-0 place-items-center rounded-lg text-xs font-bold', file ? 'bg-good text-on-accent' : 'bg-surface-3 text-ink-2')}>{file ? 'PDF' : dragging ? t(language, 'Drop', 'छोड़ें') : '+'}</span>}
       <div className="min-w-0 flex-1">
         <p className="label">{label}</p>
         {file
@@ -56,10 +56,10 @@ function ComparisonTypePicker({ language, value, onChange }: { language: Languag
   ];
   return (
     <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={t(language, 'What are you comparing?', 'आप क्या मिला रहे हैं?')}>
-      {options.map((option) => (
-        <button key={option.kind} type="button" role="radio" aria-checked={value === option.kind} onClick={() => onChange(option.kind)} className="option">
+      {options.map((option, index) => (
+        <button key={option.kind} type="button" role="radio" aria-checked={value === option.kind} tabIndex={value === option.kind ? 0 : -1} onClick={() => onChange(option.kind)} onKeyDown={(event) => moveSelection(event, index, options.length, (next) => onChange(options[next].kind))} className="option">
           <span className="flex items-start gap-3">
-            <span className={cx('mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full border', value === option.kind ? 'border-accent bg-accent' : 'border-line-strong bg-surface')} aria-hidden>{value === option.kind && <span className="h-2 w-2 rounded-full bg-white" />}</span>
+            <span className={cx('mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full border', value === option.kind ? 'border-accent bg-accent' : 'border-line-strong bg-surface')} aria-hidden>{value === option.kind && <span className="h-2 w-2 rounded-full bg-on-accent" />}</span>
             <span>
               <span className="label">{option.title}</span>
               <span className="help mt-1 block">{option.body}</span>
