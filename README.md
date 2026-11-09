@@ -23,7 +23,7 @@ Unclear decisive evidence produces a refusal, not an allegation. The app does no
 
 ## Try it
 
-Open the [live app](https://challan-jaanch.deftsalt.chatgpt.site) and select **See a 90-second demo**. Synthetic cases, manual entry, Scam Shield and payment follow-up need no account, API key or personal documents. The header switches between English and Hindi.
+Open the [live app](https://challan-jaanch.deftsalt.chatgpt.site) and select **See a 90-second demo**. Synthetic cases, manual entry, Scam Shield and payment follow-up need no account, API key or personal documents. The header switches between English and Hindi, the footer between light and dark themes, and the browser's Back button steps through a case.
 
 For a real comparison, choose **Check my challan**. Files are optional; every decisive field still requires review against the original. Supported findings can become a PDF, JSON manifest or share-safe brief.
 
@@ -67,7 +67,7 @@ Use `npm run release:check` to additionally check production dependencies for pu
 | Exports | jsPDF, JSON, clipboard and browser SHA-256 APIs |
 | Data | In-memory citizen workspace; no application database or persistent document store |
 
-Comparison and message checks run locally. Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, **not all provider retention**. Language preference is stored locally; citizen cases are not saved as accounts or cloud records.
+Comparison and message checks run locally. Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, **not all provider retention**. Language and theme preferences are stored locally; citizen cases are not saved as accounts or cloud records.
 
 ```text
 app/          Routes, page state, optional extraction endpoint
