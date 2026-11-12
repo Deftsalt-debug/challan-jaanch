@@ -22,8 +22,14 @@ Before submitting a change, run `npm run verify`. It includes lint, types, tests
 - Keep user-provided links inert. New clickable destinations must be fixed, independently checked and documented with their scope.
 - Do not infer fraud from a UPI address, guilt from a photograph, or settlement from a bank debit.
 - Keep AI transmission opt-in and separate from local processing. Never commit `.env.local` or paste real documents into issues.
-- Add regression coverage for changed behavior, including uncertainty and failure paths. Keep the submission summary and video within their checked limits.
+- Add regression coverage for changed behavior, including uncertainty and failure paths. Keep historical submission claims clearly dated.
 
 ## Pull requests
 
 Explain the citizen problem, the change, the evidence behind any new guidance, and which checks actually ran. Update the relevant guide when a data boundary or user journey changes. Keep generated builds, local tooling and credentials out of the diff.
+
+- [ ] `npm run verify` passed, or failures and unrun checks are explained.
+- [ ] English and Hindi cover the changed behavior and its failure paths.
+- [ ] Guidance sources include dates, jurisdictions and limitations; data-handling changes are explicit.
+- [ ] No credentials, real citizen records or generated build output are included.
+- [ ] Relevant documentation is updated.
