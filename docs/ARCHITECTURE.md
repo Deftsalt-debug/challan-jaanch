@@ -1,149 +1,89 @@
-# Architecture
+# Architecture and trust boundaries
 
-## Product contract
+Challan Jaanch compares user-confirmed records for narrow, observable contradictions. It does not decide legal validity or file anything with an official service.
 
-Challan Jaanch sits between receiving a confusing eChallan and using the official grievance process. It does not replace the official portal. Its only decision is whether user-confirmed records support a narrow, observable contradiction under a versioned rule.
+## Application map
 
-```text
-Synthetic fixture or citizen files
-                 │
-                 ▼
-Optional observable-field extraction ── failure ──► Manual entry
-                 │                                  │
-                 └──────────────┬───────────────────┘
-                                ▼
-                    Editable evidence map
-                                │
-                       Human confirmation gate
-                                │
-                                ▼
-                  Deterministic comparison rules
-                    │             │             │
-                    ▼             ▼             ▼
-                Supported       Refused      No ground
-                    │
-                    ▼
-          Citizen PDF + JSON manifest
-                    │
-                    ▼
-        Separate official-portal handoff
-```
+| Location | Responsibility |
+| --- | --- |
+| `app/page.tsx` | Case workflow and navigation |
+| `components/screens/` | Home, upload, review, result and packet screens |
+| `components/EvidenceWorkbench.tsx` | Source review, edits and confirmation |
+| `components/ScamShield.tsx` | Local message inspection and exposure response |
+| `components/PaymentHelp.tsx` | Service/symptom checklist |
+| `lib/cases.ts` | Typed cases, assessments and rule clock |
+| `lib/scam-shield.ts` | Message patterns, destination classes and recovery plans |
+| `lib/routes.ts`, `lib/payment-help.ts` | Fixed official routes and payment guidance |
+| `app/api/analyze/route.ts` | Optional observable-field extraction |
 
-Scam Shield is a parallel, browser-only trust lane:
+The case flow is `home → upload → processing → review → result → packet`; synthetic cases go directly to review. Scam checks are a parallel lane.
+Processing represents actual work, not simulated progress. Browser history follows case stages; leaving processing cancels pending work.
 
-```text
-Pasted message text
-        │
-        ▼
-Inert URL parsing + advisory-pattern rules
-        │
-        ├──► Verify independently on exact official hostname
-        ├──► Report attempted impersonation to I4C
-        └──► If exposed: 1930 + bank/provider + NCRP
-```
+## Local processing and optional extraction
 
-## Trust boundaries
+Manual entry needs no files. Selected local files stay in the browser; a source-role SHA-256 is computed for exports without transmitting bytes.
+The AI path requires explicit consent and a no-payload capability preflight before encoding documents. An unavailable service falls back to local entry.
 
-### Extraction boundary
+| Extraction property | Current implementation |
+| --- | --- |
+| API | One server-side OpenAI Responses API call |
+| Model | `gpt-5.6-terra` default; `OPENAI_MODEL` override |
+| Inputs | At most three selected JPG, PNG or PDF files |
+| Output | Strict `challan_evidence_extraction` JSON schema |
+| Timeout | 45 seconds |
+| Storage flag | `store: false`; not a guarantee of zero provider retention |
+| Filenames | Replaced by source-role names before transmission |
 
-The documents screen first asks which comparison the citizen is making — a vehicle mismatch or an exact duplicate event — and then presents two explicit paths. **Local manual entry** needs no files at all; a citizen can type the fields from a paper challan. Any file they do add stays in the browser and receives a source-role SHA-256 fingerprint for the packet; no file bytes are transmitted. **AI extraction** stays disabled until the citizen gives explicit transmission consent. A no-payload capability preflight first confirms that extraction is configured; failure falls back locally before any selected document bytes are encoded or sent. Only the configured AI path can send up to three selected images or PDFs to the OpenAI Responses API, using `gpt-5.6-terra` by default and honouring an `OPENAI_MODEL` override. Original filenames are replaced by source-role names before transmission. The request uses structured JSON output and `store: false`, which disables retrievable response storage but does not override OpenAI API data controls or promise zero abuse-monitoring retention. The model is instructed to return only observable fields and may not decide validity, guilt, fraud, cloning, appeal eligibility, or likely outcome. See [HOW_WE_BUILT_IT.md](HOW_WE_BUILT_IT.md) for the full extraction contract.
+The model may extract observable fields but may not decide guilt, fraud, validity, cloning, appeal eligibility or outcome. Unclear characters must not be silently corrected.
+OpenAI API data controls still apply; disabling retrievable response storage does not disable all provider retention.
+The server rejects malformed, unsupported, excess or oversized documents and revalidates returned fields, enums, lengths and calendar dates.
+Without a server key, preflight reports unavailable and direct upload receives `503 LIVE_EXTRACTION_NOT_CONFIGURED`.
 
-The boundary rejects oversized, malformed, unsupported, or excess documents; applies an upstream timeout; and validates the structured result and calendar date again before returning it to the browser.
+## Human review and deterministic decisions
 
-If the API key is absent, the preflight reports extraction as unavailable without receiving document bytes; direct upload requests still receive an honest `503 LIVE_EXTRACTION_NOT_CONFIGURED`. The interface continues with manual verification. No synthetic demo depends on the route.
+`buildManualCase()` starts all decisive fields as unreviewed, including AI-extracted values. Each requires confirmation; blank values cannot be confirmed.
+Citizen evidence also needs source-clarity review. Editing a value or its clarity removes confirmation. Closed vehicle-family choices avoid spelling-based mismatches.
 
-### Human boundary
+The current rules compare registration marks, broad vehicle families and exact duplicate events with distinct challan numbers.
+They abstain on unclear or materially ambiguous decisive sources. Duplicate identifiers are trimmed and case-folded without guessing characters.
+The rule pack contains a 45-calendar-day safety-date calculation gated by `RULE_167_EFFECTIVE_FROM`; this describes the code, not a new legal verification.
+Deadline status uses the `Asia/Kolkata` calendar date. Issue date and challan number supply packet/clock context, not a finding by themselves.
 
-Every decisive value must be confirmed. Blank values cannot be confirmed. For citizen-supplied records, the reviewer also marks whether each decisive source is clear in the original; changing that clarity removes confirmation. The citizen also supplies the challan number and issue date in a separate, non-decisive panel: those never create a finding, but they drive the Rule 167 clock and the packet header. `buildManualCase()` in `lib/cases.ts` constructs both comparison types with every decisive fact `unreviewed`, whether it was typed or AI-extracted. Closed vehicle-family choices prevent spelling variants from creating a false class mismatch. Until all decisive values are confirmed, `assessCase` returns a `review` state and produces no finding.
+Assessments carry neutral claims, source anchors, limitations and packet eligibility. A packet also needs final human attestation.
+Original uploads are excluded from exports. Synthetic fixtures have no source bytes and use `sha256: null`.
+One masking function covers redacted screen, PDF, manifest and copied brief; citizen filenames become source-role names.
 
-### Decision boundary
+## Scam and payment boundaries
 
-`lib/cases.ts` is the only decision layer. It currently implements:
+Scam Shield parses pasted text locally without fetching its URLs. User destinations are inert text; fixed official destinations are separately clickable.
+Exact hosts, government domains, lookalikes and unverified destinations are classifications, not guarantees that a sender is safe.
+A UPI handle alone proves neither personal ownership nor fraud. English, Hinglish and Devanagari patterns are covered by tests.
+Exposure states distinguish opening, downloading, installation, permissions, credential disclosure and payment; the brief omits the original lure.
 
-- registration-mark conflict across challan, photo, and vehicle record;
-- broad vehicle-family conflict;
-- exact duplicate-event matching across distinct challan numbers;
-- safe refusal for unclear or materially ambiguous registration sources and unreadable vehicle-family sources;
-- a 45-calendar-day Rule 167 safety-date calculation for the current rule pack, applied only to issue dates on or after the gazetted `RULE_167_EFFECTIVE_FROM`; every screen asks `ruleClockApplies()` rather than repeating the date.
+The payment helper chooses among five services and four symptoms without collecting financial identifiers or querying settlement.
+Its clipboard fallback is selectable text. It cannot issue refunds, change an evidence outcome or submit a complaint.
+See [the dated source notes](PAYMENT_RESEARCH.md); official requirements must be rechecked when guidance changes.
 
-Identifiers in a duplicate-event case are compared after trimming and case-folding (`normaliseIdentifier`), so a stray space cannot manufacture two records, and no character is ever guessed.
+## Languages, accessibility and state
 
-The deadline status changes at midnight in `Asia/Kolkata`. Using the UTC calendar date would make the status one day late between 00:00 and 05:30 IST, so an explicit regression test covers that boundary.
+Interface copy uses `t(language, english, hindi)`; pure rule output uses `Bilingual` values resolved by `pick()`.
+Vehicle-family/colour values remain canonical for comparison and are translated only for display. Identifiers are not translated.
+The PDF uses English because the bundled core fonts do not render Devanagari; JSON preserves both claim languages and the selected interface language.
+Language/theme preferences use browser storage; language changes update document language and speech/date presentation.
+Native modal dialogs manage focus, and stage changes move focus to the current view. Controls preserve keyboard and reduced-motion behavior.
 
-Rules emit neutral claims, evidence anchor IDs, limitations, and packet eligibility. They never call a challan invalid.
+Citizen cases and files remain session state, with no account, application database, analytics or persistent document store.
+Reset drops case state. Optional AI consent is recorded locally, not in a durable receipt. Production-scale abuse controls and durable consent are not implemented guarantees.
 
-### Persistence boundary
+## Build and deployment files
 
-The MVP has no database, R2 bucket, analytics, account system, or application-owned document store. Selected files live in the current browser session. The generated packet excludes original uploads. Citizen-selected files receive a locally computed SHA-256 keyed by source role; synthetic filenames carry `sha256: null` because no source bytes exist to hash. Redacted mode applies one shared identifier-masking function to the screen, PDF, manifest, and copied brief, and replaces citizen filenames with source-role names. A reset drops all application state; normal browser garbage collection releases object URLs.
+`vite.config.ts` loads Vinext, Sites, Cloudflare and Tailwind and directly imports `.openai/hosting.json`; the project binding is not a secret.
+Vinext reads `next.config.ts` for headers and redirects. Both configurations are active, not alternative unused builds.
+`public/_headers` mirrors the security headers for compatible static hosts; tests enforce agreement. Keep the fallback until its retirement is decided.
+Hashed `/_next/static` assets receive immutable cache headers. Current and legacy social-image URLs are retained while external use remains unresolved.
 
-The API route necessarily transmits selected files to OpenAI only when the user separately consents to AI extraction and a server-side key is configured. The prototype records that choice in the local packet manifest but deliberately does not persist a consent receipt. Production deployments should add a durable consent receipt, verify the API project's retention configuration, and add rate limits and abuse controls before accepting real documents.
+## Verification
 
-### Onward-navigation boundary
-
-`lib/routes.ts` names where a disputed challan can be taken: the MoRTH grievance entry, the Virtual Court, and a Lok Adalat. The current grievance page may redirect by challan state, so the interface instructs the citizen to follow only the destination shown there. Lok Adalat is framed as eligibility-dependent rather than automatic. Every clickable destination in the product is a hard-coded `.gov.in` host over HTTPS, opened by the citizen in a new tab; the app submits nothing and transfers nothing.
-
-The module deliberately does not claim to know which forum currently holds a given challan or how long a transfer takes. Those differ by state and by the age of the record, and the prototype has no authorised way to read a real challan's live status, so it says so instead of guessing. Routes are shown whatever the outcome — somebody with no supported finding may still have grounds the rules cannot see — and only the framing changes.
-
-Tests assert that every destination is an official HTTPS `.gov.in` host and that the prose never predicts an outcome or implies a submission.
-
-### Language boundary
-
-Both languages are written as source. Interface copy uses `t(language, english, hindi)`; the rule layer returns `Bilingual` `{ en, hi }` values that components resolve with `pick()`. No translation happens at runtime, so a language switch cannot degrade safety advice into an approximate rendering, and four tests fail the build if any rule-layer string loses its Hindi.
-
-Canonical values compared by the rules — vehicle family, colour — stay in English and are translated for display only. Registration marks, challan numbers and capture identifiers are identifiers and are never altered. See [LOCALISATION.md](LOCALISATION.md).
-
-### Scam-navigation boundary
-
-`lib/scam-shield.ts` parses pasted text locally and never performs a fetch. User-supplied destinations are rendered as inert text. Only source-controlled official destinations are clickable. The checker can label a known exact host, a government domain, a lookalike, or an unverified destination; it never labels a sender or message safe. A hostname that genuinely ends in `.gov.in` or `.nic.in` over HTTPS is a government domain because those names are issued only through the National Informatics Centre; state traffic portals such as `mahatrafficechallan.gov.in` contain the word “challan” and would otherwise have been reported as lookalikes, which would teach citizens to distrust the real portal. The suffix check is on the registrable domain, so `echallan.parivahan.gov.in.example` remains a lookalike and an `http://` link is never treated as the portal. A UPI handle such as `name@ybl` is excluded from website parsing and prompts independent verification; its syntax cannot establish personal ownership or prove fraud.
-
-### Payment follow-up boundary
-
-`lib/payment-help.ts` generates a checklist from service and symptom choices, without receiving financial identifiers or calling a payment service. `components/PaymentHelp.tsx` is reused on Home and NextSteps. Destination links are fixed in source, including Google Pay's own support page for its bill-payment route; no pasted payment address becomes clickable. The checklist is copied locally, with a selectable-text fallback. It cannot verify settlement, initiate a refund, change the evidence outcome or file a complaint. See [PAYMENT_RESEARCH.md](PAYMENT_RESEARCH.md).
-
-Exposure is modelled separately from message risk. Opening a link, downloading a file, installing an APK, granting SMS/Accessibility/VPN permissions, sharing credentials, and sending money are distinct states. That prevents a download from being described as an installation while still escalating an installed app or dangerous permission to an offline-device/clean-device containment plan. A local report-ready brief carries only selected exposure facts, signal names, inert hostnames, ordered recovery steps, and official routes; it deliberately omits the pasted lure.
-
-## UI state machine
-
-`home → upload → processing → review → result → packet`
-
-Synthetic cases go directly from `home` to `review`. Real processing has no simulated percentage or artificial delay; leaving cancels pending work.
-
-Parallel lane: `home → scam → verify | report-attempt | emergency`
-
-- **Home:** synthetic cases, product evidence, and interactive outcome preview.
-- **Upload:** drag/drop or file selection with local preview and size/type guidance.
-- **Processing:** a simple busy message for actual file preparation or optional extraction.
-- **Review:** source inspector, character-level diff, rule clock, editing, and confirmation.
-- **Result:** finding trace, adversarial counter-checks, deadline context, and refusal path.
-- **Packet:** redacted/official-handoff views, attestation, PDF/JSON exports, a bilingual share-safe brief, and a separate official link.
-- **Scam:** local message triage, inert URL inspection, exposure-aware response plan, and hard-coded official escape routes.
-
-## Main technology choices
-
-- React 19 and TypeScript for a typed client workflow.
-- Vinext/Vite for Next-compatible routes and Cloudflare output.
-- Tailwind CSS 4 plus a small global motion layer.
-- OpenAI Responses API (`gpt-5.6-terra`) for optional multimodal extraction.
-- Hand-written English and Hindi source strings, with `useSyncExternalStore` for a persisted, tab-synchronised language choice.
-- Pure TypeScript scam rules for advisory patterns, URL classification, exposure-specific containment, and a privacy-safe safety brief.
-- jsPDF, Web Crypto, object URLs, and Web Speech APIs for local capabilities.
-- OpenAI Sites for versioned hosting, with public access treated as a separate release decision.
-- Next-compatible response headers, install metadata, bilingual skip navigation, and controlled error/404 recovery for production resilience.
-
-## Response headers
-
-Security headers are declared in `next.config.ts`, which is what the current host honours, and mirrored in `public/_headers` for a static host that reads that file instead. They were once out of step — `_headers` lacked `Cross-Origin-Resource-Policy` and `Strict-Transport-Security` — which meant whichever layer a platform happened to honour silently decided the security posture. A test now fails the build if the two disagree.
-
-Assets under `/_next/static` carry a content hash in the filename, so they are served `immutable` for a year. The deployed site was previously revalidating them on every visit, which is a real cost on the slow connections this product is meant for.
-
-## Production-hardening backlog
-
-Before handling real citizen records at scale:
-
-1. Commission an Indian privacy and legal review.
-2. Persist a versioned consent receipt and add verifiable deletion semantics.
-3. Add document malware scanning, per-user rate limits, and abuse monitoring.
-4. Version rule packs by jurisdiction and effective date.
-5. Validate official handoff requirements state by state.
-6. Run accessibility testing with screen readers and Indian-language users.
-7. Add fixture-based regression tests for every rule version.
+`npm run verify` runs lint, TypeScript, deterministic tests and a production build without an API key.
+Tests cover evidence/refusal paths, bilingual completeness, boundary dates, source masking, route constraints, extraction failures, scam signals and payment guidance.
+Automated checks do not replace screen-reader/user testing, jurisdiction review or a live extraction trial with approved data.

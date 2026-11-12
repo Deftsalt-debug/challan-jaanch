@@ -1,35 +1,22 @@
 # Challan Jaanch
 
-An independent, bilingual companion for understanding Indian eChallans: compare evidence, check suspicious messages, and navigate payment problems.
+An independent English/Hindi companion for comparing eChallan evidence, checking suspicious messages and navigating payment problems.
 
-[Live application](https://challan-jaanch.deftsalt.chatgpt.site) · [Documentation](docs/README.md) · [Submission](SUBMISSION.md) · [Changelog](CHANGELOG.md)
+**Live demo:** [challan-jaanch.deftsalt.chatgpt.site](https://challan-jaanch.deftsalt.chatgpt.site)
 
-[![Verify](https://github.com/Deftsalt-debug/challan-jaanch/actions/workflows/verify.yml/badge.svg)](https://github.com/Deftsalt-debug/challan-jaanch/actions/workflows/verify.yml)
-
-![Challan Jaanch](public/og-release.png)
+![Challan Jaanch home screen with evidence comparison, scam checks and payment help](.github/assets/application.jpg)
 
 ## What it does
 
-| Citizen need | Product response |
-| --- | --- |
-| “The photo may show a different vehicle.” | Compare source-linked plate and vehicle fields, confirm evidence and export supported contradictions. |
-| “Two challans may describe the same event.” | Compare distinct records with deterministic rules, without guessing missing values. |
-| “Is this message suspicious?” | Inspect pasted text without opening its links; get exposure-specific recovery steps. |
-| “I paid, but something is wrong.” | Follow service-specific receipt and payment guidance with a locally copied checklist. |
-
-**Humans confirm the evidence. Code compares it. Official services make the decision.**
-
-Unclear decisive evidence produces a refusal, not an allegation. The app does not authenticate senders, declare a challan invalid, verify payments, promise refunds or submit anything on your behalf.
-
-## Try it
-
-Open the [live app](https://challan-jaanch.deftsalt.chatgpt.site) and select **See a 90-second demo**. Synthetic cases, manual entry, Scam Shield and payment follow-up need no account, API key or personal documents. The header switches between English and Hindi, the footer between light and dark themes, and the browser's Back button steps through a case.
-
-For a real comparison, choose **Check my challan**. Files are optional; every decisive field still requires review against the original. Supported findings can become a PDF, JSON manifest or share-safe brief.
+- Compares user-confirmed plate, vehicle and duplicate-event evidence with deterministic rules.
+- Refuses unsupported or ambiguous findings instead of guessing missing values.
+- Checks pasted scam messages locally and offers exposure-specific next steps.
+- Exports an attested evidence packet as PDF, JSON or a share-safe brief.
+- Provides service-specific payment follow-up guidance without accessing financial records.
 
 ## Run locally
 
-Requires **Node.js 22.13 or newer** and npm. The optional `.nvmrc` selects the Node 22 release line.
+Use Node.js 22.13 or newer (`.nvmrc` selects Node 22):
 
 ```bash
 git clone https://github.com/Deftsalt-debug/challan-jaanch.git
@@ -38,55 +25,52 @@ npm ci
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). Already have the folder? Skip the first two commands.
+Open [localhost:3000](http://localhost:3000). The synthetic demo, manual entry, Scam Shield and payment helper need no account or API key.
+Optional AI extraction uses server-side configuration and explicit transmission consent; see [local development](docs/LOCAL_DEVELOPMENT.md).
 
-### Optional AI extraction
-
-Copy `.env.example` to `.env.local` and set `OPENAI_API_KEY`. Never commit this file. AI extracts observable document fields only, after explicit transmission consent; it does not decide the result. Without a key, use the complete manual-entry path.
-
-See [local development](docs/LOCAL_DEVELOPMENT.md) for configuration and troubleshooting.
-
-## Development checks
+## Tests
 
 ```bash
 npm run verify
 ```
 
-Runs ESLint, TypeScript checks, regression tests and the production build. [GitHub Actions](https://github.com/Deftsalt-debug/challan-jaanch/actions/workflows/verify.yml) runs the same gate on pushes to `main` and pull requests.
-
-Use `npm run release:check` to additionally check production dependencies for published security advisories. Tests protect bilingual rules, privacy boundaries, official routing, submission limits and payment guidance.
+Runs lint, type checks, deterministic regression tests and a production build. CI runs the same checks on pushes and pull requests.
+Tests cover evidence/refusal rules, scam signals, bilingual output, privacy boundaries, routing and payment guidance.
+`npm run release:check` additionally audits production dependencies; run `npm audit` to include build-tool dependencies too.
 
 ## Architecture
 
 | Layer | Implementation |
 | --- | --- |
-| Interface | React 19, TypeScript, Tailwind CSS 4; shared design tokens and screen components |
-| Framework | Vinext / Vite with Next-compatible routing; Cloudflare Worker deployment through Sites |
-| Decisions | Pure TypeScript evidence rules and local scam-pattern checks |
-| Optional extraction | Server-side OpenAI Responses API; explicit consent and structured output |
-| Exports | jsPDF, JSON, clipboard and browser SHA-256 APIs |
-| Data | In-memory citizen workspace; no application database or persistent document store |
+| Interface | React 19, TypeScript, Tailwind CSS 4; English and Hindi source copy |
+| Hosting | Vinext/Vite, Next-compatible routes and Cloudflare Workers through Sites |
+| Decisions | Pure local rules in `lib/cases.ts` and `lib/scam-shield.ts` |
+| Optional extraction | Server-side OpenAI Responses API; observable fields only |
+| Exports | jsPDF, JSON, clipboard and browser SHA-256 |
+| Storage | In-memory case workspace; local language/theme preferences; no application database |
 
-Comparison and message checks run locally. Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, **not all provider retention**. Language and theme preferences are stored locally; citizen cases are not saved as accounts or cloud records.
+See [architecture and trust boundaries](docs/ARCHITECTURE.md) and the dated [payment research](docs/PAYMENT_RESEARCH.md).
 
-```text
-app/          Routes, page state, optional extraction endpoint
-components/   Citizen screens and reusable interface components
-lib/          Typed rules, bilingual copy and official route plans
-tests/        Rule, privacy, routing and submission regressions
-docs/         Architecture, research and development guides
-submission/   Original demo video, captures and production sources
-```
+## Known limits
 
-## Documentation and contribution
+The app does not authenticate senders, invalidate challans, verify payments, promise refunds or submit complaints.
+Every decisive field needs human review against its source. Official services make the decision; procedures and guidance can change.
+Citizen cases are not saved between sessions. The PDF is English-only; the interface and JSON claims preserve English and Hindi.
+Optional AI processing sends selected files to the provider. `store: false` disables retrievable response storage, not all provider retention.
+This is a prototype, not a government service or legal adviser; do not post real records or credentials in issues.
 
-- [Documentation index](docs/README.md): choose the right guide.
-- [System guide](SYSTEM_GUIDE.md): complete workflows, trust boundaries and design rationale.
-- [Contributing](CONTRIBUTING.md): coding standards, source requirements and review checklist.
-- [Submission pack](SUBMISSION.md): summary, live link and video. The recording predates the current UI; see [recording provenance](submission/README.md).
-
-This is an independent civic-tech prototype, not a government service or legal adviser. Source-backed guidance is dated and must be rechecked as official services change. Do not put real citizen records, credentials or unredacted documents in GitHub issues or pull requests.
-
-## License
+## Licence
 
 [MIT](LICENSE).
+
+## Credits
+
+Created by [Deftsalt-debug](https://github.com/Deftsalt-debug), with Codex as the primary implementation partner for the workbench, rules, refusal paths, exports, bilingual interface, tests and deployment.
+Product decisions and release authority remained with the creator. Existing author and AI co-author attribution is retained in Git history.
+Official guidance sources are identified in the code and [payment research](docs/PAYMENT_RESEARCH.md). See [contributing](CONTRIBUTING.md).
+
+## Hackathon submission
+
+The original 1:47.5 silent video used the 28 August 2026 synthetic interface; its UI and test counts are historical.
+The recording and production assets have been removed from the current tree. An external video link is pending from the maintainer.
+Its “storage disabled” caption referred to `store: false`, not zero provider retention.

@@ -482,30 +482,6 @@ test('security headers are identical in next.config.ts and public/_headers', asy
   assert.match(config, /max-age=31536000, immutable/);
 });
 
-test('submission pack stays inside the hackathon summary and video limits', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const [submission, video] = await Promise.all([
-    readFile(new URL('../SUBMISSION.md', import.meta.url), 'utf8'),
-    readFile(new URL('../submission/challan-jaanch-submission.mp4', import.meta.url)),
-  ]);
-
-  const summary = submission.match(/## Project summary\s+([\s\S]*?)\s+\*\*Word count:/u)?.[1]?.trim();
-  const declared = Number(submission.match(/\*\*Word count:\*\*\s+(\d+)/u)?.[1]);
-  assert.ok(summary, 'project summary block is missing');
-  const words = summary.split(/\s+/u).filter(Boolean).length;
-  assert.equal(words, declared, 'declared project-summary word count is stale');
-  assert.ok(words <= 250, `project summary is ${words} words; the limit is 250`);
-
-  const mvhd = video.indexOf(Buffer.from('mvhd'));
-  assert.ok(mvhd > 0, 'submission video has no readable MP4 movie header');
-  const version = video[mvhd + 4];
-  const timescale = version === 1 ? video.readUInt32BE(mvhd + 24) : video.readUInt32BE(mvhd + 16);
-  const duration = version === 1 ? Number(video.readBigUInt64BE(mvhd + 28)) : video.readUInt32BE(mvhd + 20);
-  const seconds = duration / timescale;
-  assert.ok(seconds > 60, `submission video is unexpectedly short (${seconds.toFixed(1)}s)`);
-  assert.ok(seconds <= 120, `submission video is ${seconds.toFixed(1)}s; the limit is 120s`);
-});
-
 test('packet integrity metadata never invents hashes for synthetic files', async () => {
   const { readFile } = await import('node:fs/promises');
   const page = await readFile(new URL('../app/page.tsx', import.meta.url), 'utf8');
@@ -523,7 +499,7 @@ test('citizen document transmission is explicit, optional, and described honestl
     readFile(new URL('../components/screens/Upload.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../components/ProductGuide.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../app/api/analyze/route.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../docs/HOW_WE_BUILT_IT.md', import.meta.url), 'utf8'),
+    readFile(new URL('../docs/ARCHITECTURE.md', import.meta.url), 'utf8'),
   ]);
   // The transmission decision is split between the documents screen and the
   // state container; the guarantees below hold across both.
