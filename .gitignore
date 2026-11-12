@@ -41,3 +41,12 @@ next-env.d.ts
 
 # local tooling
 /.claude/
+
+# Editor and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+Thumbs.db
+desktop.ini
